@@ -69,7 +69,8 @@ public class NormalMap {
         off += 5;
         int val;
         for(i = 0; i < out.length; i++){
-            val = (int)(0.2126*(fr[i*3 + off] & 0xFF) + 0.7152*(fr[i*3 + 1 + off] & 0xFF) + 0.0722*(fr[i*3 + 2 + off] & 0xFF));
+            //val = (int)(0.2126*(fr[i*3 + off] & 0xFF) + 0.7152*(fr[i*3 + 1 + off] & 0xFF) + 0.0722*(fr[i*3 + 2 + off] & 0xFF));
+            val = (int)(((fr[i*3 + off] & 0xFF) + (fr[i*3 + 1 + off] & 0xFF) + (fr[i*3 + 2 + off] & 0xFF))/3);
             if(val < 0) val = 0;
             else if (val > 255) val = 255;
             out[i] = (byte) val;
@@ -110,13 +111,12 @@ public class NormalMap {
         off += 5;
 
         int readen_lines = 1;
-        int valX;
-        int valY;
-        int valZ = 5;
+        double valX;
+        double valY;
+        double valZ = 0.1;
         double length;
 
         while(readen_lines < rows-1){
-            //System.out.println(readen_lines);
             for(i = 1; i < collumns-1 ; i++){
                 valX = -(gray[(readen_lines-1)*collumns + i - 1] & 0xFF) + (gray[(readen_lines-1)*collumns + i + 1] & 0xFF)
                         -2*(gray[readen_lines*collumns + i - 1] & 0xFF) + 2*(gray[readen_lines*collumns + i + 1] & 0xFF)
@@ -124,24 +124,22 @@ public class NormalMap {
                 valY = -(gray[(readen_lines-1)*collumns + i - 1] & 0xFF) - 2*(gray[(readen_lines-1)*collumns + i] & 0xFF) - (gray[(readen_lines-1)*collumns + i + 1] & 0xFF)
                         +(gray[(readen_lines+1)*collumns + i - 1] & 0xFF) + 2*(gray[(readen_lines+1)*collumns + i] & 0xFF) + (gray[(readen_lines+1)*collumns + i + 1] & 0xFF);
 
-                if(valX < 0) valX = 0;
+                valX = (valX/255.0);
+                valY = (valY/255.0);
+                /*if(valX < 0) valX = 0;
                 else if(valX > 255) valX = 255;
                 if(valY < 0) valY = 0;
-                else if(valY > 255) valY = 255;
+                else if(valY > 255) valY = 255;*/
 
                 length = Math.sqrt((valX*valX) + (valY*valY) + (valZ*valZ));
 
-                valX = (int)((valX/length + 1.0) * (255.0/2.0));
-                valY = (int)((valY/length + 1.0) * (255.0/2.0));
-                valZ = (int)((valZ/length + 1.0) * (255.0/2.0));
-                System.out.println(valX);
+                valX = ((valX/length + 1.0) * (255.0/2.0));
+                valY = ((valY/length + 1.0) * (255.0/2.0));
                 out[off + (readen_lines*collumns*3)+i*3] = (byte)valX;
 
                 out[off + (readen_lines*collumns*3)+1+i*3] = (byte)valY;
-                out[off + (readen_lines*collumns*3)+2+i*3] = (byte)valZ;
+                out[off + (readen_lines*collumns*3)+2+i*3] = (byte)((valZ/length + 1.0) * (255.0/2.0));
 
-
-                valZ = 5;
             }
             readen_lines++;
         }
