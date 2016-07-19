@@ -202,6 +202,10 @@ public class MainScreen extends JFrame {
                 updateImagePanel(image.getHeightMap());
             } else if(e.getSource() == normalMap){
                 updateImagePanel(image.getNormalMap());
+            } else if(e.getSource() == saveNormalMap){
+                imageLoader.saveNormalMap();
+            } else if(e.getSource() == saveHeighMap){
+                imageLoader.saveHeightMap();
             }
         }
     }
@@ -212,7 +216,7 @@ public class MainScreen extends JFrame {
 
         public ImagePanel() {
             scale = 1.0;
-            setBackground(Color.black);
+            setBackground(Color.gray);
         }
 
         public void setBufferedImage(BufferedImage image){
@@ -267,42 +271,4 @@ public class MainScreen extends JFrame {
 
 
 }
-
-/*class ZoomTest {
-    public static void main(String[] args) {
-        ImagePanel panel = new ImagePanel();
-        ImageZoom zoom = new ImageZoom(panel);
-        JFrame f = new JFrame();
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        f.getContentPane().add(zoom.getUIPanel(), "North");
-        f.getContentPane().add(new JScrollPane(panel));
-        f.setSize(400, 400);
-        f.setLocation(200, 200);
-        f.setVisible(true);
-    }
-}
-
-
-
-class ImageZoom {
-    ImagePanel imagePanel;
-
-    public ImageZoom(ImagePanel ip) {
-        imagePanel = ip;
-    }
-
-    public JPanel getUIPanel() {
-        SpinnerNumberModel model = new SpinnerNumberModel(1.0, 0.1, 1.4, .01);
-        final JSpinner spinner = new JSpinner(model);
-        spinner.setPreferredSize(new Dimension(45, spinner.getPreferredSize().height));
-        spinner.addChangeListener(e -> {
-            float scale = ((Double) spinner.getValue()).floatValue();
-            imagePanel.setScale(scale);
-        });
-        JPanel panel = new JPanel();
-        panel.add(new JLabel("scale"));
-        panel.add(spinner);
-        return panel;
-    }
-}*/
 

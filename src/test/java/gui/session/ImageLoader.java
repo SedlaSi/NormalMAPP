@@ -18,6 +18,7 @@ import java.io.IOException;
 public class ImageLoader extends JFrame{
 
     JFileChooser fileChooser;
+    JFileChooser fileSaver;
     private String sessionFolder;
     private static final String ORIGINAL_NAME = "original.ppm";
     private static final String HEIGHT_NAME = "height.ppm";
@@ -27,6 +28,7 @@ public class ImageLoader extends JFrame{
 
     public ImageLoader(String sessionFolder){
         fileChooser = new JFileChooser();
+        fileSaver = new JFileChooser();
         this.sessionFolder = sessionFolder;
     }
 
@@ -72,6 +74,54 @@ public class ImageLoader extends JFrame{
         }
 
         return image;
+    }
+
+    public void saveHeightMap(){
+        int ret = fileChooser.showSaveDialog(ImageLoader.this);
+        File file;
+        if(ret == JFileChooser.APPROVE_OPTION){
+            file = fileChooser.getSelectedFile();
+        } else {
+            return;
+        }
+        try {
+            // Use IM
+            IMOperation op = new IMOperation();
+            // Pipe
+            op.addImage(sessionFolder + "/" + HEIGHT_NAME);
+            op.addImage("png:"+file.getAbsolutePath());
+            // CC command
+            ConvertCmd convert = new ConvertCmd(true);
+            // Run
+            convert.run(op);
+            System.out.println("saved");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void saveNormalMap(){
+        int ret = fileChooser.showSaveDialog(ImageLoader.this);
+        File file;
+        if(ret == JFileChooser.APPROVE_OPTION){
+            file = fileChooser.getSelectedFile();
+        } else {
+            return;
+        }
+        try {
+            // Use IM
+            IMOperation op = new IMOperation();
+            // Pipe
+            op.addImage(sessionFolder + "/" + NORMAL_NAME);
+            op.addImage("png:"+file.getAbsolutePath());
+            // CC command
+            ConvertCmd convert = new ConvertCmd(true);
+            // Run
+            convert.run(op);
+            System.out.println("saved");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public Image getImage(){
