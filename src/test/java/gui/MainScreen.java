@@ -155,6 +155,7 @@ public class MainScreen extends JFrame {
                 if(session != null){
                     session.endSession();
                 }
+                e.getWindow().dispose();
             }
         });
 
@@ -197,15 +198,26 @@ public class MainScreen extends JFrame {
                 image = imageLoader.loadImage();
                 updateImagePanel(image.getOriginalMap());
             } else if(e.getSource() == originalImage){
-                updateImagePanel(image.getOriginalMap());
+                if(image != null){
+                    updateImagePanel(image.getOriginalMap());
+                }
             } else if(e.getSource() == heightMap){
-                updateImagePanel(image.getHeightMap());
+                if(image != null){
+                    updateImagePanel(image.getHeightMap());
+                }
             } else if(e.getSource() == normalMap){
-                updateImagePanel(image.getNormalMap());
+                if(image != null){
+                    updateImagePanel(image.getNormalMap());
+                }
             } else if(e.getSource() == saveNormalMap){
                 imageLoader.saveNormalMap();
             } else if(e.getSource() == saveHeighMap){
                 imageLoader.saveHeightMap();
+            } else if(e.getSource() == exit){
+                if(session!= null){
+                    session.endSession();
+                }
+                dispose();
             }
         }
     }
