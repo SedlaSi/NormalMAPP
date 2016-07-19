@@ -1,4 +1,4 @@
-package main.java.algorithms;
+package algorithms;
 
 import sun.misc.IOUtils;
 
@@ -10,15 +10,16 @@ import java.util.Arrays;
 
 public class NormalMap {
 
+    public static double NORMAL_HEIGHT = 0.1;
+
     public static void main(String [] args){
         //convolution(read());
         //normalMap(read());
-        write(normalMap(read()));
+        write(normalMap(read("/home/sedlasi1/Desktop/test/house.ppm")),"/home/sedlasi1/Desktop/test/normal_3.ppm");
         //getGrayscale(read());
     }
 
-    public static byte [] read(){
-        String path = "/home/sedlasi1/Desktop/Skola/Semestr_04/APO/Ukol_02/vit_small.ppm";
+    public static byte [] read(String path){
         try {
             return Files.readAllBytes(Paths.get(path));
         } catch (IOException e) {
@@ -27,10 +28,10 @@ public class NormalMap {
         }
     }
 
-    public static void write(byte [] picture){
+    public static void write(byte [] picture, String path){
         FileOutputStream fos = null;
         try {
-            fos = new FileOutputStream("/home/sedlasi1/Desktop/Skola/Semestr_04/normal.ppm");
+            fos = new FileOutputStream(path);
             fos.write(picture);
             fos.close();
         } catch (FileNotFoundException e) {
@@ -47,9 +48,18 @@ public class NormalMap {
         int off = 3; // offset in array
         byte [] out;
 
-        while(fr[off] != 10) off++;
         int i = 3;
         StringBuilder stb = new StringBuilder();
+        while(true){
+            if(fr[i] == '#'){
+                i++;
+                while(fr[i] != '\n') i++;
+                while(fr[i] == '\n') i++;
+            } else break;
+
+        }
+        off = i;
+        while(fr[off] != 10 && fr[off] != ' ') off++;
         while(i < off){
             stb.append((char)fr[i]);
             i++;
@@ -58,13 +68,14 @@ public class NormalMap {
 
         off++;
         i = off;
-        while(fr[off] != 10) off++;
+        while(fr[off] != 10 && fr[off] != ' ') off++;
         stb = new StringBuilder();
         while(i < off){
             stb.append((char)fr[i]);
             i++;
         }
         rows = Integer.parseInt(stb.toString());
+        //System.out.println("collumns: "+collumns+" rows: "+rows);
         out = new byte [collumns*rows];
         off += 5;
         int val;
@@ -93,14 +104,25 @@ public class NormalMap {
         while(fr[off] != 10) off++;
         int i = 3;
         StringBuilder stb = new StringBuilder();
+        while(true){
+            if(fr[i] == '#'){
+                i++;
+                while(fr[i] != '\n') i++;
+                while(fr[i] == '\n') i++;
+            } else break;
+        }
+
+        off = i;
+        while(fr[off] != 10 && fr[off] != ' ') off++;
         while(i < off){
             stb.append((char)fr[i]);
             i++;
         }
         collumns = Integer.parseInt(stb.toString());
+
         off++;
         i = off;
-        while(fr[off] != 10) off++;
+        while(fr[off] != 10 && fr[off] != ' ') off++;
         stb = new StringBuilder();
         while(i < off){
             stb.append((char)fr[i]);
@@ -113,7 +135,7 @@ public class NormalMap {
         int readen_lines = 1;
         double valX;
         double valY;
-        double valZ = 0.1;
+        double valZ = NORMAL_HEIGHT;
         double length;
 
         while(readen_lines < rows-1){
@@ -162,15 +184,24 @@ public class NormalMap {
         while(fr[off] != 10) off++;
         int i = 3;
         StringBuilder stb = new StringBuilder();
+        while(true){
+            if(fr[i] == '#'){
+                i++;
+                while(fr[i] != '\n') i++;
+            } else break;
+        }
+        i++;
+        off = i;
+        while(fr[off] != 10 && fr[off] != ' ') off++;
         while(i < off){
             stb.append((char)fr[i]);
             i++;
         }
         collumns = Integer.parseInt(stb.toString());
-        //System.out.println("collumns = " + collumns);
+
         off++;
         i = off;
-        while(fr[off] != 10) off++;
+        while(fr[off] != 10 && fr[off] != ' ') off++;
         stb = new StringBuilder();
         while(i < off){
             stb.append((char)fr[i]);
@@ -243,35 +274,3 @@ public class NormalMap {
         return out;
     }
 }
-
-
-// zaostrovaci maska
-/*
-valR = (5*(fr[middle + i]& 0xFF) - (fr[middle + i - 3]& 0xFF) - (fr[middle + i + 3]& 0xFF) - (fr[upper + i]& 0xFF) - (fr[lower + i]& 0xFF)); // R
-                //System.out.println("valR: "+valR);
-                if(valR > 255){
-                    valR = 255;
-                } else if (valR < 0){
-                    valR = 0;
-                }
-
-                out[middle + i] = (byte)valR;
-
-                valG = (5*(fr[middle + i + 1]& 0xFF) - (fr[middle + i - 2]& 0xFF) - (fr[middle + i + 4]& 0xFF) - (fr[upper + i + 1]& 0xFF) - (fr[lower + i + 1]& 0xFF)); // G
-                //System.out.println("valG: "+valG);
-                if(valG > 255){
-                    valG = 255;
-                } else if (valG < 0){
-                    valG = 0;
-                }
-                out[middle + i + 1] = (byte)valG;
-
-                valB = (5*(fr[middle + i + 2]& 0xFF) - (fr[middle + i - 1]& 0xFF) - (fr[middle + i + 5]& 0xFF) - (fr[upper + i + 2]& 0xFF) - (fr[lower + i + 2]& 0xFF)); // B
-                //System.out.println("valB: "+valB);
-                if(valB > 255){
-                    valB = 255;
-                } else if (valB < 0){
-                    valB = 0;
-                }
-                out[middle + i + 2] = (byte)valB;
- */
