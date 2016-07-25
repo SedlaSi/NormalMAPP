@@ -8,7 +8,7 @@ import java.io.IOException;
  */
 public class Session {
 
-    private static String ROOT_FOLDER = "/tmp/.NormalMAPP";
+    private static String ROOT_FOLDER = "/tmp/.main.NormalMAPP";
     private String sessionFolder;
     String sessionId;
 

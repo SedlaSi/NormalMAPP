@@ -3,20 +3,13 @@ package gui;
 import gui.session.ImageLoader;
 import gui.session.Session;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 /**
  * Created by root on 14.7.16.
@@ -48,7 +41,7 @@ public class MainScreen extends JFrame {
         this.setPreferredSize(new Dimension(500,500));
         setLocationRelativeTo(null);
         //setResizable(false);
-        setTitle("NormalMAPP");
+        setTitle("main.NormalMAPP");
 
         menuBar = new JMenuBar();
 
@@ -156,6 +149,7 @@ public class MainScreen extends JFrame {
                     session.endSession();
                 }
                 e.getWindow().dispose();
+                System.exit(0);
             }
         });
 
@@ -218,6 +212,7 @@ public class MainScreen extends JFrame {
                     session.endSession();
                 }
                 dispose();
+                System.exit(0);
             }
         }
     }

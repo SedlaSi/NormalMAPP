@@ -1,4 +1,4 @@
-
+package main;
 
 import gui.session.ImageLoader;
 import gui.MainScreen;
