@@ -15,7 +15,7 @@ public class NormalMap {
     public static void main(String [] args){
         //convolution(read());
         //normalMap(read());
-        write(normalMap(read("/home/sedlasi1/Desktop/test/house.ppm")),"/home/sedlasi1/Desktop/test/normal_3.ppm");
+        write(normalMap(read("/home/sedlasi1/Desktop/obrazky/stones_no_noise_blur.ppm"),-1,-1),"/home/sedlasi1/Desktop/obrazky/normals.ppm");
         //getGrayscale(read());
     }
 
@@ -91,7 +91,7 @@ public class NormalMap {
         return out;
     }
 
-    public static byte [] normalMap(byte [] fr){
+    public static byte [] normalMap(byte [] fr, int xDirection, int yDirection){
         byte [] gray = getGrayscale(fr);
         byte [] out = Arrays.copyOf(fr,fr.length);
 
@@ -146,8 +146,8 @@ public class NormalMap {
                 valY = -(gray[(readen_lines-1)*collumns + i - 1] & 0xFF) - 2*(gray[(readen_lines-1)*collumns + i] & 0xFF) - (gray[(readen_lines-1)*collumns + i + 1] & 0xFF)
                         +(gray[(readen_lines+1)*collumns + i - 1] & 0xFF) + 2*(gray[(readen_lines+1)*collumns + i] & 0xFF) + (gray[(readen_lines+1)*collumns + i + 1] & 0xFF);
 
-                valX = (valX/255.0);
-                valY = (valY/255.0);
+                valX = xDirection*(valX/255.0);
+                valY = yDirection*(valY/255.0);
                 /*if(valX < 0) valX = 0;
                 else if(valX > 255) valX = 255;
                 if(valY < 0) valY = 0;

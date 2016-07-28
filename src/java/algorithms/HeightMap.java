@@ -17,7 +17,8 @@ public class HeightMap {
         //normalMap(read());
         //write(sobelEdgeDetector(read("/home/sedlasi1/Desktop/obrazky/small_stones.ppm")),"/home/sedlasi1/Desktop/obrazky/sobel_stones.ppm");
         //write(heightMap(read("/home/sedlasi1/Desktop/obrazky/sphere.ppm")),"/home/sedlasi1/Desktop/obrazky/sphere_thr_2.ppm");
-        write(heightMap(read("/home/sedlasi1/Desktop/obrazky/small_stones.ppm")),"/home/sedlasi1/Desktop/obrazky/stones_thr_2.ppm");
+        write(heightMap(read("/home/sedlasi1/Desktop/obrazky/small_stones.ppm")),"/home/sedlasi1/Desktop/obrazky/stones_final_2.ppm");
+        write(heightMap(read("/home/sedlasi1/Desktop/obrazky/original.ppm")),"/home/sedlasi1/Desktop/obrazky/stones_final_original.ppm");
         //getGrayscale(read());
     }
 
@@ -47,19 +48,10 @@ public class HeightMap {
     public static byte [] heightMap(byte [] fr){
         byte [] sobel = sobelEdgeDetector(fr);
         byte [] out = Arrays.copyOf(fr,fr.length);
-        int min = -1;
-        int max = -1;
-        int average = -1;
-        int offset = -1;
         GrayscaleResultClass res = getGrayscale(sobel);
-        min = res.min;
-        max = res.max;
-        average = res.average;
-        offset = res.offset;
-        byte [] edges = threshold(res.out,average);
 
-        if(min == -1 || max == -1 || average == -1 || offset == -1) System.out.println("Fault operation");
-        System.out.println("min:"+min+" max:"+max+" average:"+average);
+        byte [] edges = threshold(res.out,res.average);
+
 
         if(edges == null){
             System.out.println("edges field null!!");
@@ -67,24 +59,41 @@ public class HeightMap {
         }
 
         byte [] blackWhiteEdges = blackWhiteSummerize(edges,res.collumns,res.rows);
-        byte [] distortionMap = drawDistortion(blackWhiteEdges,res.collumns,res.rows);
+        blackWhiteEdges = invert(blackWhiteEdges);
 
-        for(int i = 0; i < distortionMap.length; i++){
-            out[i*3 + offset] = distortionMap[i];
-            out[i*3 + offset + 1] = distortionMap[i];
-            out[i*3 + offset + 2] = distortionMap[i];
+        byte [] noNoise = noiseRemoval(blackWhiteEdges,res.collumns,res.rows);
+
+        byte [] distortionMap = blackBlur(noNoise,res.collumns,res.rows);
+
+        byte [] finalMap = combineEnviromentWithNoise(distortionMap,getGrayscale(fr).out);
+
+        for(int i = 0; i < finalMap.length; i++){
+            /*out[i*3 + offset] = (byte)(0.2126*distortionMap[i]);
+            out[i*3 + offset + 1] = (byte)(0.7152*distortionMap[i]);
+            out[i*3 + offset + 2] = (byte)(0.0722*distortionMap[i]);*/
+
+            out[i*3 + res.offset] = finalMap[i];
+            out[i*3 + res.offset + 1] = finalMap[i];
+            out[i*3 + res.offset + 2] = finalMap[i];
         }
 
         return out;
     }
 
-    private static byte [] drawDistortion(byte [] fr, int collumns, int rows){
-        byte [] out = new byte [fr.length];
-        int segmentation = 5;
+    private static byte [] combineEnviromentWithNoise(byte [] env, byte [] noise){
+        byte [] out = new byte[env.length];
+        int i = 0;
+        /*for(; i < env.length; i++){
+            if((env[i]&0xff) < 233){
+                env[i] = (byte)((env[i]&0xff) + 100);
+            }
+            //noise[i] = (byte)((int)((((noise[i]&0xff)*100)/255)));
+            //System.out.println(noise[i] + " " + (noise[i]&0xff));
+        }*/
 
-
-
-
+        for(i = 0; i < env.length; i++){
+            out[i] = (byte)(((noise[i]&0xff)+((env[i]&0xff)/2))/1.5);
+        }
         return out;
     }
 
@@ -92,6 +101,92 @@ public class HeightMap {
         for(int i = 0; i < fr.length; i++){
             fr[i] = (byte)(255 - (fr[i] & 0xFF));
         }
+        return fr;
+    }
+
+    private static byte [] noiseRemoval(byte [] fr, int columns, int rows){
+
+        for(int i = 2; i < rows-3; i++){
+            for(int j = 2; j < columns-3; j++){
+                if((fr[i*columns + j] & 0xFF) == 0 && (fr[i*columns + j + 1] & 0xFF) == 0 && (fr[(i+1)*columns + j] & 0xFF) == 0 && (fr[(i+1)*columns + j+1] & 0xFF) == 0){
+                    if(((fr[(i-2)*columns + j] & 0xFF) != 0 &&
+                            (fr[(i-2)*columns + j+1] & 0xFF) != 0 &&
+                            (fr[(i-1)*columns + j] & 0xFF) != 0 &&
+                            (fr[(i-1)*columns + j+1] & 0xFF) != 0)
+                            &&
+                            ((fr[(i+2)*columns + j] & 0xFF) != 0 &&
+                                    (fr[(i+2)*columns + j+1] & 0xFF) != 0 &&
+                                    (fr[(i+3)*columns + j] & 0xFF) != 0 &&
+                                    (fr[(i+3)*columns + j+1] & 0xFF) != 0)
+                            &&
+                            ((fr[(i)*columns + j-2] & 0xFF) != 0 &&
+                                    (fr[(i)*columns + j-1] & 0xFF) != 0 &&
+                                    (fr[(i-1)*columns + j-2] & 0xFF) != 0 &&
+                                    (fr[(i-1)*columns + j-2] & 0xFF) != 0)
+                            &&
+                            ((fr[i*columns + j+2] & 0xFF) != 0 &&
+                                    (fr[i*columns + j+3] & 0xFF) != 0 &&
+                                    (fr[(i-1)*columns + j+2] & 0xFF) != 0 &&
+                                    (fr[(i-1)*columns + j+3] & 0xFF) != 0)
+                            ){
+                        fr[i*columns + j] = (byte)255;
+                        fr[i*columns + j+1] = (byte)255;
+                        fr[(i+1)*columns + j] = (byte)255;
+                        fr[(i+1)*columns + j+1] = (byte)255;
+                    }
+                }
+            }
+        }
+
+
+        return fr;
+    }
+
+    private static byte [] blackBlur(byte [] fr, int columns, int rows){
+        int steps = 150;
+        int i = columns + 1;
+        int color;
+        int restrict = 0;
+
+        while(steps > 0){
+             while(i < fr.length - columns - 1){
+                 if((fr[i] & 0xFF) > restrict){
+                     /*fr[i] = (byte)((int)((fr[i - 1]&0xff + fr[i + 1]&0xff + fr[i + columns]&0xff + fr[i - columns]&0xff + fr[i - columns - 1]&0xff + fr[i - columns + 1]&0xff
+                     + fr[i + columns - 1]&0xff + fr[i + columns + 1]&0xff
+                     )/8));*/
+                     color = (2*(fr[i - 1]&0xff) +
+                             2*(fr[i + 1]&0xff) +
+                             2*(fr[i + columns]&0xff) +
+                             2*(fr[i - columns]&0xff) +
+                             (fr[i - columns - 1]&0xff) +
+                             (fr[i - columns + 1]&0xff) +
+                             (fr[i + columns - 1]&0xff) +
+                             (fr[i + columns + 1]&0xff) +
+                             4*(fr[i]&0xff)
+                     )/16 ;
+                     //System.out.println(color);
+                     if(color > 250) color = 255;
+                     else if(color < 0) color = 0;
+
+                     fr[i] = (byte) color;
+
+                     /*if(
+                             fr[i - 1] == black || fr[i + 1] == black
+                             || fr[i + columns] == black || fr[i - columns] == black
+                             || fr[i - columns - 1] == black || fr[i - columns + 1] == black
+                             || fr[i + columns - 1] == black || fr[i + columns + 1] == black
+                             ){
+                         fr[i] = (byte)(black + increment);
+                     }*/
+                 }
+                 i++;
+             }
+            restrict += 2;
+            i = columns + 1;
+            steps--;
+
+        }
+
         return fr;
     }
 
@@ -133,9 +228,9 @@ public class HeightMap {
 
 
         // POCHYBNE RESENI
-        if((fr[edge]& 0xFF) == 255){
+        /*if((fr[edge]& 0xFF) == 255){
             fr = invert(fr);
-        }
+        }*/
         // ===============
 
 
@@ -166,9 +261,10 @@ public class HeightMap {
             if(fr[i] == '#'){
                 i++;
                 while(fr[i] != '\n') i++;
+                while(fr[i] == '\n') i++;
             } else break;
+
         }
-        i++;
         off = i;
         while(fr[off] != 10 && fr[off] != ' ') off++;
         while(i < off){
@@ -186,6 +282,8 @@ public class HeightMap {
             i++;
         }
         rows = Integer.parseInt(stb.toString());
+        //System.out.println("collumns: "+collumns+" rows: "+rows);
+
         /*System.out.println("rows = " + rows);
         System.out.println("/n = " + fr[off]);
         System.out.println("2 = " + fr[off+1]);

@@ -8,7 +8,7 @@ import java.io.IOException;
  */
 public class Session {
 
-    private static String ROOT_FOLDER = "/tmp/.main.NormalMAPP";
+    private static String ROOT_FOLDER = "/tmp/NormalMAPP";
     private String sessionFolder;
     String sessionId;
 
@@ -19,15 +19,20 @@ public class Session {
     }
 
     private void init(){
+        if(System.getProperty("os.name").contains("Windows")){
+            ROOT_FOLDER = "C:\\Users\\" + System.getProperty("user.name") + "\\AppData\\Local\\Temp\\.NormalMAPP";
+        }
         File rootFolder = new File(ROOT_FOLDER);
 
         if(!rootFolder.exists() && !rootFolder.mkdir()){
             System.out.println("Cannot create root folder for session " +sessionId+".");
+            System.exit(120);
         }
 
         File sessionFolderFile = new File(sessionFolder);
         if(!sessionFolderFile.mkdir()){
             System.out.println("Cannot create session folder for session "+sessionId+".");
+            System.exit(120);
         }
 
 

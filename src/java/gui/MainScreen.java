@@ -18,12 +18,14 @@ public class MainScreen extends JFrame {
 
     JMenuBar menuBar;
     JMenu file, help, save, load, edit, filters, view;
-    JMenuItem exit, openTexture, saveAll, loadAll, saveHeighMap, saveNormalMap, loadHeightMap, originalImage, heightMap, normalMap;
+    JMenuItem exit, openTexture, saveAll, loadAll, saveHeighMap, saveNormalMap, loadHeightMap, originalImage, heightMap, normalMap, invertNormal;
     JMenuItem undo, redo, sharpen, smooth;
     ImageLoader imageLoader;
     image.Image image;
     ImagePanel imagePanel;
     Session session;
+
+    private int xDirection, yDirection;
 
     public static void main(String [] args){
         MainScreen mainScreen = new MainScreen(null,null);
@@ -41,7 +43,10 @@ public class MainScreen extends JFrame {
         this.setPreferredSize(new Dimension(500,500));
         setLocationRelativeTo(null);
         //setResizable(false);
-        setTitle("main.NormalMAPP");
+        setTitle("NormalMAPP");
+
+        xDirection = 1;
+        yDirection = 1;
 
         menuBar = new JMenuBar();
 
@@ -60,6 +65,10 @@ public class MainScreen extends JFrame {
         redo = new JMenuItem("Redo");
         redo.addActionListener(actionListener);
         edit.add(redo);
+
+        invertNormal = new JMenuItem("Invert Normals");
+        invertNormal.addActionListener(actionListener);
+        edit.add(invertNormal);
 
         view = new JMenu("View");
         view.addMenuListener(menuListener);
@@ -188,7 +197,7 @@ public class MainScreen extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             if(e.getSource() == openTexture){
-                System.out.println("opening");
+                //System.out.println("opening");
                 image = imageLoader.loadImage();
                 updateImagePanel(image.getOriginalMap());
             } else if(e.getSource() == originalImage){
@@ -213,6 +222,11 @@ public class MainScreen extends JFrame {
                 }
                 dispose();
                 System.exit(0);
+            } else if(e.getSource() == invertNormal){
+                xDirection = -1*xDirection;
+                yDirection = -1*yDirection;
+                imageLoader.refreshNormalMap(xDirection,yDirection);
+                updateImagePanel(image.getNormalMap());
             }
         }
     }

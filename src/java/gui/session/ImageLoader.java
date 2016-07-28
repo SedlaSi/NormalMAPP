@@ -55,12 +55,12 @@ public class ImageLoader extends JFrame{
             ConvertCmd convert = new ConvertCmd(true);
             // Run
             convert.run(op);
-            System.out.println("converted");
+            //System.out.println("converted");
         } catch (Exception e) {
             e.printStackTrace();
         }
-        HeightMap.write(HeightMap.read(newImagePath),sessionFolder + "/" + HEIGHT_NAME);
-        NormalMap.write(NormalMap.normalMap(NormalMap.read(sessionFolder + "/" + HEIGHT_NAME)),sessionFolder + "/" + NORMAL_NAME);
+        HeightMap.write(HeightMap.heightMap(HeightMap.read(newImagePath)),sessionFolder + "/" + HEIGHT_NAME);
+        NormalMap.write(NormalMap.normalMap(NormalMap.read(sessionFolder + "/" + HEIGHT_NAME),1,1),sessionFolder + "/" + NORMAL_NAME);
 
         image = null;
         try {
@@ -74,6 +74,16 @@ public class ImageLoader extends JFrame{
         }
 
         return image;
+    }
+
+    public void refreshNormalMap(int xDirection, int yDirection){
+        NormalMap.write(NormalMap.normalMap(NormalMap.read(sessionFolder + "/" + HEIGHT_NAME),xDirection,yDirection),sessionFolder + "/" + NORMAL_NAME);
+
+        try {
+            image.setNormalMap(ImageIO.read(new File(sessionFolder + "/" + NORMAL_NAME)));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void saveHeightMap(){
