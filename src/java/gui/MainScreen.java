@@ -2,14 +2,20 @@ package gui;
 
 import gui.session.ImageLoader;
 import gui.session.Session;
+import image.*;
+import image.Image;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
+import javax.swing.plaf.basic.BasicPanelUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Created by root on 14.7.16.
@@ -23,9 +29,19 @@ public class MainScreen extends JFrame {
     ImageLoader imageLoader;
     image.Image image;
     ImagePanel imagePanel;
+    JPanel mainPanel,leftBoxPanel;
     Session session;
 
+    NormalMapSettingsBox normalMapSettingsBox;
+    NormalMapToolBox normalMapToolBox;
+    HeightMapSettingsBox heightMapSettingsBox;
+    HeightMapToolBox heightMapToolBox;
+
+    ThisActionListener actionListener;
+
+
     private int xDirection, yDirection;
+    private double normalHeight = 0.1;
 
     public static void main(String [] args){
         MainScreen mainScreen = new MainScreen(null,null);
@@ -39,7 +55,7 @@ public class MainScreen extends JFrame {
 
     public void createFrame() {
         ThisMenuListener menuListener = new ThisMenuListener();
-        ThisActionListener actionListener = new ThisActionListener();
+        actionListener = new ThisActionListener();
         this.setPreferredSize(new Dimension(500,500));
         setLocationRelativeTo(null);
         //setResizable(false);
@@ -149,7 +165,26 @@ public class MainScreen extends JFrame {
             repaint();
         });
 
-        this.add(imagePanel);
+        mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.add(imagePanel, BorderLayout.CENTER);
+
+        normalMapSettingsBox = new NormalMapSettingsBox();
+        normalMapToolBox = new NormalMapToolBox();
+        heightMapSettingsBox = new HeightMapSettingsBox();
+        heightMapToolBox = new HeightMapToolBox();
+
+
+        leftBoxPanel = new JPanel();
+        leftBoxPanel.setLayout(new BorderLayout());
+        leftBoxPanel.add(normalMapSettingsBox.getPanel(),BorderLayout.SOUTH);
+
+
+
+        mainPanel.add(leftBoxPanel,BorderLayout.WEST);
+
+//        this.add(imagePanel);
+        this.add(mainPanel);
         this.setJMenuBar(menuBar);
         this.addWindowListener(new WindowAdapter() {
             @Override
@@ -199,7 +234,9 @@ public class MainScreen extends JFrame {
             if(e.getSource() == openTexture){
                 //System.out.println("opening");
                 image = imageLoader.loadImage();
-                updateImagePanel(image.getOriginalMap());
+                if(image != null){
+                    updateImagePanel(image.getOriginalMap());
+                }
             } else if(e.getSource() == originalImage){
                 if(image != null){
                     updateImagePanel(image.getOriginalMap());
@@ -225,7 +262,7 @@ public class MainScreen extends JFrame {
             } else if(e.getSource() == invertNormal){
                 xDirection = -1*xDirection;
                 yDirection = -1*yDirection;
-                imageLoader.refreshNormalMap(xDirection,yDirection);
+                imageLoader.refreshNormalMap(xDirection,yDirection,normalHeight);
                 updateImagePanel(image.getNormalMap());
             }
         }
@@ -288,6 +325,250 @@ public class MainScreen extends JFrame {
             revalidate();      // update the scroll pane
             repaint();
         }
+    }
+
+    private class NormalMapSettingsBox {
+        JPanel settingBox;
+        JPanel lightPanel, heightPanel, recalculatePanel, lightToolPanel, lightToolPanelLeft, lightToolPanelRight;
+        ReviewPanel reviewNormalPanelPP, reviewNormalPanelPM, reviewNormalPanelMP, reviewNormalPanelMM;
+        JButton recalculateButton, plusPlusButton, plusMinusButton, minusPlusButton, minusMinusButton;
+        JSlider height;
+
+        private static final String DIR_PP = "++";
+        private static final String DIR_PM = "+-";
+        private static final String DIR_MM = "--";
+        private static final String DIR_MP = "-+";
+
+        private Dimension reviewDimension;
+
+
+        BufferedImage ppImage, pmImage, mpImage, mmImage;
+
+        JPanel getPanel(){
+            if(settingBox == null){
+                settingBox = new JPanel();
+                settingBox.setLayout(new BorderLayout());
+
+                lightPanel = new JPanel();
+                lightPanel.setLayout(new BorderLayout());
+                lightPanel.add(new JLabel("Lightning:"),BorderLayout.NORTH);
+                lightToolPanel = new JPanel();
+                lightToolPanel.setLayout(new BorderLayout());
+                lightToolPanelLeft = new JPanel();
+                lightToolPanelLeft.setLayout(new BorderLayout());
+                plusPlusButton = new JButton();
+                plusPlusButton.addActionListener(reviewActionListener);
+                try {
+                    plusPlusButton.setIcon(new ImageIcon(ImageIO.read(getClass().getResource("/review_lamp_icon/PP.png"))));
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+                lightToolPanelLeft.add(plusPlusButton,BorderLayout.NORTH);
+                //lightToolPanelLeft.add(new JLabel("left"));
+
+                plusMinusButton = new JButton();
+                plusMinusButton.addActionListener(reviewActionListener);
+                try {
+                    plusMinusButton.setIcon(new ImageIcon(ImageIO.read(getClass().getResource("/review_lamp_icon/PM.png"))));
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+                lightToolPanelLeft.add(plusMinusButton,BorderLayout.SOUTH);
+
+                lightToolPanel.add(lightToolPanelLeft,BorderLayout.WEST);
+
+                lightToolPanelRight = new JPanel();
+                lightToolPanelRight.setLayout(new BorderLayout());
+
+                minusPlusButton = new JButton();
+                minusPlusButton.addActionListener(reviewActionListener);
+                try {
+                    minusPlusButton.setIcon(new ImageIcon(ImageIO.read(getClass().getResource("/review_lamp_icon/MP.png"))));
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+                lightToolPanelRight.add(minusPlusButton,BorderLayout.NORTH);
+
+                minusMinusButton = new JButton();
+                minusMinusButton.addActionListener(reviewActionListener);
+                try {
+                    minusMinusButton.setIcon(new ImageIcon(ImageIO.read(getClass().getResource("/review_lamp_icon/MM.png"))));
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+                lightToolPanelRight.add(minusMinusButton,BorderLayout.SOUTH);
+                //lightToolPanelRight.add(new JLabel("right"));
+
+                lightToolPanel.add(lightToolPanelRight,BorderLayout.EAST);
+
+                reviewDimension = new Dimension(120,120);
+                reviewNormalPanelPP = new ReviewPanel(DIR_PP);
+                reviewNormalPanelPP.setPreferredSize(reviewDimension);
+
+                lightToolPanel.add(reviewNormalPanelPP,BorderLayout.CENTER);
+
+                lightPanel.add(lightToolPanel,BorderLayout.SOUTH);
+
+
+                heightPanel = new JPanel();
+                JLabel heightLabel = new JLabel("Height:");
+                height = new JSlider(JSlider.HORIZONTAL,0,100,50);
+                height.setPreferredSize(new Dimension(180,50));
+                height.setMajorTickSpacing(50);
+                height.setMinorTickSpacing(10);
+                height.setPaintTicks(true);
+                height.setPaintLabels(true);
+
+                heightPanel.add(heightLabel);
+                heightPanel.add(height);
+
+                recalculatePanel = new JPanel();
+                recalculateButton = new JButton("Recalculate NormalMap");
+                recalculateButton.addActionListener(reviewActionListener);
+                recalculatePanel.add(recalculateButton);
+                settingBox.setBorder(BorderFactory.createLoweredBevelBorder());
+                settingBox.add(lightPanel,BorderLayout.NORTH);
+                settingBox.add(heightPanel,BorderLayout.CENTER);
+                settingBox.add(recalculatePanel, BorderLayout.SOUTH);
+
+
+            }
+            return settingBox;
+        }
+
+        private ActionListener reviewActionListener = new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(e.getSource() == plusPlusButton) {
+                    xDirection = 1;
+                    yDirection = 1;
+                    if(reviewNormalPanelPP == null){
+                        reviewNormalPanelPP = new ReviewPanel(DIR_PP);
+                        reviewNormalPanelPP.setPreferredSize(reviewDimension);
+                    }
+                    lightToolPanel.remove(2);
+                    lightToolPanel.add(reviewNormalPanelPP,BorderLayout.CENTER);
+                    lightToolPanel.invalidate();
+                    lightToolPanel.revalidate();
+                    lightToolPanel.repaint();
+                } else if(e.getSource() == plusMinusButton){
+                    xDirection = 1;
+                    yDirection = -1;
+                    if(reviewNormalPanelPM == null){
+                        reviewNormalPanelPM = new ReviewPanel(DIR_PM);
+                        reviewNormalPanelPM.setPreferredSize(reviewDimension);
+                    }
+                    lightToolPanel.remove(2);
+                    lightToolPanel.add(reviewNormalPanelPM,BorderLayout.CENTER);
+                    lightToolPanel.invalidate();
+                    lightToolPanel.revalidate();
+                    lightToolPanel.repaint();
+                } else if(e.getSource() == minusPlusButton){
+                    xDirection = -1;
+                    yDirection = 1;
+                    if(reviewNormalPanelMP == null){
+                        reviewNormalPanelMP = new ReviewPanel(DIR_MP);
+                        reviewNormalPanelMP.setPreferredSize(reviewDimension);
+                    }
+                    lightToolPanel.remove(2);
+                    lightToolPanel.add(reviewNormalPanelMP,BorderLayout.CENTER);
+                    lightToolPanel.invalidate();
+                    lightToolPanel.revalidate();
+                    lightToolPanel.repaint();
+                } else if(e.getSource() == minusMinusButton){
+                    xDirection = -1;
+                    yDirection = -1;
+                    if(reviewNormalPanelMM == null){
+                        reviewNormalPanelMM = new ReviewPanel(DIR_MM);
+                        reviewNormalPanelMM.setPreferredSize(reviewDimension);
+                    }
+                    lightToolPanel.remove(2);
+                    lightToolPanel.add(reviewNormalPanelMM,BorderLayout.CENTER);
+                    lightToolPanel.invalidate();
+                    lightToolPanel.revalidate();
+                    lightToolPanel.repaint();
+                } else if(e.getSource() == recalculateButton){
+                    if(imageLoader != null && image != null) {
+                        //System.out.println("refresh");
+                        imageLoader.refreshNormalMap(xDirection, yDirection,normalHeight);
+                        updateImagePanel(image.getNormalMap());
+                    }
+                }
+            }
+        };
+
+        private class ReviewPanel extends JPanel{
+
+            private BufferedImage image;
+
+            public ReviewPanel(String direction){
+                switch (direction){
+                    case DIR_PP: image = getPlusPlus(); break;
+                    case DIR_PM: image = getPlusMinus(); break;
+                    case DIR_MP: image = getMinusPlus(); break;
+                    default: image = getMinusMinus(); break;
+                }
+            }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.drawImage(image, 0, 0, null); // see javadoc for more info on the parameters
+            }
+
+            private BufferedImage getPlusPlus(){
+                try {
+                    ppImage = ImageIO.read(new File(this.getClass().getResource("/review_normal/PP.jpg").getFile()));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                return ppImage;
+            }
+
+            private BufferedImage getPlusMinus(){
+                try {
+                    ppImage = ImageIO.read(new File(this.getClass().getResource("/review_normal/PM.jpg").getFile()));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                return ppImage;
+            }
+
+            private BufferedImage getMinusPlus(){
+                try {
+                    ppImage = ImageIO.read(new File(this.getClass().getResource("/review_normal/MP.jpg").getFile()));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                return ppImage;
+            }
+
+            private BufferedImage getMinusMinus(){
+                try {
+                    ppImage = ImageIO.read(new File(this.getClass().getResource("/review_normal/MM.jpg").getFile()));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                return ppImage;
+            }
+
+        }
+    }
+
+    private class NormalMapToolBox {
+
+    }
+
+    private class HeightMapSettingsBox {
+
+    }
+
+    private class HeightMapToolBox {
+
     }
 
 

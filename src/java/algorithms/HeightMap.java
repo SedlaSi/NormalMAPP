@@ -1,5 +1,7 @@
 package algorithms;
 
+import gui.session.LoadingScreen;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,20 +12,26 @@ import java.util.Arrays;
 /**
  * Created by root on 19.7.16.
  */
-public class HeightMap {
+public class HeightMap implements Algorithm {
+
+    private LoadingScreen loadingScreen;
+    private static final int STEPS = 13;
 
     public static void main(String [] args){
         //convolution(read());
         //normalMap(read());
         //write(sobelEdgeDetector(read("/home/sedlasi1/Desktop/obrazky/small_stones.ppm")),"/home/sedlasi1/Desktop/obrazky/sobel_stones.ppm");
         //write(heightMap(read("/home/sedlasi1/Desktop/obrazky/sphere.ppm")),"/home/sedlasi1/Desktop/obrazky/sphere_thr_2.ppm");
-        write(heightMap(read("/home/sedlasi1/Desktop/obrazky/small_stones.ppm")),"/home/sedlasi1/Desktop/obrazky/stones_final_2.ppm");
-        write(heightMap(read("/home/sedlasi1/Desktop/obrazky/original.ppm")),"/home/sedlasi1/Desktop/obrazky/stones_final_original.ppm");
+        HeightMap heightMap = new HeightMap();
+        heightMap.write(heightMap.heightMap(heightMap.read("/home/sedlasi1/Desktop/obrazky/small_stones.ppm")),"/home/sedlasi1/Desktop/obrazky/stones_final_2.ppm");
+        heightMap.write(heightMap.heightMap(heightMap.read("/home/sedlasi1/Desktop/obrazky/original.ppm")),"/home/sedlasi1/Desktop/obrazky/stones_final_original.ppm");
         //getGrayscale(read());
     }
 
-    public static byte [] read(String path){
+    public byte [] read(String path){
         try {
+            loadingScreen.setText("Loading Image");
+            loadingScreen.addProgress(1);
             return Files.readAllBytes(Paths.get(path));
         } catch (IOException e) {
             e.printStackTrace();
@@ -31,12 +39,15 @@ public class HeightMap {
         }
     }
 
-    public static void write(byte [] picture, String path){
+    public void write(byte [] picture, String path){
         FileOutputStream fos = null;
+        loadingScreen.setText("Opening Maps");
+        loadingScreen.addProgress(1);
         try {
             fos = new FileOutputStream(path);
             fos.write(picture);
             fos.close();
+            loadingScreen.addProgress(1);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -45,13 +56,18 @@ public class HeightMap {
 
     }
 
-    public static byte [] heightMap(byte [] fr){
+    public byte [] heightMap(byte [] fr){
+        loadingScreen.setText("Calculating Enviroment");
+        loadingScreen.addProgress(1);
         byte [] sobel = sobelEdgeDetector(fr);
+        loadingScreen.addProgress(1);
         byte [] out = Arrays.copyOf(fr,fr.length);
+        loadingScreen.setText("Estimating Shapes");
+        loadingScreen.addProgress(1);
         GrayscaleResultClass res = getGrayscale(sobel);
-
+        loadingScreen.addProgress(1);
         byte [] edges = threshold(res.out,res.average);
-
+        loadingScreen.addProgress(1);
 
         if(edges == null){
             System.out.println("edges field null!!");
@@ -60,13 +76,14 @@ public class HeightMap {
 
         byte [] blackWhiteEdges = blackWhiteSummerize(edges,res.collumns,res.rows);
         blackWhiteEdges = invert(blackWhiteEdges);
-
+        loadingScreen.addProgress(1);
         byte [] noNoise = noiseRemoval(blackWhiteEdges,res.collumns,res.rows);
-
+        loadingScreen.addProgress(1);
         byte [] distortionMap = blackBlur(noNoise,res.collumns,res.rows);
-
+        loadingScreen.setText("Calculating height maps");
+        loadingScreen.addProgress(1);
         byte [] finalMap = combineEnviromentWithNoise(distortionMap,getGrayscale(fr).out);
-
+        loadingScreen.addProgress(1);
         for(int i = 0; i < finalMap.length; i++){
             /*out[i*3 + offset] = (byte)(0.2126*distortionMap[i]);
             out[i*3 + offset + 1] = (byte)(0.7152*distortionMap[i]);
@@ -76,11 +93,12 @@ public class HeightMap {
             out[i*3 + res.offset + 1] = finalMap[i];
             out[i*3 + res.offset + 2] = finalMap[i];
         }
-
+        loadingScreen.setText("Height maps calculated");
+        loadingScreen.addProgress(1);
         return out;
     }
 
-    private static byte [] combineEnviromentWithNoise(byte [] env, byte [] noise){
+    private byte [] combineEnviromentWithNoise(byte [] env, byte [] noise){
         byte [] out = new byte[env.length];
         int i = 0;
         /*for(; i < env.length; i++){
@@ -97,14 +115,14 @@ public class HeightMap {
         return out;
     }
 
-    private static byte [] invert(byte [] fr){
+    private byte [] invert(byte [] fr){
         for(int i = 0; i < fr.length; i++){
             fr[i] = (byte)(255 - (fr[i] & 0xFF));
         }
         return fr;
     }
 
-    private static byte [] noiseRemoval(byte [] fr, int columns, int rows){
+    private byte [] noiseRemoval(byte [] fr, int columns, int rows){
 
         for(int i = 2; i < rows-3; i++){
             for(int j = 2; j < columns-3; j++){
@@ -142,7 +160,7 @@ public class HeightMap {
         return fr;
     }
 
-    private static byte [] blackBlur(byte [] fr, int columns, int rows){
+    private byte [] blackBlur(byte [] fr, int columns, int rows){
         int steps = 150;
         int i = columns + 1;
         int color;
@@ -190,7 +208,7 @@ public class HeightMap {
         return fr;
     }
 
-    private static byte [] blackWhiteSummerize(byte [] fr, int columns, int rows){
+    private byte [] blackWhiteSummerize(byte [] fr, int columns, int rows){
         int maskSize = 2;
         int end = fr.length-maskSize-maskSize*rows;
         int avg = 0;
@@ -237,7 +255,7 @@ public class HeightMap {
         return fr;
     }
 
-    private static byte [] threshold(byte [] fr,int limit){
+    private byte [] threshold(byte [] fr,int limit){
         for(int i = 0; i < fr.length; i++){
             if(fr[i] > limit) {
                 fr[i] = (byte) 255;
@@ -246,7 +264,7 @@ public class HeightMap {
         return fr;
     }
 
-    private static byte [] sobelEdgeDetector(byte [] fr){
+    private byte [] sobelEdgeDetector(byte [] fr){
         int collumns;
         int rows;
         int off = 3; // offset in array
@@ -361,7 +379,7 @@ public class HeightMap {
         return out;
     }
 
-    private static GrayscaleResultClass getGrayscale(byte [] fr){
+    private GrayscaleResultClass getGrayscale(byte [] fr){
         int collumns;
         int rows;
         int off; // offset in array
@@ -424,7 +442,17 @@ public class HeightMap {
         return new GrayscaleResultClass(max,min,avg,off,collumns,rows,out);
     }
 
-    private static class GrayscaleResultClass {
+    @Override
+    public int getSteps() {
+        return STEPS;
+    }
+
+    @Override
+    public void setLoadingScreen(LoadingScreen loadingScreen) {
+        this.loadingScreen = loadingScreen;
+    }
+
+    private class GrayscaleResultClass {
         int max;
         int min;
         int average;
