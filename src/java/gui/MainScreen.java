@@ -179,8 +179,6 @@ public class MainScreen extends JFrame {
         leftBoxPanel.setLayout(new BorderLayout());
         leftBoxPanel.add(normalMapSettingsBox.getPanel(),BorderLayout.SOUTH);
 
-
-
         mainPanel.add(leftBoxPanel,BorderLayout.WEST);
 
 //        this.add(imagePanel);
@@ -340,6 +338,7 @@ public class MainScreen extends JFrame {
         private static final String DIR_MP = "-+";
 
         private Dimension reviewDimension;
+        private Dimension reviewButtonDimension;
 
 
         BufferedImage ppImage, pmImage, mpImage, mmImage;
@@ -348,6 +347,7 @@ public class MainScreen extends JFrame {
             if(settingBox == null){
                 settingBox = new JPanel();
                 settingBox.setLayout(new BorderLayout());
+                reviewButtonDimension = new Dimension(35,35);
 
                 lightPanel = new JPanel();
                 lightPanel.setLayout(new BorderLayout());
@@ -357,6 +357,7 @@ public class MainScreen extends JFrame {
                 lightToolPanelLeft = new JPanel();
                 lightToolPanelLeft.setLayout(new BorderLayout());
                 plusPlusButton = new JButton();
+                plusPlusButton.setPreferredSize(reviewButtonDimension);
                 plusPlusButton.addActionListener(reviewActionListener);
                 try {
                     plusPlusButton.setIcon(new ImageIcon(ImageIO.read(getClass().getResource("/review_lamp_icon/PP.png"))));
@@ -367,6 +368,7 @@ public class MainScreen extends JFrame {
                 //lightToolPanelLeft.add(new JLabel("left"));
 
                 plusMinusButton = new JButton();
+                plusMinusButton.setPreferredSize(reviewButtonDimension);
                 plusMinusButton.addActionListener(reviewActionListener);
                 try {
                     plusMinusButton.setIcon(new ImageIcon(ImageIO.read(getClass().getResource("/review_lamp_icon/PM.png"))));
@@ -381,6 +383,7 @@ public class MainScreen extends JFrame {
                 lightToolPanelRight.setLayout(new BorderLayout());
 
                 minusPlusButton = new JButton();
+                minusPlusButton.setPreferredSize(reviewButtonDimension);
                 minusPlusButton.addActionListener(reviewActionListener);
                 try {
                     minusPlusButton.setIcon(new ImageIcon(ImageIO.read(getClass().getResource("/review_lamp_icon/MP.png"))));
@@ -390,6 +393,7 @@ public class MainScreen extends JFrame {
                 lightToolPanelRight.add(minusPlusButton,BorderLayout.NORTH);
 
                 minusMinusButton = new JButton();
+                minusMinusButton.setPreferredSize(reviewButtonDimension);
                 minusMinusButton.addActionListener(reviewActionListener);
                 try {
                     minusMinusButton.setIcon(new ImageIcon(ImageIO.read(getClass().getResource("/review_lamp_icon/MM.png"))));
@@ -412,8 +416,8 @@ public class MainScreen extends JFrame {
 
                 heightPanel = new JPanel();
                 JLabel heightLabel = new JLabel("Height:");
-                height = new JSlider(JSlider.HORIZONTAL,0,100,50);
-                height.setPreferredSize(new Dimension(180,50));
+                height = new JSlider(JSlider.HORIZONTAL,0,100,91);
+                height.setPreferredSize(new Dimension(120,50));
                 height.setMajorTickSpacing(50);
                 height.setMinorTickSpacing(10);
                 height.setPaintTicks(true);
@@ -423,7 +427,7 @@ public class MainScreen extends JFrame {
                 heightPanel.add(height);
 
                 recalculatePanel = new JPanel();
-                recalculateButton = new JButton("Recalculate NormalMap");
+                recalculateButton = new JButton("Recalculate");
                 recalculateButton.addActionListener(reviewActionListener);
                 recalculatePanel.add(recalculateButton);
                 settingBox.setBorder(BorderFactory.createLoweredBevelBorder());
@@ -490,7 +494,7 @@ public class MainScreen extends JFrame {
                 } else if(e.getSource() == recalculateButton){
                     if(imageLoader != null && image != null) {
                         //System.out.println("refresh");
-                        imageLoader.refreshNormalMap(xDirection, yDirection,normalHeight);
+                        imageLoader.refreshNormalMap(xDirection, yDirection,(((double)height.getValue()*(-99.0))/10000.0+1.0));
                         updateImagePanel(image.getNormalMap());
                     }
                 }

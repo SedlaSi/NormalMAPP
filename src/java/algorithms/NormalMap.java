@@ -43,7 +43,7 @@ public class NormalMap implements Algorithm {
         };
         NormalMap normalMap = new NormalMap();
         normalMap.setLoadingScreen(loadingScreen);
-        normalMap.write(normalMap.normalMap(normalMap.read("/home/sedlasi1/Desktop/obrazky/5415-small.ppm"),-1,1,0.1),"/home/sedlasi1/Desktop/obrazky/MP.ppm");
+        normalMap.write(normalMap.normalMap(normalMap.read("/home/sedlasi1/Desktop/obrazky/5415-small.ppm"),-1,1,1),"/home/sedlasi1/Desktop/obrazky/MP_min.ppm");
         //getGrayscale(read());
     }
 
