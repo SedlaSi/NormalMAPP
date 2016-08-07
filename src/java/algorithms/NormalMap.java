@@ -21,8 +21,9 @@ public class NormalMap implements Algorithm {
         //convolution(read());
         //normalMap(read());
         LoadingScreen loadingScreen = new LoadingScreen() {
+
             @Override
-            public void startLoading(int maximum) {
+            public void startLoading(int maximum, boolean visible) {
 
             }
 

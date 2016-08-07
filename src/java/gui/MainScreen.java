@@ -16,6 +16,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 
 /**
  * Created by root on 14.7.16.
@@ -56,7 +57,10 @@ public class MainScreen extends JFrame {
     public void createFrame() {
         ThisMenuListener menuListener = new ThisMenuListener();
         actionListener = new ThisActionListener();
-        this.setPreferredSize(new Dimension(500,500));
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        /*GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        Dimension size = new Dimension(gd.getDisplayMode().getWidth(),gd.getDisplayMode().getHeight());*/
+        this.setPreferredSize(new Dimension(800,600));
         setLocationRelativeTo(null);
         //setResizable(false);
         setTitle("NormalMAPP");
@@ -126,17 +130,17 @@ public class MainScreen extends JFrame {
         save.addMenuListener(menuListener);
         file.add(save);
 
-        saveAll = new JMenuItem("Save All");
+        /*saveAll = new JMenuItem("Save All");
         saveAll.addActionListener(actionListener);
-        file.add(saveAll);
+        file.add(saveAll);*/
 
         load = new JMenu("Load");
         load.addMenuListener(menuListener);
         file.add(load);
 
-        loadAll = new JMenuItem("Load All");
+        /*loadAll = new JMenuItem("Load All");
         loadAll.addActionListener(actionListener);
-        file.add(loadAll);
+        file.add(loadAll);*/
 
         exit = new JMenuItem("Exit");
         exit.addActionListener(actionListener);
@@ -173,7 +177,6 @@ public class MainScreen extends JFrame {
         normalMapToolBox = new NormalMapToolBox();
         heightMapSettingsBox = new HeightMapSettingsBox();
         heightMapToolBox = new HeightMapToolBox();
-
 
         leftBoxPanel = new JPanel();
         leftBoxPanel.setLayout(new BorderLayout());
@@ -236,7 +239,7 @@ public class MainScreen extends JFrame {
                     updateImagePanel(image.getOriginalMap());
                 }
             } else if(e.getSource() == originalImage){
-                if(image != null){
+                if(image != null && image.getOriginalMap() != null){
                     updateImagePanel(image.getOriginalMap());
                 }
             } else if(e.getSource() == heightMap){
@@ -262,6 +265,8 @@ public class MainScreen extends JFrame {
                 yDirection = -1*yDirection;
                 imageLoader.refreshNormalMap(xDirection,yDirection,normalHeight);
                 updateImagePanel(image.getNormalMap());
+            } else if(e.getSource() == loadHeightMap){
+                image = imageLoader.loadHeightMap();
             }
         }
     }
@@ -376,6 +381,7 @@ public class MainScreen extends JFrame {
                     ex.printStackTrace();
                 }
                 lightToolPanelLeft.add(plusMinusButton,BorderLayout.SOUTH);
+                //lightToolPanelLeft.add(spacePanel,BorderLayout.CENTER);
 
                 lightToolPanel.add(lightToolPanelLeft,BorderLayout.WEST);
 
@@ -412,7 +418,6 @@ public class MainScreen extends JFrame {
                 lightToolPanel.add(reviewNormalPanelPP,BorderLayout.CENTER);
 
                 lightPanel.add(lightToolPanel,BorderLayout.SOUTH);
-
 
                 heightPanel = new JPanel();
                 JLabel heightLabel = new JLabel("Height:");
@@ -494,7 +499,7 @@ public class MainScreen extends JFrame {
                 } else if(e.getSource() == recalculateButton){
                     if(imageLoader != null && image != null) {
                         //System.out.println("refresh");
-                        imageLoader.refreshNormalMap(xDirection, yDirection,(((double)height.getValue()*(-99.0))/10000.0+1.0));
+                        imageLoader.refreshNormalMap(xDirection, yDirection,normalHeight = (((double)height.getValue()*(-99.0))/10000.0+1.0));
                         updateImagePanel(image.getNormalMap());
                     }
                 }
@@ -522,7 +527,7 @@ public class MainScreen extends JFrame {
 
             private BufferedImage getPlusPlus(){
                 try {
-                    ppImage = ImageIO.read(new File(this.getClass().getResource("/review_normal/PP.jpg").getFile()));
+                    ppImage = ImageIO.read(this.getClass().getResourceAsStream("/review_normal/PP.png"));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -532,7 +537,7 @@ public class MainScreen extends JFrame {
 
             private BufferedImage getPlusMinus(){
                 try {
-                    ppImage = ImageIO.read(new File(this.getClass().getResource("/review_normal/PM.jpg").getFile()));
+                    ppImage = ImageIO.read(this.getClass().getResourceAsStream("/review_normal/PM.png"));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -542,7 +547,7 @@ public class MainScreen extends JFrame {
 
             private BufferedImage getMinusPlus(){
                 try {
-                    ppImage = ImageIO.read(new File(this.getClass().getResource("/review_normal/MP.jpg").getFile()));
+                    ppImage = ImageIO.read(this.getClass().getResourceAsStream("/review_normal/MP.png"));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -552,7 +557,7 @@ public class MainScreen extends JFrame {
 
             private BufferedImage getMinusMinus(){
                 try {
-                    ppImage = ImageIO.read(new File(this.getClass().getResource("/review_normal/MM.jpg").getFile()));
+                    ppImage = ImageIO.read(this.getClass().getResourceAsStream("/review_normal/MM.png"));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

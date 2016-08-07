@@ -8,20 +8,23 @@ import java.io.IOException;
  */
 public class Session {
 
-    private static String ROOT_FOLDER = "/tmp/NormalMAPP";
+    private static String ROOT_FOLDER = "/tmp/.NormalMAPP";
+    public static String SLASH = "/";
     private String sessionFolder;
     String sessionId;
 
     public Session(){
-        sessionId = Long.toString(System.nanoTime()) + ((int)Math.random()*100);
-        sessionFolder = ROOT_FOLDER + "/session_" + sessionId;
+        if(System.getProperty("os.name").contains("Windows")){
+            ROOT_FOLDER = "C:\\Users\\" + System.getProperty("user.name") + "\\AppData\\Local\\Temp\\.NormalMAPP";
+            SLASH = "\\";
+        }
+        sessionId = Long.toString(System.nanoTime()) + ((int)(Math.random()*100));
+        sessionFolder = ROOT_FOLDER + SLASH + "session_" + sessionId;
         init();
     }
 
     private void init(){
-        if(System.getProperty("os.name").contains("Windows")){
-            ROOT_FOLDER = "C:\\Users\\" + System.getProperty("user.name") + "\\AppData\\Local\\Temp\\.NormalMAPP";
-        }
+
         File rootFolder = new File(ROOT_FOLDER);
 
         if(!rootFolder.exists() && !rootFolder.mkdir()){

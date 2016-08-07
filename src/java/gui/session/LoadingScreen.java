@@ -5,7 +5,7 @@ package gui.session;
  */
 public interface LoadingScreen {
 
-    public void startLoading(int maximum);
+    public void startLoading(int maximum, boolean visible);
 
     public void addProgress(int amount);
 
