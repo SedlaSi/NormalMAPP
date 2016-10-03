@@ -236,8 +236,11 @@ public class MainScreen extends JFrame {
             if(e.getSource() == openTexture){
                 //System.out.println("opening");
                 image = imageLoader.loadImage();
+                if(!originalImage.isEnabled()){
+                    originalImage.setEnabled(true);
+                }
                 if(image != null){
-                    updateImagePanel(image.getOriginalMap());
+                    updateImagePanel(image.getNormalMap()); // uvodni obrazek po nacteni
                 }
             } else if(e.getSource() == originalImage){
                 if(image != null && image.getOriginalMap() != null){
@@ -266,8 +269,14 @@ public class MainScreen extends JFrame {
                 yDirection = -1*yDirection;
                 imageLoader.refreshNormalMap(xDirection,yDirection,normalHeight);
                 updateImagePanel(image.getNormalMap());
-            } else if(e.getSource() == loadHeightMap){
+            } else if(e.getSource() == loadHeightMap){  // uvodni obrazek po nacteni
                 image = imageLoader.loadHeightMap();
+                if(originalImage.isEnabled()){
+                    originalImage.setEnabled(false);
+                }
+                if(image != null){
+                    updateImagePanel(image.getNormalMap()); // uvodni obrazek po nacteni
+                }
             }
         }
     }
