@@ -61,6 +61,7 @@ public class MainScreen extends JFrame {
         /*GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
         Dimension size = new Dimension(gd.getDisplayMode().getWidth(),gd.getDisplayMode().getHeight());*/
         this.setPreferredSize(new Dimension(800,600));
+        this.pack();
         setLocationRelativeTo(null);
         //setResizable(false);
         setTitle("NormalMAPP");
