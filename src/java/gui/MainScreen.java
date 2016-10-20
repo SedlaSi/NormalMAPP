@@ -192,10 +192,11 @@ public class MainScreen extends JFrame {
         imagePanel.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
-                imagePanel.addSquare(mouseEvent.getX(),mouseEvent.getY());
-                imagePanel.enableSquare();
-                revalidate();
-                repaint();
+                if(imagePanel.getActiveLayer() == Layer.originalImage) {
+                    imagePanel.addSquare(mouseEvent.getX(), mouseEvent.getY());
+                    revalidate();
+                    repaint();
+                }
             }
 
             @Override
@@ -293,18 +294,22 @@ public class MainScreen extends JFrame {
                 }
                 if(image != null){
                     updateImagePanel(image.getNormalMap()); // uvodni obrazek po nacteni
+                    imagePanel.setActiveLayer(Layer.normalMap);
                 }
             } else if(e.getSource() == originalImage){
                 if(image != null && image.getOriginalMap() != null){
                     updateImagePanel(image.getOriginalMap());
+                    imagePanel.setActiveLayer(Layer.originalImage);
                 }
             } else if(e.getSource() == heightMap){
                 if(image != null){
                     updateImagePanel(image.getHeightMap());
+                    imagePanel.setActiveLayer(Layer.heightMap);
                 }
             } else if(e.getSource() == normalMap){
                 if(image != null){
                     updateImagePanel(image.getNormalMap());
+                    imagePanel.setActiveLayer(Layer.normalMap);
                 }
             } else if(e.getSource() == saveNormalMap){
                 imageLoader.saveNormalMap();
@@ -327,9 +332,16 @@ public class MainScreen extends JFrame {
                 }
                 if(image != null){
                     updateImagePanel(image.getNormalMap()); // uvodni obrazek po nacteni
+                    imagePanel.setActiveLayer(Layer.normalMap);
                 }
             }
         }
+    }
+
+    private enum Layer {
+        originalImage,
+        heightMap,
+        normalMap
     }
 
     private class ImagePanel extends JPanel {
@@ -342,6 +354,8 @@ public class MainScreen extends JFrame {
         private boolean drawSquare = true;
         private java.util.List<Rectangle> squares;
         private java.util.List<RelativeSquarePosition> relativePos;
+        private Layer activeLayer = Layer.originalImage;
+
 
         private class RelativeSquarePosition {
             private double x;
@@ -406,8 +420,6 @@ public class MainScreen extends JFrame {
                         g2.draw(s);
                     }
                 }
-
-
             }
         }
 
@@ -479,18 +491,34 @@ public class MainScreen extends JFrame {
             if(squares.get(i) != null){
                 squares.remove(i);
             }
+            if(relativePos.get(i) != null){
+                relativePos.remove(i);
+            }
         }
 
-        public void enableSquare(){
+        private void enableSquare(){
             drawSquare = true;
         }
 
-        public void disableSquare(){
+        private void disableSquare(){
             drawSquare = false;
         }
 
         public void setSquareSize(int size){
             squareSize = size;
+        }
+
+        public void setActiveLayer(Layer layer){
+            activeLayer = layer;
+            if(activeLayer == Layer.originalImage){
+                enableSquare();
+            } else {
+                disableSquare();
+            }
+        }
+
+        public Layer getActiveLayer(){
+            return activeLayer;
         }
     }
 
