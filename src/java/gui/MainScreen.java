@@ -17,6 +17,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 
 /**
  * Created by root on 14.7.16.
@@ -40,8 +41,10 @@ public class MainScreen extends JFrame {
 
     ThisActionListener actionListener;
 
+    private double mouseStartX, mouseStartY;
+    private boolean mouseIsDragged = false;
 
-    private int xDirection, yDirection;
+    private double angle;
     private double normalHeight = 0.1;
 
     public static void main(String [] args){
@@ -66,8 +69,7 @@ public class MainScreen extends JFrame {
         //setResizable(false);
         setTitle("NormalMAPP");
 
-        xDirection = 1;
-        yDirection = 1;
+        angle = 0;
 
         menuBar = new JMenuBar();
 
@@ -169,6 +171,56 @@ public class MainScreen extends JFrame {
             revalidate();
             repaint();
         });
+        imagePanel.addMouseMotionListener(new MouseMotionListener() {
+            @Override
+            public void mouseDragged(MouseEvent mouseEvent) {
+                int x = (int)(mouseEvent.getPoint().getX()-mouseStartX);
+                int y = (int)(mouseEvent.getPoint().getY()-mouseStartY);
+                System.out.println("mouse at:" + x + " " + y);
+                System.out.println("image at:"  + " ");
+                imagePanel.moveImg(x,y);
+                revalidate();
+                repaint();
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent mouseEvent) {
+                //imagePanel.setMouseInit(mouseEvent.getX(),mouseEvent.getY());
+            }
+        });
+
+        imagePanel.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent mouseEvent) {
+                imagePanel.addSquare(mouseEvent.getX(),mouseEvent.getY());
+                imagePanel.enableSquare();
+                revalidate();
+                repaint();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent mouseEvent) {
+                mouseStartX = mouseEvent.getPoint().getX();
+                mouseStartY = mouseEvent.getY();
+                mouseIsDragged = true;
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent mouseEvent) {
+                mouseIsDragged = false;
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent mouseEvent) {
+
+            }
+        });
 
         mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
@@ -265,9 +317,8 @@ public class MainScreen extends JFrame {
                 dispose();
                 System.exit(0);
             } else if(e.getSource() == invertNormal){
-                xDirection = -1*xDirection;
-                yDirection = -1*yDirection;
-                imageLoader.refreshNormalMap(xDirection,yDirection,normalHeight);
+                angle = (Math.PI/2);
+                imageLoader.refreshNormalMap(angle,normalHeight);
                 updateImagePanel(image.getNormalMap());
             } else if(e.getSource() == loadHeightMap){  // uvodni obrazek po nacteni
                 image = imageLoader.loadHeightMap();
@@ -283,11 +334,38 @@ public class MainScreen extends JFrame {
 
     private class ImagePanel extends JPanel {
         double scale;
+        int posX = 0;
+        int posY = 0;
+        int squareSize = 20;
+        int imgPosX,imgPosY;
         BufferedImage image;
+        private boolean drawSquare = true;
+        private java.util.List<Rectangle> squares;
+        private java.util.List<RelativeSquarePosition> relativePos;
+
+        private class RelativeSquarePosition {
+            private double x;
+            private double y;
+
+            public RelativeSquarePosition(double x, double y){
+                this.x = x;
+                this.y = y;
+            }
+
+            public double getX(){
+                return x;
+            }
+
+            public double getY(){
+                return y;
+            }
+        }
 
         public ImagePanel() {
             scale = 1.0;
             setBackground(Color.gray);
+            squares = new ArrayList<>(3);
+            relativePos = new ArrayList<>(3);
         }
 
         public void setBufferedImage(BufferedImage image){
@@ -306,9 +384,30 @@ public class MainScreen extends JFrame {
                 int imageHeight = image.getHeight();
                 double x = (w - scale * imageWidth) / 2;
                 double y = (h - scale * imageHeight) / 2;
-                AffineTransform at = AffineTransform.getTranslateInstance(x, y);
-                at.scale(scale, scale);
-                g2.drawRenderedImage(image, at);
+
+                /*System.out.println(w + " -> " + imageWidth);
+                System.out.println(x);
+                System.out.println(h + " -> " + imageHeight);
+                System.out.println(y);*/
+                imgPosX = (int)x;
+                imgPosY = (int)y;
+
+                AffineTransform at = AffineTransform.getTranslateInstance(x,y);
+                //at.scale(1, 1);
+                //at.translate(posX,posY);
+                g2.translate(posX,posY);
+                g2.scale(scale,scale);
+                g2.drawRenderedImage(image,at);
+                if(drawSquare){ // vykreslovani zamerovacich ctvercu
+                    for(int i = 0; i < squares.size(); i++){
+                        Rectangle s = squares.get(i);
+                        RelativeSquarePosition rel = relativePos.get(i);
+                        s.setLocation((int)(x + rel.getX()*(double)imageWidth),(int)(y+ rel.getY()*(double)imageHeight));
+                        g2.draw(s);
+                    }
+                }
+
+
             }
         }
 
@@ -333,10 +432,65 @@ public class MainScreen extends JFrame {
             }
         }
 
-        public void setScale(double s) {
-            scale = s;
-            revalidate();      // update the scroll pane
-            repaint();
+        public void moveImg(int x, int y){
+            posX = x;
+            posY = y;
+        }
+
+        public void addSquare(int x, int y){
+            Rectangle square = new Rectangle(x,y,squareSize,squareSize);
+            squares.add(square);
+            /*System.out.println(imgPosX + " "+ imgPosY);
+            System.out.println(x + " "+ y);*/
+            /*System.out.println("layer: "+ posX +" "+posY);
+            System.out.println();*/
+            double xRel;
+            double yRel;
+            if(imgPosX < 0){
+                 xRel = (Math.abs(scale*imgPosX)+ x - scale*squareSize/2);
+            } else {
+                 xRel = (x - scale*imgPosX - scale*squareSize/2);
+            }
+            if(posX < 0){
+                xRel += Math.abs(posX);
+            } else {
+                xRel -= posX;
+            }
+            xRel /= (scale*image.getWidth());
+            if(imgPosY < 0){
+                 yRel = (Math.abs(scale*imgPosY)+ y- scale*squareSize/2);
+            } else {
+                 yRel = (y - scale*imgPosY- scale*squareSize/2);
+            }
+            if(posY < 0){
+                yRel += Math.abs(posY);
+            } else {
+                yRel -= posY;
+            }
+            yRel /=(scale*image.getHeight());
+            System.out.println(xRel+ " "+ yRel);
+            System.out.println();
+
+            RelativeSquarePosition rel = new RelativeSquarePosition(xRel,yRel);
+            relativePos.add(rel);
+        }
+
+        public void removeSquare(int i){
+            if(squares.get(i) != null){
+                squares.remove(i);
+            }
+        }
+
+        public void enableSquare(){
+            drawSquare = true;
+        }
+
+        public void disableSquare(){
+            drawSquare = false;
+        }
+
+        public void setSquareSize(int size){
+            squareSize = size;
         }
     }
 
@@ -459,8 +613,7 @@ public class MainScreen extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(e.getSource() == plusPlusButton) {
-                    xDirection = 1;
-                    yDirection = 1;
+                    angle = 0;
                     if(reviewNormalPanelPP == null){
                         reviewNormalPanelPP = new ReviewPanel(DIR_PP);
                         reviewNormalPanelPP.setPreferredSize(reviewDimension);
@@ -471,8 +624,7 @@ public class MainScreen extends JFrame {
                     lightToolPanel.revalidate();
                     lightToolPanel.repaint();
                 } else if(e.getSource() == plusMinusButton){
-                    xDirection = 1;
-                    yDirection = -1;
+                    angle = (Math.PI + Math.PI/2);
                     if(reviewNormalPanelPM == null){
                         reviewNormalPanelPM = new ReviewPanel(DIR_PM);
                         reviewNormalPanelPM.setPreferredSize(reviewDimension);
@@ -483,8 +635,7 @@ public class MainScreen extends JFrame {
                     lightToolPanel.revalidate();
                     lightToolPanel.repaint();
                 } else if(e.getSource() == minusPlusButton){
-                    xDirection = -1;
-                    yDirection = 1;
+                    angle = (Math.PI/2);
                     if(reviewNormalPanelMP == null){
                         reviewNormalPanelMP = new ReviewPanel(DIR_MP);
                         reviewNormalPanelMP.setPreferredSize(reviewDimension);
@@ -495,8 +646,7 @@ public class MainScreen extends JFrame {
                     lightToolPanel.revalidate();
                     lightToolPanel.repaint();
                 } else if(e.getSource() == minusMinusButton){
-                    xDirection = -1;
-                    yDirection = -1;
+                    angle = (Math.PI);
                     if(reviewNormalPanelMM == null){
                         reviewNormalPanelMM = new ReviewPanel(DIR_MM);
                         reviewNormalPanelMM.setPreferredSize(reviewDimension);
@@ -509,7 +659,8 @@ public class MainScreen extends JFrame {
                 } else if(e.getSource() == recalculateButton){
                     if(imageLoader != null && image != null) {
                         //System.out.println("refresh");
-                        imageLoader.refreshNormalMap(xDirection, yDirection,normalHeight = (((double)height.getValue()*(-99.0))/10000.0+1.0));
+                        //System.out.println("height: "+height.getValue());
+                        imageLoader.refreshNormalMap(angle,normalHeight = (((double)height.getValue()*(-99.0))/10000.0+1.0));
                         updateImagePanel(image.getNormalMap());
                     }
                 }

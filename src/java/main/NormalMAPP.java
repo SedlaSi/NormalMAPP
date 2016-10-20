@@ -1,8 +1,10 @@
 package main;
 
-import gui.session.ImageLoader;
 import gui.MainScreen;
+import gui.session.ImageLoader;
 import gui.session.Session;
+
+import java.awt.*;
 
 /**
  * Created by root on 14.7.16.
@@ -10,9 +12,22 @@ import gui.session.Session;
 public class NormalMAPP {
 
     public static void main(String [] args){
-        Session session = new Session();
+
+        new NormalMAPP();
+
+        /*Session session = new Session();
         ImageLoader imageLoader = new ImageLoader(session.getSessionFolder());
         MainScreen mainScreen = new MainScreen(session,imageLoader);
-        mainScreen.createFrame();
+        mainScreen.createFrame();*/
+    }
+
+    public NormalMAPP (){
+        EventQueue.invokeLater(() -> {
+            Session session = new Session();
+            ImageLoader imageLoader = new ImageLoader(session.getSessionFolder());
+            MainScreen mainScreen = new MainScreen(session,imageLoader);
+            mainScreen.createFrame();
+        });
+
     }
 }

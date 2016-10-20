@@ -77,6 +77,7 @@ public class HeightMap implements Algorithm {
         byte [] blackWhiteEdges = blackWhiteSummerize(edges,res.collumns,res.rows);
         blackWhiteEdges = invert(blackWhiteEdges);
         loadingScreen.addProgress(1);
+
         byte [] noNoise = noiseRemoval(blackWhiteEdges,res.collumns,res.rows);
         loadingScreen.addProgress(1);
         byte [] distortionMap = blackBlur(noNoise,res.collumns,res.rows);

@@ -12,4 +12,6 @@ public interface LoadingScreen {
     public void setText(String text);
 
     public void stopLoading();
+
+    //public ProgressWorker getProgressWorker();
 }

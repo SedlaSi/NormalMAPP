@@ -12,9 +12,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.PriorityQueue;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by root on 14.7.16.
@@ -73,7 +71,7 @@ public class ImageLoader extends JFrame{
 
         //new Thread(()->{
             heightMap.write(heightMap.heightMap(heightMap.read(newImagePath)),sessionFolder + Session.SLASH + HEIGHT_NAME);
-            normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME),1,1,0.1),sessionFolder + Session.SLASH + NORMAL_NAME);
+            normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME),0,0.1),sessionFolder + Session.SLASH + NORMAL_NAME);
         //}).start();
         //heightMap.write(heightMap.heightMap(heightMap.read(newImagePath)),sessionFolder + Session.SLASH + HEIGHT_NAME);
         //normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME),1,1,0.1),sessionFolder + Session.SLASH + NORMAL_NAME);
@@ -136,7 +134,7 @@ public class ImageLoader extends JFrame{
             e.printStackTrace();
         }
         //heightMap.write(heightMap.heightMap(heightMap.read(newImagePath)),sessionFolder + "/" + HEIGHT_NAME);
-        normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME),1,1,0.1),sessionFolder + "/" + NORMAL_NAME);
+        normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME),0,0.1),sessionFolder + "/" + NORMAL_NAME);
 
         image = null;
         try {
@@ -154,11 +152,11 @@ public class ImageLoader extends JFrame{
         return image;
     }
 
-    public void refreshNormalMap(int xDirection, int yDirection,double height){
+    public void refreshNormalMap(double angle ,double height){
         LoadingImageProgressBar loadingImageProgressBar = new LoadingImageProgressBar();
-        loadingImageProgressBar.startLoading(normalMap.getSteps(),false);
+        //loadingImageProgressBar.startLoading(normalMap.getSteps(),false);
         normalMap.setLoadingScreen(loadingImageProgressBar);
-        normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME),xDirection,yDirection,height),sessionFolder + Session.SLASH + NORMAL_NAME);
+        normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME), angle,height),sessionFolder + Session.SLASH + NORMAL_NAME);
 
         try {
             image.setNormalMap(ImageIO.read(new File(sessionFolder + Session.SLASH + NORMAL_NAME)));
@@ -227,6 +225,7 @@ public class ImageLoader extends JFrame{
         private JProgressBar progressBar;
         private java.util.PriorityQueue<Integer> addProgressList;
         private java.util.PriorityQueue<String> messages;
+        private ProgressWorker pw;
 
         /*public static void main(String[] args) throws InterruptedException {
 
@@ -242,6 +241,8 @@ public class ImageLoader extends JFrame{
         public void startLoading(int maximum, boolean visible) {
 
             //new Thread(() -> {
+                //pw = new ProgressWorker();
+
                 this.setPreferredSize(new Dimension(300,30));
                 this.setResizable(false);
                 setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -260,6 +261,10 @@ public class ImageLoader extends JFrame{
 
 
             //startThread();
+        }
+
+        public ProgressWorker getProgressWorker(){
+            return pw;
         }
 
         private void startThread(){
@@ -299,14 +304,14 @@ public class ImageLoader extends JFrame{
 
         @Override
         public void addProgress(int amount) {
-            progressBar.setValue(progressBar.getValue() + amount);
+            //progressBar.setValue(progressBar.getValue() + amount);
             //addProgressList.add(progressBar.getValue() + amount);
             //System.out.println(progressBar.getValue());
             //repaint(0);
+            /*EventQueue.invokeLater(() -> {
+                pw.newUpdate();
+            });*/
 
-                invalidate();
-                revalidate();
-                repaint(0);
         }
 
         /**
@@ -316,8 +321,9 @@ public class ImageLoader extends JFrame{
         @Override
         public void setText(String text) {
             //messages.add(text);
-            progressBar.setStringPainted(true);
-            progressBar.setString(text);
+            /*EventQueue.invokeLater(() -> {
+                pw.newMessage(text);
+            });*/
         }
 
         @Override
@@ -325,6 +331,45 @@ public class ImageLoader extends JFrame{
             //this.notifyAll();
             this.dispose();
         }
+
+        public class ProgressWorker extends SwingWorker<Object, Object> {
+
+            private boolean update = false;
+            private String message = "";
+
+            @Override
+            protected Object doInBackground() throws Exception {
+
+                while(message != null){
+                    System.out.println("blah");
+                    if(true) return null;
+                    while(!update);
+                    System.out.println("doing");
+                    setText(message);
+                    addProgress(1);
+
+                    update = false;
+
+                    invalidate();
+                    revalidate();
+                    repaint(0);
+                }
+
+                return null;
+            }
+
+            protected void newUpdate(){
+                update = true;
+            }
+
+            protected void newMessage(String message){
+                this.message = message;
+            }
+        }
+
+
     }
+
+
 
 }

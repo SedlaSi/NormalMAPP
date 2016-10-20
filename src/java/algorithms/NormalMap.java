@@ -44,7 +44,7 @@ public class NormalMap implements Algorithm {
         };
         NormalMap normalMap = new NormalMap();
         normalMap.setLoadingScreen(loadingScreen);
-        normalMap.write(normalMap.normalMap(normalMap.read("/home/sedlasi1/Desktop/obrazky/5415-small.ppm"),-1,1,1),"/home/sedlasi1/Desktop/obrazky/MP_min.ppm");
+        normalMap.write(normalMap.normalMap(normalMap.read("/home/sedlasi1/Desktop/obrazky/5415-small.ppm"),90,1),"/home/sedlasi1/Desktop/obrazky/MP_min.ppm");
         //getGrayscale(read());
     }
 
@@ -124,7 +124,7 @@ public class NormalMap implements Algorithm {
         return out;
     }
 
-    public byte [] normalMap(byte [] fr, int xDirection, int yDirection,double height){
+    public byte [] normalMap(byte [] fr, double angle ,double height){
         loadingScreen.setText("Starting calculation of normals");
         loadingScreen.addProgress(1);
         byte [] gray = getGrayscale(fr);
@@ -171,6 +171,7 @@ public class NormalMap implements Algorithm {
         int readen_lines = 1;
         double valX;
         double valY;
+        //System.out.println("height: "+height);
         double valZ = height;
         double length;
 
@@ -182,8 +183,8 @@ public class NormalMap implements Algorithm {
                 valY = -(gray[(readen_lines-1)*collumns + i - 1] & 0xFF) - 2*(gray[(readen_lines-1)*collumns + i] & 0xFF) - (gray[(readen_lines-1)*collumns + i + 1] & 0xFF)
                         +(gray[(readen_lines+1)*collumns + i - 1] & 0xFF) + 2*(gray[(readen_lines+1)*collumns + i] & 0xFF) + (gray[(readen_lines+1)*collumns + i + 1] & 0xFF);
 
-                valX = xDirection*(valX/255.0);
-                valY = yDirection*(valY/255.0);
+                valX = ((valX*Math.cos(angle)) - (valY*Math.sin(angle)))/255.0;
+                valY = ((valY*Math.cos(angle)) + (valX*Math.sin(angle)))/255.0;
                 /*if(valX < 0) valX = 0;
                 else if(valX > 255) valX = 255;
                 if(valY < 0) valY = 0;
