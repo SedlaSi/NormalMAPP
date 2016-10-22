@@ -2,22 +2,18 @@ package gui;
 
 import gui.session.ImageLoader;
 import gui.session.Session;
-import image.*;
-import image.Image;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
-import javax.swing.plaf.basic.BasicPanelUI;
+import javax.tools.Tool;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
 
 /**
  * Created by root on 14.7.16.
@@ -26,18 +22,31 @@ public class MainScreen extends JFrame {
 
     JMenuBar menuBar;
     JMenu file, help, save, load, edit, filters, view;
-    JMenuItem exit, openTexture, saveAll, loadAll, saveHeighMap, saveNormalMap, loadHeightMap, originalImage, heightMap, normalMap, invertNormal;
+    JMenuItem exit, openTexture, saveAll, loadAll, saveHeighMap, saveNormalMap, loadHeightMap, invertNormal;
     JMenuItem undo, redo, sharpen, smooth;
     ImageLoader imageLoader;
     image.Image image;
-    ImagePanel imagePanel;
+    //ImagePanel imagePanel;
     JPanel mainPanel,leftBoxPanel;
     Session session;
 
+    private final boolean updateAllImages = true;
+
+
+    JTabbedPane tabbedPanel;
+
+
+    OriginalMapSettingsBox originalMapSettingsBox;
+    OriginalMapToolBox originalMapToolBox;
     NormalMapSettingsBox normalMapSettingsBox;
     NormalMapToolBox normalMapToolBox;
     HeightMapSettingsBox heightMapSettingsBox;
     HeightMapToolBox heightMapToolBox;
+
+    OriginalMapImagePanel originalMapImagePanel;
+    HeightMapImagePanel heightMapImagePanel;
+    NormalMapImagePanel normalMapImagePanel;
+
 
     ThisActionListener actionListener;
 
@@ -97,18 +106,6 @@ public class MainScreen extends JFrame {
         view.addMenuListener(menuListener);
         menuBar.add(view);
 
-        originalImage = new JMenuItem("Original Image");
-        originalImage.addActionListener(actionListener);
-        view.add(originalImage);
-
-        heightMap = new JMenuItem("Height Map");
-        heightMap.addActionListener(actionListener);
-        view.add(heightMap);
-
-        normalMap = new JMenuItem("Normal Map");
-        normalMap.addActionListener(actionListener);
-        view.add(normalMap);
-
         filters = new JMenu("Filters");
         filters.addMenuListener(menuListener);
         menuBar.add(filters);
@@ -161,24 +158,40 @@ public class MainScreen extends JFrame {
         loadHeightMap.addActionListener(actionListener);
         load.add(loadHeightMap);
 
-        imagePanel = new ImagePanel();
-        imagePanel.addMouseWheelListener(e -> {
+        //CardLayout cl = new CardLayout();
+
+        tabbedPanel = new JTabbedPane();
+
+
+        originalMapImagePanel = new OriginalMapImagePanel();
+
+        originalMapImagePanel.addMouseWheelListener(e -> {
             if(e.getWheelRotation() > 0){
-                imagePanel.decreaseScale();
+                if(updateAllImages){
+                    heightMapImagePanel.decreaseScale();
+                    normalMapImagePanel.decreaseScale();
+                }
+                originalMapImagePanel.decreaseScale();
             } else {
-                imagePanel.increaseScale();
+                if(updateAllImages){
+                    heightMapImagePanel.increaseScale();
+                    normalMapImagePanel.increaseScale();
+                }
+                originalMapImagePanel.increaseScale();
             }
             revalidate();
             repaint();
         });
-        imagePanel.addMouseMotionListener(new MouseMotionListener() {
+        originalMapImagePanel.addMouseMotionListener(new MouseMotionListener() {
             @Override
             public void mouseDragged(MouseEvent mouseEvent) {
                 int x = (int)(mouseEvent.getPoint().getX()-mouseStartX);
                 int y = (int)(mouseEvent.getPoint().getY()-mouseStartY);
-                System.out.println("mouse at:" + x + " " + y);
-                System.out.println("image at:"  + " ");
-                imagePanel.moveImg(x,y);
+                if(updateAllImages){
+                    heightMapImagePanel.moveImg(x,y);
+                    normalMapImagePanel.moveImg(x,y);
+                }
+                originalMapImagePanel.moveImg(x,y);
                 revalidate();
                 repaint();
             }
@@ -189,14 +202,12 @@ public class MainScreen extends JFrame {
             }
         });
 
-        imagePanel.addMouseListener(new MouseListener() {
+        originalMapImagePanel.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
-                if(imagePanel.getActiveLayer() == Layer.originalImage) {
-                    imagePanel.addSquare(mouseEvent.getX(), mouseEvent.getY());
-                    revalidate();
-                    repaint();
-                }
+                originalMapImagePanel.addSquare(mouseEvent.getX(), mouseEvent.getY());
+                revalidate();
+                repaint();
             }
 
             @Override
@@ -223,10 +234,164 @@ public class MainScreen extends JFrame {
             }
         });
 
+        //*************
+        heightMapImagePanel = new HeightMapImagePanel();
+
+        heightMapImagePanel.addMouseWheelListener(e -> {
+            if(e.getWheelRotation() > 0){
+                if(updateAllImages){
+                    originalMapImagePanel.decreaseScale();
+                    normalMapImagePanel.decreaseScale();
+                }
+                heightMapImagePanel.decreaseScale();
+            } else {
+                if(updateAllImages){
+                    originalMapImagePanel.increaseScale();
+                    normalMapImagePanel.increaseScale();
+                }
+                heightMapImagePanel.increaseScale();
+            }
+            revalidate();
+            repaint();
+        });
+        heightMapImagePanel.addMouseMotionListener(new MouseMotionListener() {
+            @Override
+            public void mouseDragged(MouseEvent mouseEvent) {
+                int x = (int)(mouseEvent.getPoint().getX()-mouseStartX);
+                int y = (int)(mouseEvent.getPoint().getY()-mouseStartY);
+                if(updateAllImages){
+                    originalMapImagePanel.moveImg(x,y);
+                    normalMapImagePanel.moveImg(x,y);
+                }
+                heightMapImagePanel.moveImg(x,y);
+                revalidate();
+                repaint();
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent mouseEvent) {
+                //imagePanel.setMouseInit(mouseEvent.getX(),mouseEvent.getY());
+            }
+        });
+
+        heightMapImagePanel.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent mouseEvent) {
+                //heightMapImagePanel.addSquare(mouseEvent.getX(), mouseEvent.getY());
+                //revalidate();
+                //repaint();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent mouseEvent) {
+                mouseStartX = mouseEvent.getPoint().getX();
+                mouseStartY = mouseEvent.getY();
+                mouseIsDragged = true;
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent mouseEvent) {
+                mouseIsDragged = false;
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent mouseEvent) {
+
+            }
+        });
+
+        //*************
+        normalMapImagePanel = new NormalMapImagePanel();
+
+        normalMapImagePanel.addMouseWheelListener(e -> {
+            if(e.getWheelRotation() > 0){
+                if(updateAllImages){
+                    originalMapImagePanel.decreaseScale();
+                    heightMapImagePanel.decreaseScale();
+                }
+                normalMapImagePanel.decreaseScale();
+            } else {
+                if(updateAllImages){
+                    originalMapImagePanel.increaseScale();
+                    heightMapImagePanel.increaseScale();
+                }
+                normalMapImagePanel.increaseScale();
+            }
+            revalidate();
+            repaint();
+        });
+        normalMapImagePanel.addMouseMotionListener(new MouseMotionListener() {
+            @Override
+            public void mouseDragged(MouseEvent mouseEvent) {
+                int x = (int)(mouseEvent.getPoint().getX()-mouseStartX);
+                int y = (int)(mouseEvent.getPoint().getY()-mouseStartY);
+                if(updateAllImages){
+                    originalMapImagePanel.moveImg(x,y);
+                    heightMapImagePanel.moveImg(x,y);
+                }
+                normalMapImagePanel.moveImg(x,y);
+                revalidate();
+                repaint();
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent mouseEvent) {
+                //imagePanel.setMouseInit(mouseEvent.getX(),mouseEvent.getY());
+            }
+        });
+
+        normalMapImagePanel.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent mouseEvent) {
+                /*normalMapImagePanel.addSquare(mouseEvent.getX(), mouseEvent.getY());
+                revalidate();
+                repaint();*/
+            }
+
+            @Override
+            public void mousePressed(MouseEvent mouseEvent) {
+                mouseStartX = mouseEvent.getPoint().getX();
+                mouseStartY = mouseEvent.getY();
+                mouseIsDragged = true;
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent mouseEvent) {
+                mouseIsDragged = false;
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent mouseEvent) {
+
+            }
+        });
+
+        tabbedPanel.add(originalMapImagePanel,"Original Image");
+        tabbedPanel.add(heightMapImagePanel,"Height Map");
+        tabbedPanel.add(normalMapImagePanel,"Normal Map");
+
+        //cl.show(tabbedPanel,"Normal Map");
+        /*tabbedPanel.revalidate();
+        tabbedPanel.repaint();*/
+
         mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.add(imagePanel, BorderLayout.CENTER);
+        mainPanel.add(tabbedPanel, BorderLayout.CENTER);
 
+        originalMapSettingsBox = new OriginalMapSettingsBox();
+        originalMapToolBox = new OriginalMapToolBox();
         normalMapSettingsBox = new NormalMapSettingsBox();
         normalMapToolBox = new NormalMapToolBox();
         heightMapSettingsBox = new HeightMapSettingsBox();
@@ -234,7 +399,23 @@ public class MainScreen extends JFrame {
 
         leftBoxPanel = new JPanel();
         leftBoxPanel.setLayout(new BorderLayout());
-        leftBoxPanel.add(normalMapSettingsBox.getPanel(),BorderLayout.SOUTH);
+        leftBoxPanel.add(originalMapSettingsBox.getPanel(),BorderLayout.SOUTH);
+
+        tabbedPanel.addChangeListener(changeEvent -> {
+            if(tabbedPanel.getSelectedComponent() == originalMapImagePanel){
+                leftBoxPanel.remove(0);
+                leftBoxPanel.add(originalMapSettingsBox.getPanel(),BorderLayout.SOUTH);
+            } else if(tabbedPanel.getSelectedComponent() == heightMapImagePanel){
+                leftBoxPanel.remove(0);
+                leftBoxPanel.add(heightMapSettingsBox.getPanel(),BorderLayout.SOUTH);
+            } else if(tabbedPanel.getSelectedComponent() == normalMapImagePanel) {
+                leftBoxPanel.remove(0);
+                leftBoxPanel.add(normalMapSettingsBox.getPanel(),BorderLayout.SOUTH);
+            }
+            revalidate();
+            repaint();
+        });
+
 
         mainPanel.add(leftBoxPanel,BorderLayout.WEST);
 
@@ -258,10 +439,32 @@ public class MainScreen extends JFrame {
         pack();
     }
 
-    private void updateImagePanel(BufferedImage newImage){
-        imagePanel.setBufferedImage(newImage);
+    private void updateOriginal(BufferedImage original){
+        originalMapImagePanel.setBufferedImage(original);
         revalidate();
         repaint();
+    }
+
+    private void updateHeight(BufferedImage height){
+        heightMapImagePanel.setBufferedImage(height);
+        revalidate();
+        repaint();
+    }
+
+    private void updateNormal(BufferedImage normal){
+        normalMapImagePanel.setBufferedImage(normal);
+        revalidate();
+        repaint();
+    }
+
+    private void updateImagePanels(){
+
+        updateNormal(image.getNormalMap());
+        updateHeight(image.getHeightMap());
+        if(image.getOriginalMap() != null){
+            updateOriginal(image.getOriginalMap());
+        }
+
     }
 
     private class ThisMenuListener implements MenuListener{
@@ -289,27 +492,9 @@ public class MainScreen extends JFrame {
             if(e.getSource() == openTexture){
                 //System.out.println("opening");
                 image = imageLoader.loadImage();
-                if(!originalImage.isEnabled()){
-                    originalImage.setEnabled(true);
-                }
                 if(image != null){
-                    updateImagePanel(image.getNormalMap()); // uvodni obrazek po nacteni
-                    imagePanel.setActiveLayer(Layer.normalMap);
-                }
-            } else if(e.getSource() == originalImage){
-                if(image != null && image.getOriginalMap() != null){
-                    updateImagePanel(image.getOriginalMap());
-                    imagePanel.setActiveLayer(Layer.originalImage);
-                }
-            } else if(e.getSource() == heightMap){
-                if(image != null){
-                    updateImagePanel(image.getHeightMap());
-                    imagePanel.setActiveLayer(Layer.heightMap);
-                }
-            } else if(e.getSource() == normalMap){
-                if(image != null){
-                    updateImagePanel(image.getNormalMap());
-                    imagePanel.setActiveLayer(Layer.normalMap);
+                    updateImagePanels(); // uvodni obrazek po nacteni
+                    //imagePanel.setActiveLayer(Layer.normalMap);
                 }
             } else if(e.getSource() == saveNormalMap){
                 imageLoader.saveNormalMap();
@@ -324,131 +509,19 @@ public class MainScreen extends JFrame {
             } else if(e.getSource() == invertNormal){
                 angle = (Math.PI/2);
                 imageLoader.refreshNormalMap(angle,normalHeight);
-                updateImagePanel(image.getNormalMap());
+                updateImagePanels();
             } else if(e.getSource() == loadHeightMap){  // uvodni obrazek po nacteni
                 image = imageLoader.loadHeightMap();
-                if(originalImage.isEnabled()){
-                    originalImage.setEnabled(false);
-                }
+
                 if(image != null){
-                    updateImagePanel(image.getNormalMap()); // uvodni obrazek po nacteni
-                    imagePanel.setActiveLayer(Layer.normalMap);
+                    updateImagePanels();
+                    //imagePanel.setActiveLayer(Layer.normalMap);
                 }
             }
         }
     }
 
-    private enum Layer {
-        originalImage,
-        heightMap,
-        normalMap
-    }
-
-    private class ImagePanel extends JPanel {
-        double scale;
-        int posX = 0;
-        int posY = 0;
-        int squareSize = 20;
-        int imgPosX,imgPosY;
-        BufferedImage image;
-        private boolean drawSquare = true;
-        private java.util.List<Rectangle> squares;
-        private java.util.List<RelativeSquarePosition> relativePos;
-        private Layer activeLayer = Layer.originalImage;
-
-
-        private class RelativeSquarePosition {
-            private double x;
-            private double y;
-
-            public RelativeSquarePosition(double x, double y){
-                this.x = x;
-                this.y = y;
-            }
-
-            public double getX(){
-                return x;
-            }
-
-            public double getY(){
-                return y;
-            }
-        }
-
-        public ImagePanel() {
-            scale = 1.0;
-            setBackground(Color.gray);
-            squares = new ArrayList<>(3);
-            relativePos = new ArrayList<>(3);
-        }
-
-        public void setBufferedImage(BufferedImage image){
-            this.image = image;
-        }
-
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            if(image != null) {
-                Graphics2D g2 = (Graphics2D) g;
-                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                        RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                int w = getWidth();
-                int h = getHeight();
-                int imageWidth = image.getWidth();
-                int imageHeight = image.getHeight();
-                double x = (w - scale * imageWidth) / 2;
-                double y = (h - scale * imageHeight) / 2;
-
-                /*System.out.println(w + " -> " + imageWidth);
-                System.out.println(x);
-                System.out.println(h + " -> " + imageHeight);
-                System.out.println(y);*/
-                imgPosX = (int)x;
-                imgPosY = (int)y;
-
-                AffineTransform at = AffineTransform.getTranslateInstance(x,y);
-                //at.scale(1, 1);
-                //at.translate(posX,posY);
-                g2.translate(posX,posY);
-                g2.scale(scale,scale);
-                g2.drawRenderedImage(image,at);
-                if(drawSquare){ // vykreslovani zamerovacich ctvercu
-                    for(int i = 0; i < squares.size(); i++){
-                        Rectangle s = squares.get(i);
-                        RelativeSquarePosition rel = relativePos.get(i);
-                        s.setLocation((int)(x + rel.getX()*(double)imageWidth),(int)(y+ rel.getY()*(double)imageHeight));
-                        g2.draw(s);
-                    }
-                }
-            }
-        }
-
-        /**
-         * For the scroll pane.
-         */
-        public Dimension getPreferredSize() {
-            int w = (int) (scale * image.getWidth());
-            int h = (int) (scale * image.getHeight());
-            return new Dimension(w, h);
-        }
-
-        public void increaseScale(){
-            if(scale + 0.5 <= 3) {
-                scale += 0.5;
-            }
-        }
-
-        public void decreaseScale(){
-            if(scale - 0.5 > 0){
-                scale -= 0.5;
-            }
-        }
-
-        public void moveImg(int x, int y){
-            posX = x;
-            posY = y;
-        }
-
+    private class OriginalMapImagePanel  extends ImagePanel {
         public void addSquare(int x, int y){
             Rectangle square = new Rectangle(x,y,squareSize,squareSize);
             squares.add(square);
@@ -459,9 +532,9 @@ public class MainScreen extends JFrame {
             double xRel;
             double yRel;
             if(imgPosX < 0){
-                 xRel = (Math.abs(scale*imgPosX)+ x - scale*squareSize/2);
+                xRel = (Math.abs(scale*imgPosX)+ x - scale*squareSize/2);
             } else {
-                 xRel = (x - scale*imgPosX - scale*squareSize/2);
+                xRel = (x - scale*imgPosX - scale*squareSize/2);
             }
             if(posX < 0){
                 xRel += Math.abs(posX);
@@ -470,9 +543,9 @@ public class MainScreen extends JFrame {
             }
             xRel /= (scale*image.getWidth());
             if(imgPosY < 0){
-                 yRel = (Math.abs(scale*imgPosY)+ y- scale*squareSize/2);
+                yRel = (Math.abs(scale*imgPosY)+ y- scale*squareSize/2);
             } else {
-                 yRel = (y - scale*imgPosY- scale*squareSize/2);
+                yRel = (y - scale*imgPosY- scale*squareSize/2);
             }
             if(posY < 0){
                 yRel += Math.abs(posY);
@@ -480,9 +553,6 @@ public class MainScreen extends JFrame {
                 yRel -= posY;
             }
             yRel /=(scale*image.getHeight());
-            System.out.println(xRel+ " "+ yRel);
-            System.out.println();
-
             RelativeSquarePosition rel = new RelativeSquarePosition(xRel,yRel);
             relativePos.add(rel);
         }
@@ -508,21 +578,30 @@ public class MainScreen extends JFrame {
             squareSize = size;
         }
 
-        public void setActiveLayer(Layer layer){
-            activeLayer = layer;
-            if(activeLayer == Layer.originalImage){
-                enableSquare();
-            } else {
-                disableSquare();
-            }
+    }
+
+    private class HeightMapImagePanel extends ImagePanel {
+
+    }
+
+    private class NormalMapImagePanel extends ImagePanel {
+
+
+    }
+
+    private abstract class SettingsBox {
+        JPanel settingBox;
+
+        public SettingsBox(){
+            settingBox = new JPanel();
         }
 
-        public Layer getActiveLayer(){
-            return activeLayer;
+        JPanel getPanel() {
+            return settingBox;
         }
     }
 
-    private class NormalMapSettingsBox {
+    private class NormalMapSettingsBox extends SettingsBox {
         JPanel settingBox;
         JPanel lightPanel, heightPanel, recalculatePanel, lightToolPanel, lightToolPanelLeft, lightToolPanelRight;
         ReviewPanel reviewNormalPanelPP, reviewNormalPanelPM, reviewNormalPanelMP, reviewNormalPanelMM;
@@ -540,7 +619,8 @@ public class MainScreen extends JFrame {
 
         BufferedImage ppImage, pmImage, mpImage, mmImage;
 
-        JPanel getPanel(){
+        @Override
+        public JPanel getPanel(){
             if(settingBox == null){
                 settingBox = new JPanel();
                 settingBox.setLayout(new BorderLayout());
@@ -689,11 +769,13 @@ public class MainScreen extends JFrame {
                         //System.out.println("refresh");
                         //System.out.println("height: "+height.getValue());
                         imageLoader.refreshNormalMap(angle,normalHeight = (((double)height.getValue()*(-99.0))/10000.0+1.0));
-                        updateImagePanel(image.getNormalMap());
+                        //updateImagePanel(image.getNormalMap());
+                        updateNormal(image.getNormalMap());
                     }
                 }
             }
         };
+
 
         private class ReviewPanel extends JPanel{
 
@@ -761,7 +843,7 @@ public class MainScreen extends JFrame {
 
     }
 
-    private class HeightMapSettingsBox {
+    private class HeightMapSettingsBox extends SettingsBox {
 
     }
 
@@ -769,6 +851,13 @@ public class MainScreen extends JFrame {
 
     }
 
+    private class OriginalMapSettingsBox extends SettingsBox {
+
+    }
+
+    private class OriginalMapToolBox {
+
+    }
 
 }
 
