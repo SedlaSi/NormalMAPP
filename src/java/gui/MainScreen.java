@@ -1,19 +1,19 @@
 package gui;
 
+import gui.mark.EditMarkerScreen;
+import gui.mark.Marker;
 import gui.session.ImageLoader;
 import gui.session.Session;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
-import javax.tools.Tool;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * Created by root on 14.7.16.
@@ -34,6 +34,8 @@ public class MainScreen extends JFrame {
 
 
     JTabbedPane tabbedPanel;
+    JPanel cardSettingsBoxPanel;
+    CardLayout cardSettingsBoxLayout;
 
 
     OriginalMapSettingsBox originalMapSettingsBox;
@@ -47,6 +49,7 @@ public class MainScreen extends JFrame {
     HeightMapImagePanel heightMapImagePanel;
     NormalMapImagePanel normalMapImagePanel;
 
+    java.util.List<Marker> markerList;
 
     ThisActionListener actionListener;
 
@@ -162,8 +165,10 @@ public class MainScreen extends JFrame {
 
         tabbedPanel = new JTabbedPane();
 
+        markerList = new ArrayList<>(3);
 
-        originalMapImagePanel = new OriginalMapImagePanel();
+        originalMapImagePanel = new OriginalMapImagePanel(this);
+        originalMapImagePanel.setMarkerList(markerList);
 
         originalMapImagePanel.addMouseWheelListener(e -> {
             if(e.getWheelRotation() > 0){
@@ -205,9 +210,19 @@ public class MainScreen extends JFrame {
         originalMapImagePanel.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
-                originalMapImagePanel.addSquare(mouseEvent.getX(), mouseEvent.getY());
-                revalidate();
-                repaint();
+                if(originalMapSettingsBox.activeButton == originalMapSettingsBox.addMarkerButton){
+                    originalMapImagePanel.addSquare(mouseEvent.getX(), mouseEvent.getY());
+                    originalMapSettingsBox.updateList();
+                    revalidate();
+                    repaint();
+                } else if(originalMapSettingsBox.activeButton == originalMapSettingsBox.editMarkerButton){
+
+                } else if(originalMapSettingsBox.activeButton == originalMapSettingsBox.removeMarkerButton){
+                    originalMapImagePanel.removeSquare(mouseEvent.getX(), mouseEvent.getY());
+                    originalMapSettingsBox.updateList();
+                    revalidate();
+                    repaint();
+                }
             }
 
             @Override
@@ -391,26 +406,35 @@ public class MainScreen extends JFrame {
         mainPanel.add(tabbedPanel, BorderLayout.CENTER);
 
         originalMapSettingsBox = new OriginalMapSettingsBox();
+        originalMapSettingsBox.setMarkerList(markerList);
         originalMapToolBox = new OriginalMapToolBox();
         normalMapSettingsBox = new NormalMapSettingsBox();
         normalMapToolBox = new NormalMapToolBox();
         heightMapSettingsBox = new HeightMapSettingsBox();
         heightMapToolBox = new HeightMapToolBox();
 
-        leftBoxPanel = new JPanel();
-        leftBoxPanel.setLayout(new BorderLayout());
-        leftBoxPanel.add(originalMapSettingsBox.getPanel(),BorderLayout.SOUTH);
+        leftBoxPanel = new JPanel(new BorderLayout());
+        //leftBoxPanel.setLayout(new BorderLayout());
+        cardSettingsBoxLayout = new CardLayout();
+        cardSettingsBoxPanel = new JPanel(cardSettingsBoxLayout);
+        leftBoxPanel.add(cardSettingsBoxPanel,BorderLayout.CENTER);
+        cardSettingsBoxPanel.add(originalMapSettingsBox.getPanel(),"os");
+        cardSettingsBoxPanel.add(heightMapSettingsBox.getPanel(),"hs");
+        cardSettingsBoxPanel.add(normalMapSettingsBox.getPanel(),"ns");
 
         tabbedPanel.addChangeListener(changeEvent -> {
             if(tabbedPanel.getSelectedComponent() == originalMapImagePanel){
-                leftBoxPanel.remove(0);
-                leftBoxPanel.add(originalMapSettingsBox.getPanel(),BorderLayout.SOUTH);
+                cardSettingsBoxLayout.show(cardSettingsBoxPanel,"os");
+                //leftBoxPanel.remove(0);
+                //leftBoxPanel.add(originalMapSettingsBox.getPanel(),BorderLayout.SOUTH);
             } else if(tabbedPanel.getSelectedComponent() == heightMapImagePanel){
-                leftBoxPanel.remove(0);
-                leftBoxPanel.add(heightMapSettingsBox.getPanel(),BorderLayout.SOUTH);
+                cardSettingsBoxLayout.show(cardSettingsBoxPanel,"hs");
+                //leftBoxPanel.remove(0);
+                //leftBoxPanel.add(heightMapSettingsBox.getPanel(),BorderLayout.SOUTH);
             } else if(tabbedPanel.getSelectedComponent() == normalMapImagePanel) {
-                leftBoxPanel.remove(0);
-                leftBoxPanel.add(normalMapSettingsBox.getPanel(),BorderLayout.SOUTH);
+                cardSettingsBoxLayout.show(cardSettingsBoxPanel,"ns");
+                //leftBoxPanel.remove(0);
+                //leftBoxPanel.add(normalMapSettingsBox.getPanel(),BorderLayout.SOUTH);
             }
             revalidate();
             repaint();
@@ -522,47 +546,150 @@ public class MainScreen extends JFrame {
     }
 
     private class OriginalMapImagePanel  extends ImagePanel {
+
+        public OriginalMapImagePanel(JFrame mainFrameReference){
+            super();
+            this.mainFrameReference = mainFrameReference;
+        }
+
+        private int markerNumber = 0;
+        private JFrame mainFrameReference;
+
         public void addSquare(int x, int y){
-            Rectangle square = new Rectangle(x,y,squareSize,squareSize);
-            squares.add(square);
+            if(image != null) {
+                Rectangle square = new Rectangle(x, y, squareSize, squareSize);
+                Marker marker = new Marker(markerNumber+"# Marker");
+                marker.setSquare(square);
             /*System.out.println(imgPosX + " "+ imgPosY);
             System.out.println(x + " "+ y);*/
             /*System.out.println("layer: "+ posX +" "+posY);
             System.out.println();*/
-            double xRel;
-            double yRel;
-            if(imgPosX < 0){
-                xRel = (Math.abs(scale*imgPosX)+ x - scale*squareSize/2);
-            } else {
-                xRel = (x - scale*imgPosX - scale*squareSize/2);
+                double xRel;
+                double yRel;
+                if (imgPosX < 0) {
+                    xRel = (Math.abs(scale * imgPosX) + x - scale * squareSize / 2);
+                } else {
+                    xRel = (x - scale * imgPosX - scale * squareSize / 2);
+                }
+                if (posX < 0) {
+                    xRel += Math.abs(posX);
+                } else {
+                    xRel -= posX;
+                }
+                xRel /= (scale * image.getWidth());
+                if (imgPosY < 0) {
+                    yRel = (Math.abs(scale * imgPosY) + y - scale * squareSize / 2);
+                } else {
+                    yRel = (y - scale * imgPosY - scale * squareSize / 2);
+                }
+                if (posY < 0) {
+                    yRel += Math.abs(posY);
+                } else {
+                    yRel -= posY;
+                }
+                yRel /= (scale * image.getHeight());
+                marker.setPosX(xRel);
+                marker.setPosY(yRel);
+
+                /**
+                 * ZDE SE POTOM SPUSTI OBRAZOVKA NA UPRAVU UDAJU x, y A name
+                 */
+                EditMarkerScreen editMarkerScreen = new EditMarkerScreen(mainFrameReference,"",Dialog.ModalityType.DOCUMENT_MODAL);
+                editMarkerScreen.setMarker(marker);
+                editMarkerScreen.startFrame();
+
+                if(x == -1 || y == -1){ // Uzivatel dal "cancel"
+                    return;
+                }
+                markerNumber++;
+                markerList.add(marker);
+
             }
-            if(posX < 0){
-                xRel += Math.abs(posX);
-            } else {
-                xRel -= posX;
-            }
-            xRel /= (scale*image.getWidth());
-            if(imgPosY < 0){
-                yRel = (Math.abs(scale*imgPosY)+ y- scale*squareSize/2);
-            } else {
-                yRel = (y - scale*imgPosY- scale*squareSize/2);
-            }
-            if(posY < 0){
-                yRel += Math.abs(posY);
-            } else {
-                yRel -= posY;
-            }
-            yRel /=(scale*image.getHeight());
-            RelativeSquarePosition rel = new RelativeSquarePosition(xRel,yRel);
-            relativePos.add(rel);
         }
 
-        public void removeSquare(int i){
-            if(squares.get(i) != null){
-                squares.remove(i);
+        public void hightlightIfInterselectWithMouse(int x, int y){
+            if(image != null) {
+                double xRel;
+                double yRel;
+                if (imgPosX < 0) {
+                    xRel = (Math.abs(scale * imgPosX) + x - scale * squareSize);
+                } else {
+                    xRel = (x - scale * imgPosX - scale * squareSize);
+                }
+                if (posX < 0) {
+                    xRel += Math.abs(posX);
+                } else {
+                    xRel -= posX;
+                }
+                xRel /= (scale * image.getWidth());
+                if (imgPosY < 0) {
+                    yRel = (Math.abs(scale * imgPosY) + y - scale * squareSize);
+                } else {
+                    yRel = (y - scale * imgPosY - scale * squareSize);
+                }
+                if (posY < 0) {
+                    yRel += Math.abs(posY);
+                } else {
+                    yRel -= posY;
+                }
+                yRel /= (scale * image.getHeight());
+
+                double xMin = xRel;
+                double xMax = xRel + scale * squareSize/(scale * image.getWidth());
+                double yMin = yRel;
+                double yMax = yRel + scale * squareSize/(scale * image.getHeight());
+
+                for(Marker m : markerList){
+                    if(m.getPosX() >= xMin && m.getPosX() <= xMax && m.getPosY() >= yMin && m.getPosY() <= yMax){
+                        Rectangle s = m.getSquare();
+                        break;
+                    }
+                }
+
             }
-            if(relativePos.get(i) != null){
-                relativePos.remove(i);
+        }
+
+        public void removeSquare(int x, int y){
+            if(image != null) {
+                double xRel;
+                double yRel;
+                if (imgPosX < 0) {
+                    xRel = (Math.abs(scale * imgPosX) + x - scale * squareSize);
+                } else {
+                    xRel = (x - scale * imgPosX - scale * squareSize);
+                }
+                if (posX < 0) {
+                    xRel += Math.abs(posX);
+                } else {
+                    xRel -= posX;
+                }
+                xRel /= (scale * image.getWidth());
+                if (imgPosY < 0) {
+                    yRel = (Math.abs(scale * imgPosY) + y - scale * squareSize);
+                } else {
+                    yRel = (y - scale * imgPosY - scale * squareSize);
+                }
+                if (posY < 0) {
+                    yRel += Math.abs(posY);
+                } else {
+                    yRel -= posY;
+                }
+                yRel /= (scale * image.getHeight());
+
+                double xMin = xRel;
+                double xMax = xRel + scale * squareSize/(scale * image.getWidth());
+                double yMin = yRel;
+                double yMax = yRel + scale * squareSize/(scale * image.getHeight());
+
+                for(Marker m : markerList){
+                    if(m.getPosX() >= xMin && m.getPosX() <= xMax && m.getPosY() >= yMin && m.getPosY() <= yMax){
+                        /*System.out.println("mouse: \n"+xMin+" - "+xMax+"\n"+yMin+" - "+yMax);
+                        System.out.println("square: \n"+m.getPosX()+" \n "+m.getPosY());*/
+                        markerList.remove(m);
+                        break;
+                    }
+                }
+
             }
         }
 
@@ -852,7 +979,109 @@ public class MainScreen extends JFrame {
     }
 
     private class OriginalMapSettingsBox extends SettingsBox {
+        JPanel settingBox;
+        JPanel recalculatePanel,editPanel,markerSizePanel,listPanel;
+        JButton recalculateButton;
+        java.util.List<Marker> markerList;
+        JList<Marker> displayMarkerList;
+        ButtonGroup buttonGroup;
 
+        JToggleButton addMarkerButton, editMarkerButton, removeMarkerButton, activeButton;
+
+        private Dimension editPanelDimension,markerSizeDimension,recalculatePanelDimension;
+
+        JSlider markerSizeSlider;
+
+        @Override
+        public JPanel getPanel(){
+            if(settingBox == null && this.markerList != null){
+                settingBox = new JPanel();
+                settingBox.setLayout(new BorderLayout());
+
+                JPanel topPanel = new JPanel(new BorderLayout());
+
+                editPanel = new JPanel(new GridLayout(0,3));
+                buttonGroup = new ButtonGroup();
+                addMarkerButton = new JToggleButton("ADD");
+                editMarkerButton = new JToggleButton("EDT");
+                removeMarkerButton = new JToggleButton("RMV");
+                buttonGroup.add(addMarkerButton);
+                buttonGroup.add(editMarkerButton);
+                buttonGroup.add(removeMarkerButton);
+
+                ActionListener acButton = actionEvent -> {
+                    if(actionEvent.getSource() == addMarkerButton){
+                        activeButton = addMarkerButton;
+                    } else if(actionEvent.getSource() == editMarkerButton){
+                        activeButton = editMarkerButton;
+                    } else if(actionEvent.getSource() == removeMarkerButton){
+                        activeButton = removeMarkerButton;
+                    }
+                };
+
+                addMarkerButton.addActionListener(acButton);
+                editMarkerButton.addActionListener(acButton);
+                removeMarkerButton.addActionListener(acButton);
+
+                editPanel.add(addMarkerButton);
+                editPanel.add(editMarkerButton);
+                editPanel.add(removeMarkerButton);
+
+                topPanel.add(editPanel,BorderLayout.NORTH);
+
+                markerSizePanel = new JPanel(new BorderLayout());
+                JLabel markerSizeLabel = new JLabel("  Markers size:");
+                markerSizeSlider = new JSlider(JSlider.HORIZONTAL,2,150,50);
+                markerSizePanel.add(markerSizeLabel,BorderLayout.NORTH);
+                markerSizePanel.add(markerSizeSlider,BorderLayout.CENTER);
+
+                topPanel.add(markerSizePanel,BorderLayout.SOUTH);
+
+                settingBox.add(topPanel,BorderLayout.NORTH);
+
+                JScrollPane scrollPane = new JScrollPane();
+                scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+                listPanel = new JPanel(new BorderLayout());
+                displayMarkerList = new JList<>();
+                displayMarkerList.setListData(markerList.toArray(new Marker[markerList.size()]));
+                scrollPane.setViewportView(displayMarkerList);
+                listPanel.add(scrollPane,BorderLayout.CENTER);
+
+                settingBox.add(listPanel,BorderLayout.CENTER);
+
+                recalculatePanel = new JPanel();
+                recalculateButton = new JButton("Calculate Depth");
+                recalculateButton.addActionListener(reviewActionListener);
+                recalculatePanel.add(recalculateButton);
+                settingBox.setBorder(BorderFactory.createLoweredBevelBorder());
+                settingBox.add(recalculatePanel, BorderLayout.PAGE_END);
+
+            }
+            return settingBox;
+        }
+
+        public void updateList(){
+            displayMarkerList.setListData(markerList.toArray(new Marker [markerList.size()]));
+            displayMarkerList.revalidate();
+            displayMarkerList.repaint();
+        }
+
+        public void setMarkerList(java.util.List<Marker> markerList){
+            this.markerList = markerList;
+        }
+
+        public java.util.List<Marker> getMarkerList(){
+            return markerList;
+        }
+
+        private ActionListener reviewActionListener = new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(e.getSource() == recalculateButton){
+
+                }
+            }
+        };
     }
 
     private class OriginalMapToolBox {

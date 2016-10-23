@@ -1,13 +1,11 @@
 package gui;
 
+import gui.mark.Marker;
+
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 
 /**
  * Created by root on 22.10.16.
@@ -20,8 +18,9 @@ public abstract class ImagePanel extends JPanel {
     int imgPosX,imgPosY;
     BufferedImage image;
     boolean drawSquare = true;
-    java.util.List<Rectangle> squares;
-    java.util.List<RelativeSquarePosition> relativePos;
+    //java.util.List<Rectangle> squares;
+    java.util.List<Marker> markerList;
+    //java.util.List<RelativeSquarePosition> relativePos;
     //private Layer activeLayer = Layer.originalImage;
 
 
@@ -46,8 +45,11 @@ public abstract class ImagePanel extends JPanel {
     public ImagePanel() {
         scale = 1.0;
         setBackground(Color.gray);
-        squares = new ArrayList<>(3);
-        relativePos = new ArrayList<>(3);
+        //relativePos = new ArrayList<>(3);
+    }
+
+    public void setMarkerList(java.util.List<Marker> markerList){
+        this.markerList = markerList;
     }
 
     public void setBufferedImage(BufferedImage image){
@@ -80,11 +82,11 @@ public abstract class ImagePanel extends JPanel {
             g2.translate(posX,posY);
             g2.scale(scale,scale);
             g2.drawRenderedImage(image,at);
-            if(drawSquare){ // vykreslovani zamerovacich ctvercu
-                for(int i = 0; i < squares.size(); i++){
-                    Rectangle s = squares.get(i);
-                    RelativeSquarePosition rel = relativePos.get(i);
-                    s.setLocation((int)(x + rel.getX()*(double)imageWidth),(int)(y+ rel.getY()*(double)imageHeight));
+            if(drawSquare && markerList != null){ // vykreslovani zamerovacich ctvercu
+                for(int i = 0; i < markerList.size(); i++){
+                    Marker marker = markerList.get(i);
+                    Rectangle s = marker.getSquare();
+                    s.setLocation((int)(x + marker.getPosX()*(double)imageWidth),(int)(y+ marker.getPosY()*(double)imageHeight));
                     g2.draw(s);
                 }
             }
