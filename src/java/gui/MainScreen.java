@@ -598,7 +598,7 @@ public class MainScreen extends JFrame {
                 editMarkerScreen.setMarker(marker);
                 editMarkerScreen.startFrame();
 
-                if(x == -1 || y == -1){ // Uzivatel dal "cancel"
+                if(marker.getX() == -1 || marker.getY() == -1 || marker.getZ() == -1){ // Uzivatel dal "cancel"
                     return;
                 }
                 markerNumber++;
