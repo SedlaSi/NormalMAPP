@@ -12,7 +12,6 @@ import java.awt.*;
 public class NormalMAPP {
 
     public static void main(String [] args){
-
         new NormalMAPP();
 
         /*Session session = new Session();
@@ -22,10 +21,12 @@ public class NormalMAPP {
     }
 
     public NormalMAPP (){
+
         EventQueue.invokeLater(() -> {
             Session session = new Session();
             ImageLoader imageLoader = new ImageLoader(session.getSessionFolder());
             MainScreen mainScreen = new MainScreen(session,imageLoader);
+            imageLoader.setMainFrameReference(mainScreen);
             mainScreen.createFrame();
         });
 

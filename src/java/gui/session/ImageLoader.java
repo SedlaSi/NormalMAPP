@@ -2,6 +2,8 @@ package gui.session;
 
 import algorithms.HeightMap;
 import algorithms.NormalMap;
+import algorithms.ShapeFromShading;
+import gui.mark.Marker;
 import image.Image;
 import org.im4java.core.ConvertCmd;
 import org.im4java.core.IMOperation;
@@ -21,12 +23,14 @@ public class ImageLoader extends JFrame{
 
     JFileChooser fileChooser;
     JFileChooser fileSaver;
+    JFrame mainFrameReference;
     private String sessionFolder;
     private static final String ORIGINAL_NAME = "original.ppm";
     private static final String HEIGHT_NAME = "height.ppm";
     private static final String NORMAL_NAME = "normal.ppm";
     private final HeightMap heightMap = new HeightMap();
     private final NormalMap normalMap = new NormalMap();
+    private final ShapeFromShading shapeFromShading = new ShapeFromShading();
 
     Image image;
 
@@ -36,6 +40,9 @@ public class ImageLoader extends JFrame{
         this.sessionFolder = sessionFolder;
     }
 
+    public void setMainFrameReference(JFrame mainFrameReference){
+        this.mainFrameReference = mainFrameReference;
+    }
 
     public Image loadImage(){
 
@@ -47,7 +54,7 @@ public class ImageLoader extends JFrame{
             return null;
         }
 
-        LoadingScreen loadingImageProgressBar = new LoadingImageProgressBar();
+        LoadingScreen loadingImageProgressBar = new LoadingImageProgressBar(mainFrameReference,"",Dialog.ModalityType.DOCUMENT_MODAL);
         loadingImageProgressBar.startLoading(heightMap.getSteps() + normalMap.getSteps(),true);
         //loadingImageProgressBar.startLoading(heightMap.getSteps() + normalMap.getSteps());
         heightMap.setLoadingScreen(loadingImageProgressBar);
@@ -112,7 +119,7 @@ public class ImageLoader extends JFrame{
             return null;
         }
 
-        LoadingScreen loadingImageProgressBar = new LoadingImageProgressBar();
+        LoadingScreen loadingImageProgressBar = new LoadingImageProgressBar(mainFrameReference,"",Dialog.ModalityType.DOCUMENT_MODAL);
         loadingImageProgressBar.startLoading(normalMap.getSteps(),true);
         //loadingImageProgressBar.startLoading(heightMap.getSteps() + normalMap.getSteps());
         //heightMap.setLoadingScreen(loadingImageProgressBar);
@@ -153,7 +160,7 @@ public class ImageLoader extends JFrame{
     }
 
     public void refreshNormalMap(double angle ,double height){
-        LoadingImageProgressBar loadingImageProgressBar = new LoadingImageProgressBar();
+        LoadingImageProgressBar loadingImageProgressBar = new LoadingImageProgressBar(mainFrameReference,"",Dialog.ModalityType.DOCUMENT_MODAL);
         //loadingImageProgressBar.startLoading(normalMap.getSteps(),false);
         normalMap.setLoadingScreen(loadingImageProgressBar);
         normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME), angle,height),sessionFolder + Session.SLASH + NORMAL_NAME);
@@ -165,6 +172,13 @@ public class ImageLoader extends JFrame{
         }
         loadingImageProgressBar.stopLoading();
         normalMap.setLoadingScreen(null);
+    }
+
+    public void calculateHeightMap(java.util.List<Marker> markerList){
+            shapeFromShading.setMarkers(markerList);
+            shapeFromShading.setImage(sessionFolder + Session.SLASH + ORIGINAL_NAME);
+            shapeFromShading.write(shapeFromShading.shapeFromShading(),sessionFolder + Session.SLASH + HEIGHT_NAME);
+
     }
 
     public void saveHeightMap(){
@@ -219,7 +233,7 @@ public class ImageLoader extends JFrame{
         return image;
     }
 
-    private class LoadingImageProgressBar extends JFrame implements LoadingScreen {
+    private class LoadingImageProgressBar extends JDialog implements LoadingScreen {
 
 
         private JProgressBar progressBar;
@@ -237,6 +251,10 @@ public class ImageLoader extends JFrame{
 
         }*/
 
+        public LoadingImageProgressBar(JFrame mainFrameReference,String name, Dialog.ModalityType modalityType){
+            super(mainFrameReference,"", ModalityType.MODELESS);
+        }
+
         @Override
         public void startLoading(int maximum, boolean visible) {
 
@@ -245,7 +263,7 @@ public class ImageLoader extends JFrame{
 
                 this.setPreferredSize(new Dimension(300,30));
                 this.setResizable(false);
-                setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                //setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 progressBar = new JProgressBar();
                 progressBar.setMinimum(0);
                 progressBar.setMaximum(maximum);

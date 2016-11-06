@@ -47,6 +47,12 @@
             <artifactId>im4java</artifactId>
             <version>1.2.0</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/gov.nist.math/jama -->
+        <dependency>
+            <groupId>gov.nist.math</groupId>
+            <artifactId>jama</artifactId>
+            <version>1.0.3</version>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.github.jai-imageio/jai-imageio-core -->
         <dependency>

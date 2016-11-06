@@ -126,6 +126,7 @@ public abstract class ImagePanel extends JPanel {
             } else {
                 posY = y - posY;
             }*/
+
         posX = x;
         posY = y;
     }

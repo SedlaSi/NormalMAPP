@@ -1078,7 +1078,11 @@ public class MainScreen extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(e.getSource() == recalculateButton){
-
+                    if(!markerList.isEmpty() && markerList.size() >=3){
+                        imageLoader.calculateHeightMap(markerList);
+                        revalidate();
+                        repaint();
+                    }
                 }
             }
         };

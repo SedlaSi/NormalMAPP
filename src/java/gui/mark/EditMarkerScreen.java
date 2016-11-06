@@ -96,9 +96,22 @@ public class EditMarkerScreen extends JDialog {
 
         ActionListener buttonListener = actionEvent -> {
             if(actionEvent.getSource() == okButton){
-                marker.setName(nameArea.getText());
+                if(!nameArea.getText().isEmpty()) {
+                    marker.setName(nameArea.getText());
+                }
+                //  Vypocteni x y a z pro marker
+                double x =(Math.cos(angleSlider.getValue())*Math.sin(directionSlider.getValue()));
+                double y =(Math.cos(angleSlider.getValue())*Math.cos(directionSlider.getValue()));
+                double z = (Math.sin(angleSlider.getValue()));
+                x = 127.5*(x+1);
+                y = 127.5*(y+1);
+                z = 127.5*(z+1);
 
+                marker.setX((int)x);
+                marker.setY((int)y);
+                marker.setZ((int)z);
 
+                // ---------------------
                 disposeDialog();
             } else if(actionEvent.getSource() == cancelButton){
                 marker.setX(-1);
