@@ -100,9 +100,10 @@ public class EditMarkerScreen extends JDialog {
                     marker.setName(nameArea.getText());
                 }
                 //  Vypocteni x y a z pro marker
-                double x =(Math.cos(angleSlider.getValue())*Math.sin(directionSlider.getValue()));
-                double y =(Math.cos(angleSlider.getValue())*Math.cos(directionSlider.getValue()));
-                double z = (Math.sin(angleSlider.getValue()));
+                int angle = angleSlider.getValue() + 90;
+                double x =(Math.cos(angle)*Math.sin(directionSlider.getValue()));
+                double y =(Math.cos(angle)*Math.cos(directionSlider.getValue()));
+                double z = (Math.sin(angle));
                 x = 127.5*(x+1);
                 y = 127.5*(y+1);
                 z = 127.5*(z+1);

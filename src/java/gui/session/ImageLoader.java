@@ -178,6 +178,11 @@ public class ImageLoader extends JFrame{
             shapeFromShading.setMarkers(markerList);
             shapeFromShading.setImage(sessionFolder + Session.SLASH + ORIGINAL_NAME);
             shapeFromShading.write(shapeFromShading.shapeFromShading(),sessionFolder + Session.SLASH + HEIGHT_NAME);
+        try {
+            image.setHeightMap(ImageIO.read(new File(sessionFolder + Session.SLASH + HEIGHT_NAME)));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 

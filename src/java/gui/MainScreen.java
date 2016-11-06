@@ -1080,8 +1080,7 @@ public class MainScreen extends JFrame {
                 if(e.getSource() == recalculateButton){
                     if(!markerList.isEmpty() && markerList.size() >=3){
                         imageLoader.calculateHeightMap(markerList);
-                        revalidate();
-                        repaint();
+                        updateHeight(image.getHeightMap());
                     }
                 }
             }

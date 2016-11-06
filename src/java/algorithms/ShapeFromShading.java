@@ -19,15 +19,15 @@ public class ShapeFromShading implements Algorithm {
     private int collumns;
     private int rows;
     private byte [] fr;
-    private byte [] grayscale;
+    private double [] grayscale;
     private List<Marker> markers;
     private double lightX;
     private double lightY;
     private double lightZ;
     private byte [] heightMap;
-    private int steps=2;
-    private int q = 1;
-    private int lm = 1;
+    private int steps=20;
+    private double q = 1;
+    private double lm = 0.1;
     int bodyStart;
     private double [] normalField;
 
@@ -67,7 +67,7 @@ public class ShapeFromShading implements Algorithm {
         //getDepthMap();
         double [] n = getHeightMap();
         for(int i = bodyStart; i< n.length ; i++){
-            fr[i] = (byte)((n[i])*127.5);
+            fr[i] = (byte)((n[i]+1)*127.5);
         }
 
         return fr;
@@ -504,19 +504,32 @@ public class ShapeFromShading implements Algorithm {
         int size = collumns*rows;
         int neighbourSize;
         double s;
+        double n_y_left;
+        double n_x_left;
+        double n_z_left;
         //double [] s = new double[size];
         for(int g = 0; g < steps; g++){ // hlavni loop = pocet kroku gauss-siedela
             for(int i = 0; i <(size); i++){ // prochazim N, v tomto loop spocitam n_x, n_y a n_z pro g-tou iteraci gauss-saidela
                 neighbourSize = 0;
-                while(index[4*i + neighbourSize] != -1 && neighbourSize != 4) neighbourSize++;
-                neighbourSize--;
+                while(index[4*i + neighbourSize] != -1 && neighbourSize != 3) neighbourSize++;
                 double n_1 = 0;
+                double n_2 = 0;
+                double n_3 = 0;
                 for(int ne=0; ne<neighbourSize;ne++){
-                    n_1 += n[index[4*i]+ne]; // prvni pridavame prvky v zavorce s lambda
+                    n_1 += n[index[4*i+ne]]; // prvni pridavame prvky v zavorce s lambda -- hlavni rovnice kde n_x je s (4lm + l_x)
+                    n_2 += n[index[4*i+ne]+1]; //  vedlejsi rovnice kde n_x je n_x*l_x a hlavni je y
+                    n_3 += n[index[4*i+ne]+2]; //  vedlejsi rovnice kde n_x je n_x*l_x a hlavni je z
+
                 }
                 n_1 *= lm; // pridame lambda
                 n_1 += q*grayscale[i]; // pridame b[i]
-                s=n_1;
+                n_2 *= lm; // pridame lambda
+                n_2 += q*grayscale[i]; // pridame b[i]
+                n_3 *= lm; // pridame lambda
+                n_3 += q*grayscale[i]; // pridame b[i]
+                n_x_left = n_1;
+                n_y_left = n_2;
+                n_z_left = n_3;
                 //nyni odecteme cleny n[i+1]*nei[]
                 int neiCoef = 0;
                 if(neighbourSize == 2){
@@ -525,16 +538,22 @@ public class ShapeFromShading implements Algorithm {
                     neiCoef = 6;
                 }
 
-                n_1 -= (n[3*i+1]*nei[neiCoef + 1] + n[3*i+2]*nei[neiCoef + 2]);
+                n_1 -= (n[3*i+1]*lightY + n[3*i+2]*lightZ);
                 n_1 /= nei[neiCoef]; // prvni vysledek
 
-                double newValue = n_1;
-                double sum = 1;
-                for(int r = 0; r<neighbourSize; r++){ // budu projizdet rovnice neighbouru a vyjadrovat z nich n_1
-                    int u = index[4*i ]+ r; // index na neighboura
+                n_2 -= (n[3*i+1]*nei[neiCoef+1] + n[3*i+2]*lightZ);
+                n_2 /= lightX; // druhy vysledek
+
+                n_3 -= (n[3*i+1]*lightY + n[3*i+2]*nei[neiCoef+2]);
+                n_3 /= lightX; // treti vysledek
+
+
+                double newValue_x = n_1 + n_2 + n_3;
+                double sum = 3;
+                for(int r = 0; r < neighbourSize; r++){ // budu projizdet rovnice neighbouru a vyjadrovat z nich n_1
+                    int u = index[4*i + r]; // index na neighboura
                     int uNeighbourSize = 0;
-                    while(index[(u/3)*4 + uNeighbourSize] != -1 && uNeighbourSize != 4) uNeighbourSize++;
-                    uNeighbourSize--;
+                    while(index[(u/3)*4 + uNeighbourSize] != -1 && uNeighbourSize != 3) uNeighbourSize++;
                     int uNeiCoef = 0;
                     if(uNeighbourSize == 2){
                         uNeiCoef = 3;
@@ -543,34 +562,54 @@ public class ShapeFromShading implements Algorithm {
                     }
                     double n_i = 0;
                     for(int ne=0; ne<uNeighbourSize;ne++){
-                        if(index[(u/3)*4]+ne == 3*i) continue;
-                        n_i += n[index[(u/3)*4]+ne]; // prvni pridavame prvky v zavorce s lambda
+                        if(index[(u/3)*4+ne] == 3*i) continue;
+                        n_i += n[index[(u/3)*4+ne]]; // prvni pridavame prvky v zavorce s lambda
                     }
                     n_i *= lm; // pridame lambda
-                    n_i = q*grayscale[u/3] - n[u]*nei[uNeiCoef];
-                    n_i -= (n[u+1]*nei[uNeiCoef + 1] + n[u+2]*nei[uNeiCoef + 2]);
+                    n_i += (q*grayscale[u/3] - n[u]*nei[uNeiCoef]);
+                    n_i -= (n[u+1]*lightY + n[u+2]*lightZ);
                     n_i *= -1;
                     n_i /= lm; // vysledek z rovnice souseda
-                    newValue += n_i;
+                    newValue_x += n_i;
                     sum++;
                 }
-                newValue /= sum;
 
-                n[3*i] = newValue;
+
+                newValue_x /= sum;
+
+
 
                 // value y
-                n_1 = s;
-                n_1 -= (n[3*i]*nei[neiCoef] + n[3*i+2]*nei[neiCoef + 2]);
-                n_1 /= nei[neiCoef+1]; // prvni vysledek
+                //neighbourSize je stejny !!!
 
-                newValue = n_1;
-                sum = 1;
+                n_1 = n_x_left;
+                n_2 = n_y_left;
+                n_3 = n_z_left;
 
-                for(int r = 0; r<neighbourSize; r++){ // budu projizdet rovnice neighbouru a vyjadrovat z nich n_1
-                    int u = index[4*i]+1 + r; // index na neighboura
+                //nyni odecteme cleny n[i+1]*nei[]
+                neiCoef = 0;
+                if(neighbourSize == 2){
+                    neiCoef = 3;
+                } else if(neighbourSize == 3) {
+                    neiCoef = 6;
+                }
+
+                n_1 -= (n[3*i]*nei[neiCoef] + n[3*i+2]*lightZ);
+                n_1 /= lightY; // prvni vysledek
+
+                n_2 -= (n[3*i]*lightX + n[3*i+2]*lightZ);
+                n_2 /= nei[neiCoef+1]; // druhy vysledek
+
+                n_3 -= (n[3*i]*lightX + n[3*i+2]*nei[neiCoef+2]);
+                n_3 /= lightY; // treti vysledek
+
+
+                double newValue_y = n_1 + n_2 + n_3;
+                sum = 3;
+                for(int r = 0; r < neighbourSize; r++){ // budu projizdet rovnice neighbouru a vyjadrovat z nich n_1
+                    int u = index[4*i + r]; // index na neighboura
                     int uNeighbourSize = 0;
-                    while(index[(u/3)*4 ]+ uNeighbourSize != -1 && uNeighbourSize != 4) uNeighbourSize++;
-                    uNeighbourSize--;
+                    while(index[(u/3)*4 + uNeighbourSize] != -1 && uNeighbourSize != 3) uNeighbourSize++;
                     int uNeiCoef = 0;
                     if(uNeighbourSize == 2){
                         uNeiCoef = 3;
@@ -579,34 +618,54 @@ public class ShapeFromShading implements Algorithm {
                     }
                     double n_i = 0;
                     for(int ne=0; ne<uNeighbourSize;ne++){
-                        if(index[(u/3)*4]+ne == 3*i+1) continue;
-                        n_i += n[index[(u/3)*4]+ne]; // prvni pridavame prvky v zavorce s lambda
+                        if(index[(u/3)*4+ne] == 3*i) continue;
+                        n_i += n[index[(u/3)*4+ne]+1]; // prvni pridavame prvky v zavorce s lambda
                     }
                     n_i *= lm; // pridame lambda
-                    n_i = q*grayscale[u/3] - n[u]*nei[uNeiCoef];
-                    n_i -= (n[u+1]*nei[uNeiCoef + 1] + n[u+2]*nei[uNeiCoef + 2]);
+                    n_i += (q*grayscale[u/3] - n[u+1]*nei[uNeiCoef+1]);
+                    n_i -= (n[u]*lightX + n[u+2]*lightZ);
                     n_i *= -1;
                     n_i /= lm; // vysledek z rovnice souseda
-                    newValue += n_i;
+                    newValue_y += n_i;
                     sum++;
                 }
-                newValue /= sum;
 
-                n[3*i+1] = newValue;
+
+                newValue_y /= sum;
+
+
 
                 // value z
-                n_1 = s;
-                n_1 -= (n[3*i]*nei[neiCoef] + n[3*i+1]*nei[neiCoef + 1]);
-                n_1 /= nei[neiCoef+1]; // prvni vysledek
+                //neighbourSize je stejny !!!
 
-                newValue = n_1;
-                sum = 1;
+                n_1 = n_x_left;
+                n_2 = n_y_left;
+                n_3 = n_z_left;
 
-                for(int r = 0; r<neighbourSize; r++){ // budu projizdet rovnice neighbouru a vyjadrovat z nich n_1
-                    int u = index[4*i]+2 + r; // index na neighboura
+                //nyni odecteme cleny n[i+1]*nei[]
+                neiCoef = 0;
+                if(neighbourSize == 2){
+                    neiCoef = 3;
+                } else if(neighbourSize == 3) {
+                    neiCoef = 6;
+                }
+
+                n_1 -= (n[3*i]*nei[neiCoef] + n[3*i+1]*lightY);
+                n_1 /= lightZ; // prvni vysledek
+
+                n_2 -= (n[3*i]*lightX + n[3*i+1]*nei[neiCoef+1]);
+                n_2 /= lightZ; // druhy vysledek
+
+                n_3 -= (n[3*i]*lightX + n[3*i+1]*lightY);
+                n_3 /= nei[neiCoef+2]; // treti vysledek
+
+
+                double newValue_z = n_1 + n_2 + n_3;
+                sum = 3;
+                for(int r = 0; r < neighbourSize; r++){ // budu projizdet rovnice neighbouru a vyjadrovat z nich n_1
+                    int u = index[4*i + r]; // index na neighboura
                     int uNeighbourSize = 0;
-                    while(index[(u/3)*4 ]+ uNeighbourSize != -1 && uNeighbourSize != 4) uNeighbourSize++;
-                    uNeighbourSize--;
+                    while(index[(u/3)*4 + uNeighbourSize] != -1 && uNeighbourSize != 3) uNeighbourSize++;
                     int uNeiCoef = 0;
                     if(uNeighbourSize == 2){
                         uNeiCoef = 3;
@@ -615,31 +674,37 @@ public class ShapeFromShading implements Algorithm {
                     }
                     double n_i = 0;
                     for(int ne=0; ne<uNeighbourSize;ne++){
-                        if(index[(u/3)*4]+ne == 3*i+2) continue;
-                        n_i += n[index[(u/3)*4]+ne]; // prvni pridavame prvky v zavorce s lambda
+                        if(index[(u/3)*4+ne] == 3*i) continue;
+                        n_i += n[index[(u/3)*4+ne]+2]; // prvni pridavame prvky v zavorce s lambda
                     }
                     n_i *= lm; // pridame lambda
-                    n_i = q*grayscale[u/3] - n[u]*nei[uNeiCoef];
-                    n_i -= (n[u+1]*nei[uNeiCoef + 1] + n[u+2]*nei[uNeiCoef + 2]);
+                    n_i += (q*grayscale[u/3] - n[u+2]*nei[uNeiCoef+2]);
+                    n_i -= (n[u]*lightX + n[u+1]*lightY);
                     n_i *= -1;
                     n_i /= lm; // vysledek z rovnice souseda
-                    newValue += n_i;
+                    newValue_z += n_i;
                     sum++;
                 }
-                newValue /= sum;
 
-                n[3*i+2] = newValue;
+                newValue_z /= sum;
+                n_1 = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+                n[3*i] = newValue_x/n_1;
+                n[3*i+1] = newValue_y/n_1;
+                n[3*i+2] = newValue_z/n_1;
+
+                //System.out.println(n[3*i]+" "+n[3*i+1]+" "+n[3*i+2]);
+
             }
         }
 
         //normalizace
-        double len;
+        /*double len;
         for(int i = 0; i< size; i++){
             len = Math.sqrt(n[3*i]*n[3*i]+n[3*i+1]*n[3*i+1]+n[3*i+2]*n[3*i+2]);
             n[3*i] = n[3*i]/len;
             n[3*i+1] = n[3*i+1]/len;
             n[3*i+2] = n[3*i+2]/len;
-        }
+        }*/
         //
         return n;
     }
@@ -655,7 +720,7 @@ public class ShapeFromShading implements Algorithm {
         for(int i = 0; i < markers.size(); i++){
             m = markers.get(i);
             valsA[i] = new double[]{m.getX(),m.getY(),m.getZ()};
-            valsB[i] = new double[]{(double)(grayscale[(int)((rows*m.getPosY())*collumns+collumns*m.getPosX()-1)]& 0xFF)};
+            valsB[i] = new double[]{(double)(grayscale[(int)((rows*m.getPosY())*collumns+collumns*m.getPosX())-1])};
         }
 
         Matrix A = new Matrix(valsA);
@@ -671,10 +736,10 @@ public class ShapeFromShading implements Algorithm {
         lightY=lightY/size;
         lightZ=lightZ/size;
 
-        lightX = 127.5*(lightX+1);
+        /*lightX = 127.5*(lightX+1);
         lightY = 127.5*(lightY+1);
-        lightZ = 127.5*(lightZ+1);
-        System.out.println((int)lightX+" "+(int)lightY+" "+(int)lightZ);
+        lightZ = 127.5*(lightZ+1);*/
+        System.out.println(lightX+" "+lightY+" "+lightZ);
 
     }
 
@@ -685,7 +750,7 @@ public class ShapeFromShading implements Algorithm {
      */
     private void getGrayscale(){
         int off; // offset in array
-        byte [] out;
+        double [] out;
 
 
         int i = 3;
@@ -716,16 +781,17 @@ public class ShapeFromShading implements Algorithm {
         }
         rows = Integer.parseInt(stb.toString());
         //System.out.println("collumns: "+collumns+" rows: "+rows);
-        out = new byte [collumns*rows];
+        out = new double [collumns*rows];
         off += 5;
         bodyStart = off;
         int val;
         for(i = 0; i < out.length; i++){
             val = (int)(0.2126*(fr[i*3 + off] & 0xFF) + 0.7152*(fr[i*3 + 1 + off] & 0xFF) + 0.0722*(fr[i*3 + 2 + off] & 0xFF));
+            //val = (int)(0.5*(fr[i*3 + off] & 0xFF) + 0.5*(fr[i*3 + 1 + off] & 0xFF) + 0.5*(fr[i*3 + 2 + off] & 0xFF));
             //val = (int)(((fr[i*3 + off] & 0xFF) + (fr[i*3 + 1 + off] & 0xFF) + (fr[i*3 + 2 + off] & 0xFF))/3);
             if(val < 0) val = 0;
             else if (val > 255) val = 255;
-            out[i] = (byte) val;
+            out[i] = ( (val/127.5)-1);
             //System.out.println(out[i]);
         }
         grayscale = out;
