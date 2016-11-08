@@ -66,11 +66,27 @@ public class ShapeFromShading implements Algorithm {
 
         //getDepthMap();
         double [] n = getHeightMap();
+        grayscale = null;
+
         for(int i = bodyStart; i< n.length ; i++){
             fr[i] = (byte)((n[i]+1)*127.5);
         }
-
+        finishDepths(relativeHeights());
+        //return fr;
         return fr;
+    }
+
+    private void finishDepths(byte[] rel) { // prepocteni relativnich vysek do height mapy a zapsani do fr
+
+    }
+
+    private byte [] relativeHeights(){
+        int size = collumns*rows;
+        byte [] relativeHeights = new byte [2*collumns*rows];
+        for(int i = 0; i < size; i++){
+
+        }
+        return relativeHeights;
     }
 
     public void write(byte [] picture, String path){
@@ -511,7 +527,8 @@ public class ShapeFromShading implements Algorithm {
         for(int g = 0; g < steps; g++){ // hlavni loop = pocet kroku gauss-siedela
             for(int i = 0; i <(size); i++){ // prochazim N, v tomto loop spocitam n_x, n_y a n_z pro g-tou iteraci gauss-saidela
                 neighbourSize = 0;
-                while(index[4*i + neighbourSize] != -1 && neighbourSize != 3) neighbourSize++;
+                while(index[4*i + neighbourSize] != -1 && neighbourSize != 4) neighbourSize++;
+                neighbourSize--;
                 double n_1 = 0;
                 double n_2 = 0;
                 double n_3 = 0;
@@ -553,7 +570,8 @@ public class ShapeFromShading implements Algorithm {
                 for(int r = 0; r < neighbourSize; r++){ // budu projizdet rovnice neighbouru a vyjadrovat z nich n_1
                     int u = index[4*i + r]; // index na neighboura
                     int uNeighbourSize = 0;
-                    while(index[(u/3)*4 + uNeighbourSize] != -1 && uNeighbourSize != 3) uNeighbourSize++;
+                    while(index[(u/3)*4 + uNeighbourSize] != -1 && uNeighbourSize != 4) uNeighbourSize++;
+                    uNeighbourSize--;
                     int uNeiCoef = 0;
                     if(uNeighbourSize == 2){
                         uNeiCoef = 3;
@@ -609,7 +627,8 @@ public class ShapeFromShading implements Algorithm {
                 for(int r = 0; r < neighbourSize; r++){ // budu projizdet rovnice neighbouru a vyjadrovat z nich n_1
                     int u = index[4*i + r]; // index na neighboura
                     int uNeighbourSize = 0;
-                    while(index[(u/3)*4 + uNeighbourSize] != -1 && uNeighbourSize != 3) uNeighbourSize++;
+                    while(index[(u/3)*4 + uNeighbourSize] != -1 && uNeighbourSize != 4) uNeighbourSize++;
+                    uNeighbourSize--;
                     int uNeiCoef = 0;
                     if(uNeighbourSize == 2){
                         uNeiCoef = 3;
@@ -665,7 +684,8 @@ public class ShapeFromShading implements Algorithm {
                 for(int r = 0; r < neighbourSize; r++){ // budu projizdet rovnice neighbouru a vyjadrovat z nich n_1
                     int u = index[4*i + r]; // index na neighboura
                     int uNeighbourSize = 0;
-                    while(index[(u/3)*4 + uNeighbourSize] != -1 && uNeighbourSize != 3) uNeighbourSize++;
+                    while(index[(u/3)*4 + uNeighbourSize] != -1 && uNeighbourSize != 4) uNeighbourSize++;
+                    uNeighbourSize--;
                     int uNeiCoef = 0;
                     if(uNeighbourSize == 2){
                         uNeiCoef = 3;
