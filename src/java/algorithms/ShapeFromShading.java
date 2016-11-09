@@ -7,9 +7,11 @@ import gui.session.LoadingScreen;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.MathContext;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.atomic.DoubleAccumulator;
 
 /**
  * Created by root on 5.11.16.
@@ -65,27 +67,130 @@ public class ShapeFromShading implements Algorithm {
         getLightSource(); // 3. step
 
         //getDepthMap();
-        double [] n = getHeightMap();
+        normalField = getHeightMap();
         grayscale = null;
 
-        for(int i = bodyStart; i< n.length ; i++){
+        /*for(int i = bodyStart; i< n.length ; i++){
             fr[i] = (byte)((n[i]+1)*127.5);
-        }
+        }*/
         finishDepths(relativeHeights());
         //return fr;
         return fr;
     }
 
-    private void finishDepths(byte[] rel) { // prepocteni relativnich vysek do height mapy a zapsani do fr
+    private void finishDepths(double[] rel) { // prepocteni relativnich vysek do height mapy a zapsani do fr
+        int size = collumns*rows;
+        double [] absolute = new double[size];
+        double min = Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
+        for(int i = size-2; i > (size-collumns-1); i--){ // posledni radek
+            absolute[i] = absolute[i+1] + rel[2*i];
+            if(absolute[i] < min){
+                min = absolute[i];
+            }
+            if(absolute[i] > max){
+                max = absolute[i];
+            }
+        }
+
+        for(int i = (size - collumns - 1); i >= collumns; i-= collumns){ // posledni sloupec
+            absolute[i] = absolute[i+collumns] + rel[2*i];
+            if(absolute[i] < min){
+                min = absolute[i];
+            }
+            if(absolute[i] > max){
+                max = absolute[i];
+            }
+        }
+
+        for(int i = (size-collumns-2); i >= 0; i--){ // absolutni vysky v doublech
+            absolute[i] = ((absolute[i+1] + rel[2*i]) + (absolute[i+collumns] + rel[2*i + 1]))/2;
+            if(absolute[i] < min){
+                min = absolute[i];
+            }
+            if(absolute[i] > max){
+                max = absolute[i];
+            }
+        }
+        double range = Math.abs(max) + Math.abs(min);
+        byte value;
+        min = Math.abs(min);
+        System.out.println("Range: "+range);
+        System.out.println("Min: -"+min);
+        System.out.println("Max: "+max);
+        System.out.println("double to byte:");
+        System.out.println((byte)((((absolute[1]+min)/range)*255)-127.5));
+        System.out.println(((((absolute[1]+min)/range)*255)-127.5));
+        for(int i = 0; i < size; i++){
+            value = (byte)((((absolute[i]+min)/range)*255)-127.5);
+            //System.out.println(value);
+            fr[3*i + bodyStart] = value;
+            fr[3*i + bodyStart + 1] = value;
+            fr[3*i + bodyStart + 2] = value;
+        }
 
     }
 
-    private byte [] relativeHeights(){
+    private double [] relativeHeights(){
         int size = collumns*rows;
-        byte [] relativeHeights = new byte [2*collumns*rows];
-        for(int i = 0; i < size; i++){
+        double [] relativeHeights = new double [2*collumns*rows];
+        double x_1,x_2,z_1,z_2,y_1,y_2;
+        double a,b;
+        double qij;
+        for(int i = (size-collumns-2); i >= 0; i--){ // stred
+            x_1 = normalField[3*i];
+            x_2 = normalField[3*i + 3];
+            z_1 = normalField[3*i + 2];
+            z_2 = normalField[3*i + 3 + 2];
+            a = Math.atan(z_1/x_1);
+            b = Math.atan(z_2/x_2);
+            if(a == b){
+                a = Math.toRadians(Math.toDegrees(a)-1);
+            }
+            qij = (Math.sin(b)-Math.sin(a))/(Math.cos(b)-Math.cos(a));
+            relativeHeights[2*i] = qij;
 
+            z_2 = normalField[3*i + collumns + 2];
+            y_1 = normalField[3*i + 1];
+            y_2 = normalField[3*i + collumns + 1];
+            a = Math.atan(z_1/y_1);
+            b = Math.atan(z_2/y_2);
+            if(a == b){
+                a = Math.toRadians(Math.toDegrees(a)-1);
+            }
+            qij = (Math.sin(b)-Math.sin(a))/(Math.cos(b)-Math.cos(a));
+
+            relativeHeights[2*i + 1] = qij;
         }
+        for(int i = size-2; i > (size-collumns-1); i--){ //spodni radka
+            x_1 = normalField[3*i];
+            x_2 = normalField[3*i + 3];
+            z_1 = normalField[3*i + 2];
+            z_2 = normalField[3*i + 3 + 2];
+            a = Math.atan(z_1/x_1);
+            b = Math.atan(z_2/x_2);
+            if(a == b){
+                a = Math.toRadians(Math.toDegrees(a)-1);
+            }
+            qij = (Math.sin(b)-Math.sin(a))/(Math.cos(b)-Math.cos(a));
+
+            relativeHeights[2*i] = qij;
+        }
+        for(int i = (size - collumns - 1); i >= collumns; i-= collumns){ //pravy sloupec
+            z_1 = normalField[3*i + 2];
+            z_2 = normalField[3*i + collumns + 2];
+            y_1 = normalField[3*i + 1];
+            y_2 = normalField[3*i + collumns + 1];
+            a = Math.atan(z_1/y_1);
+            b = Math.atan(z_2/y_2);
+            if(a == b){
+                a = Math.toRadians(Math.toDegrees(a)-1);
+            }
+            qij = (Math.sin(b)-Math.sin(a))/(Math.cos(b)-Math.cos(a));
+
+            relativeHeights[2*i] = qij;
+        }
+        normalField = null;
         return relativeHeights;
     }
 
@@ -707,6 +812,8 @@ public class ShapeFromShading implements Algorithm {
                 }
 
                 newValue_z /= sum;
+
+                // normalizace a prirazeni
                 n_1 = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
                 n[3*i] = newValue_x/n_1;
                 n[3*i+1] = newValue_y/n_1;
