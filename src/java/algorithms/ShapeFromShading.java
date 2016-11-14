@@ -1,17 +1,15 @@
 package algorithms;
 
 import Jama.Matrix;
-import gui.mark.Marker;
+import gui.sfs.Marker;
 import gui.session.LoadingScreen;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.math.MathContext;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.atomic.DoubleAccumulator;
 
 /**
  * Created by root on 5.11.16.
@@ -70,10 +68,10 @@ public class ShapeFromShading implements Algorithm {
         normalField = getHeightMap();
         grayscale = null;
 
-        /*for(int i = bodyStart; i< n.length ; i++){
-            fr[i] = (byte)((n[i]+1)*127.5);
-        }*/
-        finishDepths(relativeHeights());
+        for(int i = bodyStart; i< normalField.length ; i++){
+            fr[i] = (byte)((normalField[i]+1)*127.5);
+        }
+        //finishDepths(relativeHeights());
         //return fr;
         return fr;
     }
@@ -934,5 +932,13 @@ public class ShapeFromShading implements Algorithm {
     @Override
     public void setLoadingScreen(LoadingScreen loadingScreen) {
 
+    }
+
+    public void setAlbedo(double albedo) {
+        this.q = albedo;
+    }
+
+    public void setRegularization(double regularization) {
+        this.lm = regularization;
     }
 }

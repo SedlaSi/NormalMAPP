@@ -3,7 +3,7 @@ package gui.session;
 import algorithms.HeightMap;
 import algorithms.NormalMap;
 import algorithms.ShapeFromShading;
-import gui.mark.Marker;
+import gui.sfs.Marker;
 import image.Image;
 import org.im4java.core.ConvertCmd;
 import org.im4java.core.IMOperation;
@@ -174,7 +174,10 @@ public class ImageLoader extends JFrame{
         normalMap.setLoadingScreen(null);
     }
 
-    public void calculateHeightMap(java.util.List<Marker> markerList){
+    public void calculateHeightMap(java.util.List<Marker> markerList, int steps, double q, double lm){
+            shapeFromShading.setSteps(steps);
+            shapeFromShading.setAlbedo(q);
+            shapeFromShading.setRegularization(lm);
             shapeFromShading.setMarkers(markerList);
             shapeFromShading.setImage(sessionFolder + Session.SLASH + ORIGINAL_NAME);
             shapeFromShading.write(shapeFromShading.shapeFromShading(),sessionFolder + Session.SLASH + HEIGHT_NAME);

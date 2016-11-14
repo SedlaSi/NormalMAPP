@@ -1,7 +1,8 @@
 package gui;
 
-import gui.mark.EditMarkerScreen;
-import gui.mark.Marker;
+import gui.sfs.AlgorithmSettingsDialog;
+import gui.sfs.EditMarkerScreen;
+import gui.sfs.Marker;
 import gui.session.ImageLoader;
 import gui.session.Session;
 
@@ -167,7 +168,7 @@ public class MainScreen extends JFrame {
 
         markerList = new ArrayList<>(3);
 
-        originalMapImagePanel = new OriginalMapImagePanel(this);
+        originalMapImagePanel = new OriginalMapImagePanel();
         originalMapImagePanel.setMarkerList(markerList);
 
         originalMapImagePanel.addMouseWheelListener(e -> {
@@ -491,6 +492,10 @@ public class MainScreen extends JFrame {
 
     }
 
+    private JFrame getMainReference(){
+        return this;
+    }
+
     private class ThisMenuListener implements MenuListener{
 
         @Override
@@ -547,13 +552,11 @@ public class MainScreen extends JFrame {
 
     private class OriginalMapImagePanel  extends ImagePanel {
 
-        public OriginalMapImagePanel(JFrame mainFrameReference){
+        public OriginalMapImagePanel(){
             super();
-            this.mainFrameReference = mainFrameReference;
         }
 
         private int markerNumber = 0;
-        private JFrame mainFrameReference;
 
         public void addSquare(int x, int y){
             if(image != null) {
@@ -594,7 +597,7 @@ public class MainScreen extends JFrame {
                 /**
                  * ZDE SE POTOM SPUSTI OBRAZOVKA NA UPRAVU UDAJU x, y A name
                  */
-                EditMarkerScreen editMarkerScreen = new EditMarkerScreen(mainFrameReference,"",Dialog.ModalityType.DOCUMENT_MODAL);
+                EditMarkerScreen editMarkerScreen = new EditMarkerScreen(getMainReference(),"",Dialog.ModalityType.DOCUMENT_MODAL);
                 editMarkerScreen.setMarker(marker);
                 editMarkerScreen.startFrame();
 
@@ -985,6 +988,7 @@ public class MainScreen extends JFrame {
         java.util.List<Marker> markerList;
         JList<Marker> displayMarkerList;
         ButtonGroup buttonGroup;
+        AlgorithmSettingsDialog algorithmSettingsDialog;
 
         JToggleButton addMarkerButton, editMarkerButton, removeMarkerButton, activeButton;
 
@@ -1078,9 +1082,17 @@ public class MainScreen extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(e.getSource() == recalculateButton){
-                    if(!markerList.isEmpty() && markerList.size() >=3){
-                        imageLoader.calculateHeightMap(markerList);
-                        updateHeight(image.getHeightMap());
+                    if(!markerList.isEmpty() && markerList.size() >= 3){
+
+                        algorithmSettingsDialog = new AlgorithmSettingsDialog(getMainReference(),"", Dialog.ModalityType.DOCUMENT_MODAL);
+                        algorithmSettingsDialog.startFrame();
+                        System.out.println(algorithmSettingsDialog.steps);
+                        System.out.println(algorithmSettingsDialog.q);
+                        System.out.println(algorithmSettingsDialog.lm);
+                        if(algorithmSettingsDialog.steps != -1) {
+                            imageLoader.calculateHeightMap(markerList, algorithmSettingsDialog.steps, algorithmSettingsDialog.q, algorithmSettingsDialog.lm);
+                            updateHeight(image.getHeightMap());
+                        }
                     }
                 }
             }

@@ -1,4 +1,4 @@
-package gui.mark;
+package gui.sfs;
 
 import java.awt.*;
 

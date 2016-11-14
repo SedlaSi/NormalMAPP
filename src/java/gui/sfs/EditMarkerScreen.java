@@ -1,13 +1,10 @@
-package gui.mark;
+package gui.sfs;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
@@ -100,7 +97,7 @@ public class EditMarkerScreen extends JDialog {
                     marker.setName(nameArea.getText());
                 }
                 //  Vypocteni x y a z pro marker
-                int angle = angleSlider.getValue() + 90;
+                int angle = angleSlider.getValue();
                 double x =(Math.cos(angle)*Math.sin(directionSlider.getValue()));
                 double y =(Math.cos(angle)*Math.cos(directionSlider.getValue()));
                 double z = (Math.sin(angle));

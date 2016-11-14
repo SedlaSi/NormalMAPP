@@ -1,6 +1,6 @@
 package gui;
 
-import gui.mark.Marker;
+import gui.sfs.Marker;
 
 import javax.swing.*;
 import java.awt.*;
