@@ -459,7 +459,7 @@ public class MainScreen extends JFrame {
         });
 
         // TEST SEGMENT
-        /*image = imageLoader.testloadImage();
+        image = imageLoader.testloadImage();
         if(image != null){
             updateImagePanels(); // uvodni obrazek po nacteni
             //imagePanel.setActiveLayer(Layer.normalMap);
@@ -479,7 +479,7 @@ public class MainScreen extends JFrame {
         markerList.add(m1);
         markerList.add(m2);
         markerList.add(m3);
-        markerList.add(m4);*/
+        markerList.add(m4);
 
         //======================
         setVisible(true);

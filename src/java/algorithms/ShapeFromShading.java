@@ -16,9 +16,9 @@ import java.util.List;
  */
 public class ShapeFromShading implements Algorithm {
 
-    private final static double ROUND_ANGLE = 2d;
-    private final static double FLAT_ANGLE = 5d;
-    private final static double MAX_RELATIVE_HEIGHT = 2d;
+    private final static double ROUND_ANGLE = 2.0;
+    private final static double FLAT_ANGLE = 2.0;
+    private final static double MAX_RELATIVE_HEIGHT = 0.2;
     private int collumns;
     private int rows;
     private byte [] fr;
@@ -70,16 +70,22 @@ public class ShapeFromShading implements Algorithm {
         //getDepthMap();
         normalField = getHeightMap();
         grayscale = null;
-        double [] rel = relativeHeights();
+
+        // VYPISOVANI RELATIVNICH VYSEK
+        /*double [] rel = relativeHeights();
         for(int i = bodyStart; i< rel.length-1 ; i+=2){
-            fr[(i/2)*3] = (byte)((rel[i]+1)*127.5);
-            fr[(i/2)*3+1] = (byte)((rel[i]+1)*127.5);
-            fr[(i/2)*3+2] = (byte)((rel[i]+1)*127.5);
-        }
+            fr[(i/2)*3] = (byte)((rel[i+1])*255);
+            fr[(i/2)*3+1] = (byte)((rel[i+1])*255);
+            fr[(i/2)*3+2] = (byte)((rel[i+1])*255);
+        }*/
+
+        // VYPISOVANI PLOCHYCH NORMAL
         /*for(int i = bodyStart; i< normalField.length ; i++){
             fr[i] = (byte)((normalField[i]+1)*127.5);
         }*/
-        //finishDepths(relativeHeights());
+
+        // VYPISOVANI VYSKOVE MAPY
+        finishDepths(relativeHeights());
         //return fr;
         return fr;
     }
@@ -89,6 +95,19 @@ public class ShapeFromShading implements Algorithm {
         double [] absolute = new double[size];
         double min = Double.MAX_VALUE;
         double max = Double.MIN_VALUE;
+        double avg = 0;
+        double rel_max = Double.MIN_VALUE;
+        double rel_min = Double.MAX_VALUE;
+        for(int i = 0; i < rel.length; i++){
+            avg += rel[i];
+            if(rel[i] > rel_max) rel_max = rel[i];
+            if(rel[i] < rel_min) rel_min = rel[i];
+        }
+        System.out.println("average rel height: "+avg/rel.length);
+        System.out.println("REL MAX: "+rel_max);
+        System.out.println("REL MIN: "+rel_min);
+        //-0.05630200696272626
+        absolute[size-1] = 0;
         for(int i = size-2; i > (size-collumns-1); i--){ // posledni radek
             absolute[i] = absolute[i+1] + rel[2*i];
             if(absolute[i] < min){
@@ -108,14 +127,18 @@ public class ShapeFromShading implements Algorithm {
                 max = absolute[i];
             }
         }
+        // absolutni vysky v doublech
+        for(int i = (size-collumns-2); i >= 0; i-=collumns){ //radky
+            for(int j = 0 ; j <= collumns-2; j++){ // bunky v radcich
+                absolute[i-j] = ((absolute[i-j+1] + rel[2*(i-j)]) + (absolute[i-j+collumns] + rel[2*(i-j) + 1]))/2;
+                //absolute[i-j] = (absolute[i-j+1] + rel[2*(i-j)]);
 
-        for(int i = (size-collumns-2); i >= 0; i--){ // absolutni vysky v doublech
-            absolute[i] = ((absolute[i+1] + rel[2*i]) + (absolute[i+collumns] + rel[2*i + 1]))/2;
-            if(absolute[i] < min){
-                min = absolute[i];
-            }
-            if(absolute[i] > max){
-                max = absolute[i];
+                if(absolute[i-j] < min){
+                    min = absolute[i-j];
+                }
+                if(absolute[i-j] > max){
+                    max = absolute[i-j];
+                }
             }
         }
         double range = Math.abs(max) + Math.abs(min);
@@ -125,7 +148,8 @@ public class ShapeFromShading implements Algorithm {
         System.out.println("Min: -"+min);
         System.out.println("Max: "+max);
         for(int i = 0; i < size; i++){
-            value = (byte)((((absolute[i]+min)/range)*255)-127.5);
+            //value = (byte)((((absolute[i]+min)/range)*255)-127.5);
+            value = (byte)((((absolute[i]+min)/range))*255);
             //System.out.println(value);
             fr[3*i + bodyStart] = value;
             fr[3*i + bodyStart + 1] = value;
@@ -172,8 +196,8 @@ public class ShapeFromShading implements Algorithm {
                 A = (b/a)*c + d;
                 B = c - (b/a)*d;
 
-                h_1 = B/A + Math.sqrt(B*B + A*A)/A;
-                h_2 = B/A - Math.sqrt(B*B + A*A)/A;
+                h_1 = B/(-A) + Math.sqrt(B*B + A*A)/(-A);
+                h_2 = B/(-A) - Math.sqrt(B*B + A*A)/(-A);
 
                 beta = (h_1 - (b/a)) / ((b/a)*c - d);
                 alpha = (beta*c + 1) / a;
@@ -186,7 +210,11 @@ public class ShapeFromShading implements Algorithm {
 
             }
             // ========
-
+            if(qij < -1*MAX_RELATIVE_HEIGHT){
+                qij = -1*MAX_RELATIVE_HEIGHT;
+            } else if(qij > MAX_RELATIVE_HEIGHT){
+                qij = MAX_RELATIVE_HEIGHT;
+            }
             relativeHeights[2*i] = qij;
 
             z_2 = normalField[3*i + 3*collumns + 2];
@@ -219,8 +247,8 @@ public class ShapeFromShading implements Algorithm {
                 A = (b/a)*c + d;
                 B = c - (b/a)*d;
 
-                h_1 = B/A + Math.sqrt(B*B + A*A)/A;
-                h_2 = B/A - Math.sqrt(B*B + A*A)/A;
+                h_1 = B/(-A) + Math.sqrt(B*B + A*A)/(-A);
+                h_2 = B/(-A) - Math.sqrt(B*B + A*A)/(-A);
 
                 beta = (h_1 - (b/a)) / ((b/a)*c - d);
                 alpha = (beta*c + 1) / a;
@@ -233,7 +261,11 @@ public class ShapeFromShading implements Algorithm {
 
             }
             // =========
-
+            if(qij < -1*MAX_RELATIVE_HEIGHT){
+                qij = -1*MAX_RELATIVE_HEIGHT;
+            } else if(qij > MAX_RELATIVE_HEIGHT){
+                qij = MAX_RELATIVE_HEIGHT;
+            }
             relativeHeights[2*i + 1] = qij;
         }
         for(int i = size-2; i > (size-collumns-1); i--){ //spodni radka
@@ -268,8 +300,8 @@ public class ShapeFromShading implements Algorithm {
                 A = (b/a)*c + d;
                 B = c - (b/a)*d;
 
-                h_1 = B/A + Math.sqrt(B*B + A*A)/A;
-                h_2 = B/A - Math.sqrt(B*B + A*A)/A;
+                h_1 = B/(-A) + Math.sqrt(B*B + A*A)/(-A);
+                h_2 = B/(-A) - Math.sqrt(B*B + A*A)/(-A);
 
                 beta = (h_1 - (b/a)) / ((b/a)*c - d);
                 alpha = (beta*c + 1) / a;
@@ -282,7 +314,11 @@ public class ShapeFromShading implements Algorithm {
 
             }
             // =========
-
+            if(qij < -1*MAX_RELATIVE_HEIGHT){
+                qij = -1*MAX_RELATIVE_HEIGHT;
+            } else if(qij > MAX_RELATIVE_HEIGHT){
+                qij = MAX_RELATIVE_HEIGHT;
+            }
             relativeHeights[2*i] = qij;
         }
         for(int i = (size - collumns - 1); i >= collumns; i-= collumns){ //pravy sloupec
@@ -316,8 +352,8 @@ public class ShapeFromShading implements Algorithm {
                 A = (b/a)*c + d;
                 B = c - (b/a)*d;
 
-                h_1 = B/A + Math.sqrt(B*B + A*A)/A;
-                h_2 = B/A - Math.sqrt(B*B + A*A)/A;
+                h_1 = B/(-A) + Math.sqrt(B*B + A*A)/(-A);
+                h_2 = B/(-A) - Math.sqrt(B*B + A*A)/(-A);
 
                 beta = (h_1 - (b/a)) / ((b/a)*c - d);
                 alpha = (beta*c + 1) / a;
@@ -330,10 +366,33 @@ public class ShapeFromShading implements Algorithm {
 
             }
             // =========
-
+            if(qij < -1*MAX_RELATIVE_HEIGHT){
+                qij = -1*MAX_RELATIVE_HEIGHT;
+            } else if(qij > MAX_RELATIVE_HEIGHT){
+                qij = MAX_RELATIVE_HEIGHT;
+            }
             relativeHeights[2*i] = qij;
         }
         normalField = null;
+
+        // normalizace
+        double range;
+        double min = Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
+        for(int i = 0; i < relativeHeights.length; i++ ){
+            if(relativeHeights[i] < min){
+                min = relativeHeights[i];
+            }
+            if(relativeHeights[i] > max){
+                max = relativeHeights[i];
+            }
+        }
+        min = Math.abs(min);
+        range = min + Math.abs(max);
+        for(int i = 0; i < relativeHeights.length; i++ ){
+            relativeHeights[i] = (relativeHeights[i]+min)/range;
+        }
+
         return relativeHeights;
     }
 
