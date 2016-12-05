@@ -458,6 +458,30 @@ public class MainScreen extends JFrame {
             }
         });
 
+        // TEST SEGMENT
+        /*image = imageLoader.testloadImage();
+        if(image != null){
+            updateImagePanels(); // uvodni obrazek po nacteni
+            //imagePanel.setActiveLayer(Layer.normalMap);
+        }
+        Rectangle r1 = new Rectangle(449,216,20,20);
+        Rectangle r2 = new Rectangle(581,101,20,20);
+        Rectangle r3 = new Rectangle(655,365,20,20);
+        Rectangle r4 = new Rectangle(396,554,20,20);
+        Marker m1 = new Marker("15# Marker",84, 98, 243, 0.601, 0.5170511534603811);
+        Marker m2 = new Marker("16# Marker",56, 131, 21, 0.665, 0.32029421598127716);
+        Marker m3 = new Marker("18# Marker",212, 60, 61, 0.713, 0.567703109327984);
+        Marker m4 = new Marker("19# Marker",92, 236, 183, 0.454, 0.757271815446339);
+        m1.setSquare(r1);
+        m2.setSquare(r2);
+        m3.setSquare(r3);
+        m4.setSquare(r4);
+        markerList.add(m1);
+        markerList.add(m2);
+        markerList.add(m3);
+        markerList.add(m4);*/
+
+        //======================
         setVisible(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -605,6 +629,22 @@ public class MainScreen extends JFrame {
                     return;
                 }
                 markerNumber++;
+                // marker info
+                System.out.println("marker:");
+                System.out.println(marker.getName());
+                System.out.println("X: "+marker.getX());
+                System.out.println("Y: "+marker.getY());
+                System.out.println("Z: "+marker.getZ());
+                System.out.println("PosX: "+marker.getPosX());
+                System.out.println("PosY: "+marker.getPosY());
+                System.out.println();
+                System.out.println("rectangle:");
+                System.out.println("x: "+x);
+                System.out.println("y: "+y);
+                System.out.println("size: "+squareSize);
+                System.out.println("=============================");
+                // marker info
+
                 markerList.add(marker);
 
             }
@@ -1086,9 +1126,9 @@ public class MainScreen extends JFrame {
 
                         algorithmSettingsDialog = new AlgorithmSettingsDialog(getMainReference(),"", Dialog.ModalityType.DOCUMENT_MODAL);
                         algorithmSettingsDialog.startFrame();
-                        System.out.println(algorithmSettingsDialog.steps);
+                        /*System.out.println(algorithmSettingsDialog.steps);
                         System.out.println(algorithmSettingsDialog.q);
-                        System.out.println(algorithmSettingsDialog.lm);
+                        System.out.println(algorithmSettingsDialog.lm);*/
                         if(algorithmSettingsDialog.steps != -1) {
                             imageLoader.calculateHeightMap(markerList, algorithmSettingsDialog.steps, algorithmSettingsDialog.q, algorithmSettingsDialog.lm);
                             updateHeight(image.getHeightMap());

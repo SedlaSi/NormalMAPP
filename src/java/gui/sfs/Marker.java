@@ -18,7 +18,7 @@ public class Marker {
 
     private String name;
 
-    public Marker(String name,int x, int y, int z, int posX, int posY){
+    public Marker(String name,int x, int y, int z, double posX, double posY){
         this.name = name;
         this.x = x;
         this.y = y;

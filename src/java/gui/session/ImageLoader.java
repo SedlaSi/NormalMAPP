@@ -109,6 +109,41 @@ public class ImageLoader extends JFrame{
         return image;
     }
 
+    public Image testloadImage(){
+
+        File file = new File("/home/sedlasi1/Desktop/obrazky/coin.jpg");
+
+        String newImagePath = sessionFolder + Session.SLASH + ORIGINAL_NAME;
+        try {
+            // Use IM
+            IMOperation op = new IMOperation();
+            // Pipe
+            op.addImage(file.getAbsolutePath());
+            op.addImage("ppm:"+newImagePath);
+            // CC command
+            ConvertCmd convert = new ConvertCmd(true);
+            // Run
+            convert.run(op);
+            //System.out.println("converted");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        image = null;
+        try {
+            File imageFile = new File(newImagePath);
+            BufferedImage imData = ImageIO.read(imageFile);
+            image = new Image(imageFile,imData);
+            /*while(!normalFile.exists()){
+
+            }*/
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return image;
+    }
+
     public Image loadHeightMap(){
 
         int ret = fileChooser.showOpenDialog(ImageLoader.this);

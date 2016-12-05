@@ -16,6 +16,9 @@ import java.util.List;
  */
 public class ShapeFromShading implements Algorithm {
 
+    private final static double ROUND_ANGLE = 2d;
+    private final static double FLAT_ANGLE = 5d;
+    private final static double MAX_RELATIVE_HEIGHT = 2d;
     private int collumns;
     private int rows;
     private byte [] fr;
@@ -67,10 +70,15 @@ public class ShapeFromShading implements Algorithm {
         //getDepthMap();
         normalField = getHeightMap();
         grayscale = null;
-
-        for(int i = bodyStart; i< normalField.length ; i++){
-            fr[i] = (byte)((normalField[i]+1)*127.5);
+        double [] rel = relativeHeights();
+        for(int i = bodyStart; i< rel.length-1 ; i+=2){
+            fr[(i/2)*3] = (byte)((rel[i]+1)*127.5);
+            fr[(i/2)*3+1] = (byte)((rel[i]+1)*127.5);
+            fr[(i/2)*3+2] = (byte)((rel[i]+1)*127.5);
         }
+        /*for(int i = bodyStart; i< normalField.length ; i++){
+            fr[i] = (byte)((normalField[i]+1)*127.5);
+        }*/
         //finishDepths(relativeHeights());
         //return fr;
         return fr;
@@ -116,9 +124,6 @@ public class ShapeFromShading implements Algorithm {
         System.out.println("Range: "+range);
         System.out.println("Min: -"+min);
         System.out.println("Max: "+max);
-        System.out.println("double to byte:");
-        System.out.println((byte)((((absolute[1]+min)/range)*255)-127.5));
-        System.out.println(((((absolute[1]+min)/range)*255)-127.5));
         for(int i = 0; i < size; i++){
             value = (byte)((((absolute[i]+min)/range)*255)-127.5);
             //System.out.println(value);
@@ -133,30 +138,101 @@ public class ShapeFromShading implements Algorithm {
         int size = collumns*rows;
         double [] relativeHeights = new double [2*collumns*rows];
         double x_1,x_2,z_1,z_2,y_1,y_2;
-        double a,b;
+        double a,b,c,d;
         double qij;
+        double A,B,h_1,h_2,beta,alpha;
         for(int i = (size-collumns-2); i >= 0; i--){ // stred
             x_1 = normalField[3*i];
             x_2 = normalField[3*i + 3];
             z_1 = normalField[3*i + 2];
             z_2 = normalField[3*i + 3 + 2];
-            a = Math.atan(z_1/x_1);
-            b = Math.atan(z_2/x_2);
-            if(a == b){
-                a = Math.toRadians(Math.toDegrees(a)-1);
+            // Rovnice pro (x_1,z_1)  a (x_2,z_2)
+            a = x_1;
+            b = z_1;
+            c = x_2;
+            d = z_2;
+            // uhly vektoru
+            alpha = Math.atan(b/a);
+            alpha = Math.toDegrees(alpha);
+            if(alpha < 0){
+                alpha += 180d;
             }
-            qij = (Math.sin(b)-Math.sin(a))/(Math.cos(b)-Math.cos(a));
+            beta = Math.atan(d/c);
+            beta = Math.toDegrees(beta);
+            if(beta < 0){
+                beta += 180d;
+            }
+            if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
+                if((180-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
+                    qij = MAX_RELATIVE_HEIGHT;
+                } else { // prolozime primku
+                    qij = -(b/a);
+                }
+            } else { // mame rozdilne uhly -> kruznice
+                A = (b/a)*c + d;
+                B = c - (b/a)*d;
+
+                h_1 = B/A + Math.sqrt(B*B + A*A)/A;
+                h_2 = B/A - Math.sqrt(B*B + A*A)/A;
+
+                beta = (h_1 - (b/a)) / ((b/a)*c - d);
+                alpha = (beta*c + 1) / a;
+
+                if(beta*alpha > 0){
+                    qij = h_1;
+                } else {
+                    qij = h_2;
+                }
+
+            }
+            // ========
+
             relativeHeights[2*i] = qij;
 
-            z_2 = normalField[3*i + collumns + 2];
+            z_2 = normalField[3*i + 3*collumns + 2];
             y_1 = normalField[3*i + 1];
-            y_2 = normalField[3*i + collumns + 1];
-            a = Math.atan(z_1/y_1);
-            b = Math.atan(z_2/y_2);
-            if(a == b){
-                a = Math.toRadians(Math.toDegrees(a)-1);
+            y_2 = normalField[3*i + 3*collumns + 1];
+
+            // Rovnice pro (y_1,z_1)  a (y_2,z_2)
+            a = y_1;
+            b = z_1;
+            c = y_2;
+            d = z_2;
+            // uhly vektoru
+            alpha = Math.atan(b/a);
+            alpha = Math.toDegrees(alpha);
+            if(alpha < 0){
+                alpha += 180d;
             }
-            qij = (Math.sin(b)-Math.sin(a))/(Math.cos(b)-Math.cos(a));
+            beta = Math.atan(d/c);
+            beta = Math.toDegrees(beta);
+            if(beta < 0){
+                beta += 180d;
+            }
+            if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
+                if((180-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
+                    qij = MAX_RELATIVE_HEIGHT;
+                } else { // prolozime primku
+                    qij = -(b/a);
+                }
+            } else { // mame rozdilne uhly -> kruznice
+                A = (b/a)*c + d;
+                B = c - (b/a)*d;
+
+                h_1 = B/A + Math.sqrt(B*B + A*A)/A;
+                h_2 = B/A - Math.sqrt(B*B + A*A)/A;
+
+                beta = (h_1 - (b/a)) / ((b/a)*c - d);
+                alpha = (beta*c + 1) / a;
+
+                if(beta*alpha > 0){
+                    qij = h_1;
+                } else {
+                    qij = h_2;
+                }
+
+            }
+            // =========
 
             relativeHeights[2*i + 1] = qij;
         }
@@ -165,26 +241,95 @@ public class ShapeFromShading implements Algorithm {
             x_2 = normalField[3*i + 3];
             z_1 = normalField[3*i + 2];
             z_2 = normalField[3*i + 3 + 2];
-            a = Math.atan(z_1/x_1);
-            b = Math.atan(z_2/x_2);
-            if(a == b){
-                a = Math.toRadians(Math.toDegrees(a)-1);
+
+            // Rovnice pro (x_1,z_1)  a (x_2,z_2)
+            a = x_1;
+            b = z_1;
+            c = x_2;
+            d = z_2;
+            // uhly vektoru
+            alpha = Math.atan(b/a);
+            alpha = Math.toDegrees(alpha);
+            if(alpha < 0){
+                alpha += 180d;
             }
-            qij = (Math.sin(b)-Math.sin(a))/(Math.cos(b)-Math.cos(a));
+            beta = Math.atan(d/c);
+            beta = Math.toDegrees(beta);
+            if(beta < 0){
+                beta += 180d;
+            }
+            if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
+                if((180-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
+                    qij = MAX_RELATIVE_HEIGHT;
+                } else { // prolozime primku
+                    qij = -(b/a);
+                }
+            } else { // mame rozdilne uhly -> kruznice
+                A = (b/a)*c + d;
+                B = c - (b/a)*d;
+
+                h_1 = B/A + Math.sqrt(B*B + A*A)/A;
+                h_2 = B/A - Math.sqrt(B*B + A*A)/A;
+
+                beta = (h_1 - (b/a)) / ((b/a)*c - d);
+                alpha = (beta*c + 1) / a;
+
+                if(beta*alpha > 0){
+                    qij = h_1;
+                } else {
+                    qij = h_2;
+                }
+
+            }
+            // =========
 
             relativeHeights[2*i] = qij;
         }
         for(int i = (size - collumns - 1); i >= collumns; i-= collumns){ //pravy sloupec
             z_1 = normalField[3*i + 2];
-            z_2 = normalField[3*i + collumns + 2];
+            z_2 = normalField[3*i + 3*collumns + 2];
             y_1 = normalField[3*i + 1];
-            y_2 = normalField[3*i + collumns + 1];
-            a = Math.atan(z_1/y_1);
-            b = Math.atan(z_2/y_2);
-            if(a == b){
-                a = Math.toRadians(Math.toDegrees(a)-1);
+            y_2 = normalField[3*i + 3*collumns + 1];
+            // Rovnice pro (y_1,z_1)  a (y_2,z_2)
+            a = y_1;
+            b = z_1;
+            c = y_2;
+            d = z_2;
+            // uhly vektoru
+            alpha = Math.atan(b/a);
+            alpha = Math.toDegrees(alpha);
+            if(alpha < 0){
+                alpha += 180d;
             }
-            qij = (Math.sin(b)-Math.sin(a))/(Math.cos(b)-Math.cos(a));
+            beta = Math.atan(d/c);
+            beta = Math.toDegrees(beta);
+            if(beta < 0){
+                beta += 180d;
+            }
+            if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
+                if((180-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
+                    qij = MAX_RELATIVE_HEIGHT;
+                } else { // prolozime primku
+                    qij = -(b/a);
+                }
+            } else { // mame rozdilne uhly -> kruznice
+                A = (b/a)*c + d;
+                B = c - (b/a)*d;
+
+                h_1 = B/A + Math.sqrt(B*B + A*A)/A;
+                h_2 = B/A - Math.sqrt(B*B + A*A)/A;
+
+                beta = (h_1 - (b/a)) / ((b/a)*c - d);
+                alpha = (beta*c + 1) / a;
+
+                if(beta*alpha > 0){
+                    qij = h_1;
+                } else {
+                    qij = h_2;
+                }
+
+            }
+            // =========
 
             relativeHeights[2*i] = qij;
         }
@@ -852,9 +997,9 @@ public class ShapeFromShading implements Algorithm {
         Matrix b = new Matrix(valsB);
         Matrix x = A.solve(b);
 
-        lightX = x.get(0,0);
-        lightY = x.get(1,0);
-        lightZ = x.get(2,0);
+        lightX = x.get(0,0)/q;
+        lightY = x.get(1,0)/q;
+        lightZ = x.get(2,0)/q;
 
         double size = Math.sqrt((lightX*lightX)+lightY*lightY+lightZ*lightZ);
         lightX=lightX/size;
@@ -864,7 +1009,7 @@ public class ShapeFromShading implements Algorithm {
         /*lightX = 127.5*(lightX+1);
         lightY = 127.5*(lightY+1);
         lightZ = 127.5*(lightZ+1);*/
-        System.out.println(lightX+" "+lightY+" "+lightZ);
+        //System.out.println(lightX+" "+lightY+" "+lightZ);
 
     }
 
