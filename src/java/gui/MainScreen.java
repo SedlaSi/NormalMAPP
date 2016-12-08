@@ -464,7 +464,8 @@ public class MainScreen extends JFrame {
             updateImagePanels(); // uvodni obrazek po nacteni
             //imagePanel.setActiveLayer(Layer.normalMap);
         }
-        Rectangle r1 = new Rectangle(449,216,20,20);
+        // ====== COIN ============
+        /*Rectangle r1 = new Rectangle(449,216,20,20);
         Rectangle r2 = new Rectangle(581,101,20,20);
         Rectangle r3 = new Rectangle(655,365,20,20);
         Rectangle r4 = new Rectangle(396,554,20,20);
@@ -479,7 +480,22 @@ public class MainScreen extends JFrame {
         markerList.add(m1);
         markerList.add(m2);
         markerList.add(m3);
-        markerList.add(m4);
+        markerList.add(m4);*/
+
+        // ======== BALL_02 ============
+        Rectangle r1 = new Rectangle(352,335,20,20);
+        Rectangle r2 = new Rectangle(767,344,20,20);
+        Rectangle r3 = new Rectangle(577,187,20,20);
+        Marker m1 = new Marker("15# Marker",127, 194, 235, 0.12037037037037036, 0.48333333333333334);
+        Marker m2 = new Marker("16# Marker",73, 87, 235, 0.8351851851851851, 0.5);
+        Marker m3 = new Marker("18# Marker",185, 161, 235, 0.48333333333333334, 0.20925925925925926);
+        m1.setSquare(r1);
+        m2.setSquare(r2);
+        m3.setSquare(r3);
+        markerList.add(m1);
+        markerList.add(m2);
+        markerList.add(m3);
+
 
         //======================
         setVisible(true);

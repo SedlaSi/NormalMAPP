@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.DoubleSummaryStatistics;
 import java.util.List;
 
 /**
@@ -17,8 +18,10 @@ import java.util.List;
 public class ShapeFromShading implements Algorithm {
 
     private final static double ROUND_ANGLE = 2.0;
-    private final static double FLAT_ANGLE = 2.0;
-    private final static double MAX_RELATIVE_HEIGHT = 0.2;
+    private final static double FLAT_ANGLE = 10.0;
+    //private final static double FLAT_ANGLE = 0;
+    private final static double MAX_RELATIVE_HEIGHT = 20.0;
+    //private final static double MAX_RELATIVE_HEIGHT = Double.MAX_VALUE;
     private int collumns;
     private int rows;
     private byte [] fr;
@@ -35,7 +38,6 @@ public class ShapeFromShading implements Algorithm {
     private double [] normalField;
 
     public ShapeFromShading(){
-
     }
 
     public void setImage(String path){
@@ -47,8 +49,6 @@ public class ShapeFromShading implements Algorithm {
         }
 
     }
-
-
 
     public void setSteps(int steps){
         this.steps = steps;
@@ -81,21 +81,28 @@ public class ShapeFromShading implements Algorithm {
 
         // VYPISOVANI PLOCHYCH NORMAL
         /*for(int i = bodyStart; i< normalField.length ; i++){
-            fr[i] = (byte)((normalField[i]+1)*127.5);
+            //fr[i] = (byte)((normalField[i]+1)*127.5);
+            fr[i] = (byte)((normalField[i])*255);
         }*/
 
         // VYPISOVANI VYSKOVE MAPY
-        finishDepths(relativeHeights());
+        //finishDepths(relativeHeights());
+        absoluteHeights(relativeHeights());
         //return fr;
         return fr;
     }
 
+    // nepouziva se
     private void finishDepths(double[] rel) { // prepocteni relativnich vysek do height mapy a zapsani do fr
         int size = collumns*rows;
         double [] absolute = new double[size];
+        double [] absoluteInv = new double[size];
+        double [] absoluteOrto = new double[size];
         double min = Double.MAX_VALUE;
         double max = Double.MIN_VALUE;
-        double avg = 0;
+        double minInv = Double.MAX_VALUE;
+        double maxInv = Double.MIN_VALUE;
+        /*double avg = 0;
         double rel_max = Double.MIN_VALUE;
         double rel_min = Double.MAX_VALUE;
         for(int i = 0; i < rel.length; i++){
@@ -105,8 +112,8 @@ public class ShapeFromShading implements Algorithm {
         }
         System.out.println("average rel height: "+avg/rel.length);
         System.out.println("REL MAX: "+rel_max);
-        System.out.println("REL MIN: "+rel_min);
-        //-0.05630200696272626
+        System.out.println("REL MIN: "+rel_min);*/
+
         absolute[size-1] = 0;
         for(int i = size-2; i > (size-collumns-1); i--){ // posledni radek
             absolute[i] = absolute[i+1] + rel[2*i];
@@ -118,6 +125,28 @@ public class ShapeFromShading implements Algorithm {
             }
         }
 
+        absoluteInv[0] = 0;
+        for(int i = 1; i < collumns-1; i++){ // prvni radek INV
+            absoluteInv[i] = absoluteInv[i-1] + rel[2*(i-1)];
+            if(absoluteInv[i] < minInv){
+                minInv = absoluteInv[i];
+            }
+            if(absoluteInv[i] > maxInv){
+                maxInv = absoluteInv[i];
+            }
+        }
+
+        absoluteOrto[size-collumns] = 0;
+        for(int i = (size-collumns+1); i < size; i++){ // posledni radek ORTO
+            absoluteOrto[i] = absoluteOrto[i-1] + rel[2*(i-1)];
+            /*if(absoluteOrto[i] < min){
+                min = absoluteOrto[i];
+            }
+            if(absoluteOrto[i] > max){
+                max = absoluteOrto[i];
+            }*/
+        }
+
         for(int i = (size - collumns - 1); i >= collumns; i-= collumns){ // posledni sloupec
             absolute[i] = absolute[i+collumns] + rel[2*i];
             if(absolute[i] < min){
@@ -127,12 +156,32 @@ public class ShapeFromShading implements Algorithm {
                 max = absolute[i];
             }
         }
+
+        for(int i = collumns; i <= size-collumns; i+= collumns){ // prvni sloupec INV
+            absoluteInv[i] = absoluteInv[i-collumns] + rel[2*(i-collumns+1)];
+            if(absoluteInv[i] < minInv){
+                minInv = absoluteInv[i];
+            }
+            if(absoluteInv[i] > maxInv){
+                maxInv = absoluteInv[i];
+            }
+        }
+
+        for(int i = size-2*collumns; i >= 0; i-= collumns){ // prvni sloupec ORTO
+            absoluteOrto[i] = absoluteOrto[i+collumns] + rel[2*(i+collumns+1)];
+            /*if(absoluteOrto[i] < minInv){
+                minInv = absoluteOrto[i];
+            }
+            if(absoluteOrto[i] > maxInv){
+                maxInv = absoluteOrto[i];
+            }*/
+        }
+
         // absolutni vysky v doublech
         for(int i = (size-collumns-2); i >= 0; i-=collumns){ //radky
             for(int j = 0 ; j <= collumns-2; j++){ // bunky v radcich
                 absolute[i-j] = ((absolute[i-j+1] + rel[2*(i-j)]) + (absolute[i-j+collumns] + rel[2*(i-j) + 1]))/2;
                 //absolute[i-j] = (absolute[i-j+1] + rel[2*(i-j)]);
-
                 if(absolute[i-j] < min){
                     min = absolute[i-j];
                 }
@@ -141,15 +190,166 @@ public class ShapeFromShading implements Algorithm {
                 }
             }
         }
+
+        for(int i = collumns + 1; i < size-collumns+1; i+=collumns){ //radky INV
+            for(int j = 0 ; j < collumns-1; j++){ // bunky v radcich INV
+                absoluteInv[i+j] = ((absoluteInv[i+j-1] + rel[2*(i+j-1)]) + (absoluteInv[i+j-collumns] + rel[2*(i+j-collumns) + 1]))/2;
+                //absoluteInv[i+j] = (absoluteInv[i+j-1] - rel[2*(i+j-1)]);
+                if(absoluteInv[i+j] < minInv){
+                    minInv = absoluteInv[i+j];
+                }
+                if(absoluteInv[i+j] > maxInv){
+                    maxInv = absoluteInv[i+j];
+                }
+            }
+        }
+
+        for(int i = (size-2*collumns+1); i >= 1; i-=collumns){ //radky ORTO
+            for(int j = 0 ; j < collumns-1; j++){ // bunky v radcich ORTO
+                absoluteOrto[i+j] = ((absoluteOrto[i+j-1] + rel[2*(i+j-1)]) + (absoluteOrto[i+j+collumns] + rel[2*(i+j-1) + 1]))/2;
+                //absoluteOrto[i+j] = (absoluteOrto[i+j-1] + rel[2*(i+j-1)]);
+                /*if(absoluteOrto[i+j] < min){
+                    min = absoluteOrto[i+j];
+                }
+                if(absoluteOrto[i+j] > max){
+                    max = absoluteOrto[i+j];
+                }*/
+            }
+        }
+
+
+        for(int i = 0; i < absolute.length; i++){
+            /*if(absolute[i] > absoluteInv[i]){
+                absolute[i] = absoluteInv[i];
+            }*/
+            //absolute[i] = (absolute[i] + absoluteInv[i])/2;
+            absolute[i] = (absolute[i] + absoluteOrto[i] + absoluteInv[i])/3;
+            //absolute[i] = (absoluteOrto[i] + absoluteInv[i])/2;
+        }
+
+
         double range = Math.abs(max) + Math.abs(min);
+        double rangeInv = Math.abs(maxInv) + Math.abs(minInv);
         byte value;
         min = Math.abs(min);
+        minInv = Math.abs(minInv);
         System.out.println("Range: "+range);
         System.out.println("Min: -"+min);
         System.out.println("Max: "+max);
         for(int i = 0; i < size; i++){
-            //value = (byte)((((absolute[i]+min)/range)*255)-127.5);
             value = (byte)((((absolute[i]+min)/range))*255);
+            //value = (byte)((((absoluteInv[i]+minInv)/rangeInv))*255);
+            //value = (byte)((((absoluteOrto[i]+min)/range))*255);
+            //System.out.println(value);
+            fr[3*i + bodyStart] = value;
+            fr[3*i + bodyStart + 1] = value;
+            fr[3*i + bodyStart + 2] = value;
+        }
+
+    }
+
+    private void absoluteHeights(double [] q){
+        int size = collumns*rows;
+        double [] h = new double[size];
+        double h1,h2,h3,h4;
+        double height;
+        for(int gauss = steps; gauss >= 0; gauss--){ // LOOP GAUSS-SEIDEL
+            // HORNI RADKA
+
+            //levy horni roh
+            h1 = h[1] + q[0];
+            h2 = h[collumns] + q[1];
+
+            height = (h1 + h2)/2;
+            h[0] = height;
+
+            //horni radka
+            for(int i = 1; i < collumns-1; i++){
+                h1 = h[i+1] + q[2*i];
+                h2 = h[i+collumns] + q[2*i+1];
+                h3 = h[i-1] - q[2*(i-1)];
+
+                height = (h1 + h2 + h3)/3;
+                h[i] = height;
+            }
+
+            // pravy horni roh
+            h2 = h[collumns-1+collumns] + q[2*(collumns-1)+1];
+            h3 = h[collumns-1-1] - q[2*(collumns-1-1)];
+
+            height = (h2 + h3)/2;
+            h[collumns-1] = height;
+
+            //TELO
+            for(int j = collumns; j <= (rows-2)*collumns; j++){ // projizdime radky
+                //levy prvek
+                h1 = h[j + 1] + q[2*j];
+                h2 = h[j + collumns] + q[2*j + 1];
+                h4 = h[j - collumns] - q[2*(j-collumns)+1];
+                height = (h1 + h2 + h4)/3;
+                h[j] = height;
+
+                for(int i = 1; i < collumns-1; i++){ // projizdime bunky v radcich
+                    h1 = h[(j + i) + 1] + q[2*(j + i)];
+                    h2 = h[(j + i) + collumns] + q[2*(j + i) + 1];
+                    h3 = h[(j + i)-1] - q[2*((j + i)-1)];
+                    h4 = h[(j + i) - collumns] - q[2*((j + i)-collumns)+1];
+
+                    height = (h1 + h2 + h3 + h4)/4;
+                    h[(j + i)] = height;
+                }
+
+                //pravy prvek
+                h2 = h[(j + collumns-1) + collumns] + q[2*(j + collumns-1) + 1];
+                h3 = h[(j + collumns-1)-1] - q[2*((j + collumns-1)-1)];
+                h4 = h[(j + collumns-1) - collumns] - q[2*((j + collumns-1)-collumns)+1];
+                height = (h2 + h3 + h4)/3;
+                h[(j + collumns-1)] = height;
+
+
+            }
+            // SPODNI RADKA
+
+            //levy spodni roh
+            h1 = h[(size - collumns)+1] + q[2*(size - collumns)];
+            h4 = h[(size - collumns) - collumns] - q[2*((size - collumns)-collumns)+1];
+
+            height = (h1 + h4)/2;
+            h[(size - collumns)] = height;
+
+            //spodni radek
+            for(int i = size-collumns; i < size-1; i++){
+                h1 = h[i+1] + q[2*i];
+                h3 = h[i-1] - q[2*(i-1)];
+                h4 = h[i - collumns] - q[2*(i-collumns)+1];
+
+                height = (h1 + h3 + h4)/3;
+                h[i] = height;
+            }
+
+            //pravy spodni roh
+            h3 = h[(size-1)-1] - q[2*((size-1)-1)];
+            h4 = h[(size-1) - collumns] - q[2*((size-1)-collumns)+1];
+
+
+        }
+        double max = Double.MIN_VALUE;
+        double min = Double.MAX_VALUE;
+        double range;
+        for(int i = 0; i < size; i++){
+            if(h[i] > max){
+                max = h[i];
+            }
+            if(h[i] < min){
+                min = h[i];
+            }
+        }
+        min = Math.abs(min);
+        range = min + Math.abs(max);
+
+        byte value;
+        for(int i = 0; i < size; i++){
+            value = (byte)(((h[i]+min)/range)*255);
             //System.out.println(value);
             fr[3*i + bodyStart] = value;
             fr[3*i + bodyStart + 1] = value;
@@ -165,6 +365,7 @@ public class ShapeFromShading implements Algorithm {
         double a,b,c,d;
         double qij;
         double A,B,h_1,h_2,beta,alpha;
+        double aEq,bEq,cEq;
         for(int i = (size-collumns-2); i >= 0; i--){ // stred
             x_1 = normalField[3*i];
             x_2 = normalField[3*i + 3];
@@ -175,15 +376,22 @@ public class ShapeFromShading implements Algorithm {
             b = z_1;
             c = x_2;
             d = z_2;
+
+            if(a == 0){
+                a += Double.MIN_VALUE;
+            }
+            if(c == 0){
+                c += Double.MIN_VALUE;
+            }
             // uhly vektoru
             alpha = Math.atan(b/a);
             alpha = Math.toDegrees(alpha);
-            if(alpha < 0){
+            if(a < 0.0){
                 alpha += 180d;
             }
             beta = Math.atan(d/c);
             beta = Math.toDegrees(beta);
-            if(beta < 0){
+            if(c < 0){
                 beta += 180d;
             }
             if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
@@ -193,11 +401,18 @@ public class ShapeFromShading implements Algorithm {
                     qij = -(b/a);
                 }
             } else { // mame rozdilne uhly -> kruznice
-                A = (b/a)*c + d;
-                B = c - (b/a)*d;
+                cEq = (b/a)*c + d;
 
-                h_1 = B/(-A) + Math.sqrt(B*B + A*A)/(-A);
-                h_2 = B/(-A) - Math.sqrt(B*B + A*A)/(-A);
+                if(cEq != 0){ // kvadraticka rovnice
+                    A = (b/a)*c + d;
+                    B = c - (b/a)*d;
+
+                    h_1 = B/(-A) + Math.sqrt(B*B + A*A)/(-A);
+                    h_2 = B/(-A) - Math.sqrt(B*B + A*A)/(-A);
+                } else { // rovnice ma tvar h*() = 0 takze h = 0
+                    h_1 = 0;
+                    h_2 = 0;
+                }
 
                 beta = (h_1 - (b/a)) / ((b/a)*c - d);
                 alpha = (beta*c + 1) / a;
@@ -226,15 +441,22 @@ public class ShapeFromShading implements Algorithm {
             b = z_1;
             c = y_2;
             d = z_2;
+
+            if(a == 0){
+                a += Double.MIN_VALUE;
+            }
+            if(c == 0){
+                c += Double.MIN_VALUE;
+            }
             // uhly vektoru
             alpha = Math.atan(b/a);
             alpha = Math.toDegrees(alpha);
-            if(alpha < 0){
+            if(a < 0.0){
                 alpha += 180d;
             }
             beta = Math.atan(d/c);
             beta = Math.toDegrees(beta);
-            if(beta < 0){
+            if(c < 0){
                 beta += 180d;
             }
             if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
@@ -244,11 +466,18 @@ public class ShapeFromShading implements Algorithm {
                     qij = -(b/a);
                 }
             } else { // mame rozdilne uhly -> kruznice
-                A = (b/a)*c + d;
-                B = c - (b/a)*d;
+                cEq = (b/a)*c + d;
 
-                h_1 = B/(-A) + Math.sqrt(B*B + A*A)/(-A);
-                h_2 = B/(-A) - Math.sqrt(B*B + A*A)/(-A);
+                if(cEq != 0){ // kvadraticka rovnice
+                    A = (b/a)*c + d;
+                    B = c - (b/a)*d;
+
+                    h_1 = B/(-A) + Math.sqrt(B*B + A*A)/(-A);
+                    h_2 = B/(-A) - Math.sqrt(B*B + A*A)/(-A);
+                } else { // rovnice ma tvar h*() = 0 takze h = 0
+                    h_1 = 0;
+                    h_2 = 0;
+                }
 
                 beta = (h_1 - (b/a)) / ((b/a)*c - d);
                 alpha = (beta*c + 1) / a;
@@ -279,17 +508,26 @@ public class ShapeFromShading implements Algorithm {
             b = z_1;
             c = x_2;
             d = z_2;
+
+            if(a == 0){
+                a += Double.MIN_VALUE;
+            }
+            if(c == 0){
+                c += Double.MIN_VALUE;
+            }
             // uhly vektoru
             alpha = Math.atan(b/a);
             alpha = Math.toDegrees(alpha);
-            if(alpha < 0){
+            if(a < 0.0){
                 alpha += 180d;
             }
             beta = Math.atan(d/c);
             beta = Math.toDegrees(beta);
-            if(beta < 0){
+            if(c < 0){
                 beta += 180d;
             }
+            /*System.out.println("aplha "+alpha);
+            System.out.println("beta "+beta);*/
             if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
                 if((180-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
                     qij = MAX_RELATIVE_HEIGHT;
@@ -297,12 +535,20 @@ public class ShapeFromShading implements Algorithm {
                     qij = -(b/a);
                 }
             } else { // mame rozdilne uhly -> kruznice
-                A = (b/a)*c + d;
-                B = c - (b/a)*d;
+                cEq = (b/a)*c + d;
+                if(cEq != 0){ // kvadraticka rovnice
+                    A = (b/a)*c + d;
+                    B = c - (b/a)*d;
+                    {} // jenom zalozka
+                    h_1 = B/(-A) + Math.sqrt(B*B + A*A)/(-A);
+                    h_2 = B/(-A) - Math.sqrt(B*B + A*A)/(-A);
+                } else { // rovnice ma tvar h*() = 0 takze h = 0
+                    h_1 = 0;
+                    h_2 = 0;
+                }
 
-                h_1 = B/(-A) + Math.sqrt(B*B + A*A)/(-A);
-                h_2 = B/(-A) - Math.sqrt(B*B + A*A)/(-A);
-
+                /*System.out.println("h1 "+h_1);
+                System.out.println("h2 "+h_2);*/
                 beta = (h_1 - (b/a)) / ((b/a)*c - d);
                 alpha = (beta*c + 1) / a;
 
@@ -331,15 +577,22 @@ public class ShapeFromShading implements Algorithm {
             b = z_1;
             c = y_2;
             d = z_2;
+
+            if(a == 0){
+                a += Double.MIN_VALUE;
+            }
+            if(c == 0){
+                c += Double.MIN_VALUE;
+            }
             // uhly vektoru
             alpha = Math.atan(b/a);
             alpha = Math.toDegrees(alpha);
-            if(alpha < 0){
+            if(a < 0.0){
                 alpha += 180d;
             }
             beta = Math.atan(d/c);
             beta = Math.toDegrees(beta);
-            if(beta < 0){
+            if(c < 0){
                 beta += 180d;
             }
             if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
@@ -349,11 +602,18 @@ public class ShapeFromShading implements Algorithm {
                     qij = -(b/a);
                 }
             } else { // mame rozdilne uhly -> kruznice
-                A = (b/a)*c + d;
-                B = c - (b/a)*d;
+                cEq = (b/a)*c + d;
 
-                h_1 = B/(-A) + Math.sqrt(B*B + A*A)/(-A);
-                h_2 = B/(-A) - Math.sqrt(B*B + A*A)/(-A);
+                if(cEq != 0){ // kvadraticka rovnice
+                    A = (b/a)*c + d;
+                    B = c - (b/a)*d;
+
+                    h_1 = B/(-A) + Math.sqrt(B*B + A*A)/(-A);
+                    h_2 = B/(-A) - Math.sqrt(B*B + A*A)/(-A);
+                } else { // rovnice ma tvar h*() = 0 takze h = 0
+                    h_1 = 0;
+                    h_2 = 0;
+                }
 
                 beta = (h_1 - (b/a)) / ((b/a)*c - d);
                 alpha = (beta*c + 1) / a;
@@ -371,7 +631,7 @@ public class ShapeFromShading implements Algorithm {
             } else if(qij > MAX_RELATIVE_HEIGHT){
                 qij = MAX_RELATIVE_HEIGHT;
             }
-            relativeHeights[2*i] = qij;
+            relativeHeights[2*i+1] = qij;
         }
         normalField = null;
 
@@ -412,99 +672,42 @@ public class ShapeFromShading implements Algorithm {
     }
 
     public static void main(String [] args){
+        String headerString = "P3\n2 1\n";
+        byte [] header = headerString.getBytes();
+        byte [] fr = new byte [header.length + 6];
+
         ShapeFromShading sfs = new ShapeFromShading();
-        sfs.getDepthMap();
+        sfs.normalField = new double[6];
+        sfs.collumns = 2;
+        sfs.rows = 1;
+        double Ax = -1; //Math.sqrt(2)/2
+        double Ay = 0;
+        double Az = 0;
+        double Bx = -Math.sqrt(2)/2;
+        double By = 0;
+        double Bz = Math.sqrt(2)/2;
+        sfs.normalField[0] = Ax;
+        sfs.normalField[1] = Ay;
+        sfs.normalField[2] = Az;
+        sfs.normalField[3] = Bx;
+        sfs.normalField[4] = By;
+        sfs.normalField[5] = Bz;
 
-        int lm = 1;
-        double lightX = 0.5;
-        double lightY = 0.5;
-        double lightZ = 0.5;
-        int collumns = 2;
-        int rows = 2;
-
-        double [] nei = new double[]{2*lm+lightX,2*lm+lightY,2*lm+lightZ,
-                3*lm+lightX,3*lm+lightY,3*lm+lightZ,
-                4*lm+lightX,4*lm+lightY,4*lm+lightZ
-        };
-
-        double [] n = new double[3*collumns*rows];
-
-        // vytvoreni matice index - matice sousednosti
-
-        //prvni radek
-        int [] index = new int[(4*collumns)*rows];
-
-        index[0] = 3;
-        index[1] = 3*collumns;
-        index[2] = -1;
-        index[3] = -1;
-
-        for(int i=1; i < collumns-1; i++){
-            index[4*i] = 3*i+3;
-            index[4*i+1] = 3*i-3;
-            index[4*i+2] = 3*(i+collumns);
-            index[4*i+3] = -1;
-        }
-
-        index[4*collumns-4] = 3*collumns-2*3;
-        index[4*collumns-3] = 2*3*collumns-3;
-        index[4*collumns-2] = -1;
-        index[4*collumns-1] = -1;
-
-        //stred matice
-
-        for(int j = 1; j < rows-1; j++){
-
-            index[j*4*collumns] = j*3*collumns-3*collumns;
-            index[j*4*collumns+1] = j*3*collumns+3;
-            index[j*4*collumns+2] = j*3*collumns+3*collumns;
-            index[j*4*collumns+3] = -1;
-
-            for(int i=1; i < collumns-1; i++){
-                index[j*4*collumns + i*4 ] = j*3*collumns + i*3 +3;
-                index[j*4*collumns + i*4 + 1] = j*3*collumns + i*3 -3;
-                index[j*4*collumns + i*4 + 2] = j*3*collumns + i*3 +3*collumns;
-                index[j*4*collumns + i*4 + 3] = j*3*collumns + i*3 -3*collumns;
-                //break;
-            }
-
-
-            index[(j+1)*4*collumns-4] = (j+1)*3*collumns-3-3*collumns;
-            index[(j+1)*4*collumns-3] = (j+1)*3*collumns-3-3;
-            index[(j+1)*4*collumns-2] = (j+1)*3*collumns-3+3*collumns;
-            index[(j+1)*4*collumns-1] = -1;
-
-        }
-
-        //posledni radek
-        int start = 4*(collumns)*(rows-1);
-        index[start] = 3*(collumns)*(rows-2);
-        index[start + 1] = 3*(collumns)*(rows-1)+3;
-        index[start + 2] = -1;
-        index[start + 3] = -1;
-
-        for(int i=1; i < collumns-1; i++){
-            index[4*i + start] = 3*i+3 + 3*(collumns)*(rows-1);
-            index[4*i+1 + start] = 3*i-3 + 3*(collumns)*(rows-1);
-            index[4*i+2+ start] = 3*(i-collumns) + 3*(collumns)*(rows-1);
-            index[4*i+3+start] = -1;
-        }
-
-        start = (4*collumns)*rows -4;
-
-        index[start] = 3*(collumns)*(rows-1)-3;
-        index[start+1] = 3*(collumns)*rows-2*3;
-        index[start+2] = -1;
-        index[start+3] = -1;
-
-        //
+        double [] relatives = sfs.relativeHeights();
+        /*System.out.println("=================");
+        System.out.println("relative A: "+relatives[0]+" "+relatives[1]);
+        System.out.println("relative B: "+relatives[2]+" "+relatives[3]);*/
+        /*System.out.println("===================");
+        System.out.println("A:");
+        System.out.println("x = "+relatives[0]);
+        System.out.println("y = "+relatives[1]);
+        System.out.println("z = "+relatives[2]);
         System.out.println();
-        for(int j =0; j< rows; j++){
-            for(int i=0;i<4*collumns;i+=4){
-                System.out.print(index[j*4*collumns+i]+" "+index[j*4*collumns+i+1]+" "+index[j*4*collumns+i+2]+" "+index[j*4*collumns+i+3]+"|");
-            }
-            System.out.println();
-        }
+        System.out.println("B:");
+        System.out.println("x = "+relatives[3]);
+        System.out.println("y = "+relatives[4]);
+        System.out.println("z = "+relatives[5]);*/
+
     }
 
     private void getDepthMap(){
