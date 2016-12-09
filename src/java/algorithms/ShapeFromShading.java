@@ -4,6 +4,11 @@ import Jama.Matrix;
 import gui.sfs.Marker;
 import gui.session.LoadingScreen;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.DataLine;
+import java.awt.*;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -20,7 +25,7 @@ public class ShapeFromShading implements Algorithm {
     private final static double ROUND_ANGLE = 2.0;
     private final static double FLAT_ANGLE = 10.0;
     //private final static double FLAT_ANGLE = 0;
-    private final static double MAX_RELATIVE_HEIGHT = 20.0;
+    private final static double MAX_RELATIVE_HEIGHT = 2;
     //private final static double MAX_RELATIVE_HEIGHT = Double.MAX_VALUE;
     private int collumns;
     private int rows;
@@ -87,8 +92,8 @@ public class ShapeFromShading implements Algorithm {
 
         // VYPISOVANI VYSKOVE MAPY
         //finishDepths(relativeHeights());
-        absoluteHeights(relativeHeights());
-        //return fr;
+        //absoluteHeights(relativeHeights());
+        gong();
         return fr;
     }
 
@@ -941,6 +946,28 @@ public class ShapeFromShading implements Algorithm {
     private double [] getHeightMap(){
         // 4. step
 
+        //uvodni estimate bez regularizace
+        int size = collumns*rows;
+        double [] n = new double[3*size];
+        double x,y,z;
+        for(int i = 0; i < size; i++){
+            x = (q*grayscale[i])/lightX;
+            y = (q*grayscale[i])/lightY;
+            z = (q*grayscale[i])/lightZ;
+            if(z < 0) {
+                x = -x;
+                y = -y;
+                z = -z;
+            }
+            n[3*i] = x;
+            n[3*i+1] = y;
+            n[3*i+2] = z;
+        }
+
+        // buffer field
+        double mod = 2*3*collumns;
+        double [] buffer = new double [(int)mod];
+
         // matice s neighbours = nei
 
         double [] nei = new double[]{2*lm+lightX,2*lm+lightY,2*lm+lightZ, // 0 + 0; 0+1; 0+2
@@ -948,7 +975,7 @@ public class ShapeFromShading implements Algorithm {
                                      4*lm+lightX,4*lm+lightY,4*lm+lightZ // 6 + 0; 6 + 1; 6+2
                                     };
 
-        double [] n = new double[3*collumns*rows];
+
         // vytvoreni matice index - matice sousednosti
 
         //prvni radek
@@ -1027,7 +1054,7 @@ public class ShapeFromShading implements Algorithm {
 
         //
         // Pocitame rovnici x_i = a_i /d_i
-        int size = collumns*rows;
+
         int neighbourSize;
         double s;
         double n_y_left;
@@ -1219,13 +1246,41 @@ public class ShapeFromShading implements Algorithm {
                 newValue_z /= sum;
 
                 // normalizace a prirazeni
+                if(newValue_z < 0){
+                    newValue_z = -newValue_z;
+                    newValue_x = -newValue_x;
+                    newValue_y = -newValue_y;
+                }
                 n_1 = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
-                n[3*i] = newValue_x/n_1;
+
+                // zapiseme do n z bufferu a do bufferu zapiseme nove hodnoty na stejne pozice
+                // obnova dat z bufferu
+                if((i - 2*collumns) >= 0){ // pokud jsme v poli
+                    n[3*(i - 2*collumns)] = buffer[(int)((3*(i - 2*collumns)) % mod)];
+                    n[3*(i - 2*collumns)+1] = buffer[(int)((3*(i - 2*collumns)+1) % mod)];
+                    n[3*(i - 2*collumns)+2] = buffer[(int)((3*(i - 2*collumns)+2) % mod)];
+                }
+                // zapis do bufferu
+                /*System.out.println(i);
+                System.out.println(collumns);
+                System.out.println(buffer.length);
+                System.out.println((int)((3*(i - 2*collumns)) % mod));
+                System.out.println("============");*/
+                buffer[(int)((3*i) % mod)] = newValue_x/n_1;
+                buffer[(int)((3*i+1) % mod)] = newValue_y/n_1;
+                buffer[(int)((3*i+2) % mod)] = newValue_z/n_1;
+                // stary zpusob
+                /*n[3*i] = newValue_x/n_1;
                 n[3*i+1] = newValue_y/n_1;
-                n[3*i+2] = newValue_z/n_1;
+                n[3*i+2] = newValue_z/n_1;*/
+
+
 
                 //System.out.println(n[3*i]+" "+n[3*i+1]+" "+n[3*i+2]);
 
+            }
+            for(int i = 3*(size - 2*collumns); i < 3*size; i++){
+                n[i] = buffer[(int)(i % mod)];
             }
         }
 
@@ -1347,5 +1402,21 @@ public class ShapeFromShading implements Algorithm {
 
     public void setRegularization(double regularization) {
         this.lm = regularization;
+    }
+
+    public static void gong() {
+        new Thread(() -> {
+            try {
+                Clip clip;
+                AudioInputStream inputStream = AudioSystem.getAudioInputStream(
+                        ShapeFromShading.class.getResourceAsStream("/gong/gong.wav"));
+                DataLine.Info info = new DataLine.Info(Clip.class, inputStream.getFormat());
+                clip = (Clip) AudioSystem.getLine(info);
+                clip.open(inputStream);
+                clip.start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 }

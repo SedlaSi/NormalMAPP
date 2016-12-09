@@ -465,6 +465,23 @@ public class MainScreen extends JFrame {
             //imagePanel.setActiveLayer(Layer.normalMap);
         }
         // ====== COIN ============
+        Rectangle r1 = new Rectangle(661,153,20,20);
+        Rectangle r2 = new Rectangle(746,400,20,20);
+        Rectangle r3 = new Rectangle(474,586,20,20);
+        Rectangle r4 = new Rectangle(630,348,20,20);
+        Marker m1 = new Marker("15# Marker",123, 60, 235, 0.66, 0.31895687061183553);
+        Marker m2 = new Marker("16# Marker",124, 126, 0, 0.716, 0.5667001003009027);
+        Marker m3 = new Marker("18# Marker",19, 192, 148, 0.444, 0.753259779338014);
+        Marker m4 = new Marker("19# Marker",139, 114, 253, 0.6, 0.5145436308926781);
+        m1.setSquare(r1);
+        m2.setSquare(r2);
+        m3.setSquare(r3);
+        m4.setSquare(r4);
+        markerList.add(m1);
+        markerList.add(m2);
+        markerList.add(m3);
+        markerList.add(m4);
+
         /*Rectangle r1 = new Rectangle(449,216,20,20);
         Rectangle r2 = new Rectangle(581,101,20,20);
         Rectangle r3 = new Rectangle(655,365,20,20);
@@ -483,7 +500,7 @@ public class MainScreen extends JFrame {
         markerList.add(m4);*/
 
         // ======== BALL_02 ============
-        Rectangle r1 = new Rectangle(352,335,20,20);
+        /*Rectangle r1 = new Rectangle(352,335,20,20);
         Rectangle r2 = new Rectangle(767,344,20,20);
         Rectangle r3 = new Rectangle(577,187,20,20);
         Marker m1 = new Marker("15# Marker",127, 194, 235, 0.12037037037037036, 0.48333333333333334);
@@ -494,7 +511,7 @@ public class MainScreen extends JFrame {
         m3.setSquare(r3);
         markerList.add(m1);
         markerList.add(m2);
-        markerList.add(m3);
+        markerList.add(m3);*/
 
 
         //======================
