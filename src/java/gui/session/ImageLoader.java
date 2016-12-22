@@ -111,8 +111,8 @@ public class ImageLoader extends JFrame{
 
     public Image testloadImage(){
 
-        File file = new File("/home/sedlasi1/Desktop/obrazky/coin.jpg");
-        //File file = new File("/home/sedlasi1/Desktop/obrazky/ball_02.png");
+        //File file = new File("/home/sedlasi1/Desktop/obrazky/coin.jpg");
+        File file = new File("/home/sedlasi1/Desktop/obrazky/ball_02.png");
 
         String newImagePath = sessionFolder + Session.SLASH + ORIGINAL_NAME;
         try {

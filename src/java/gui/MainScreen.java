@@ -8,6 +8,8 @@ import gui.session.Session;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import java.awt.*;
@@ -465,7 +467,7 @@ public class MainScreen extends JFrame {
             //imagePanel.setActiveLayer(Layer.normalMap);
         }
         // ====== COIN ============
-        Rectangle r1 = new Rectangle(661,153,20,20);
+        /*Rectangle r1 = new Rectangle(661,153,20,20);
         Rectangle r2 = new Rectangle(746,400,20,20);
         Rectangle r3 = new Rectangle(474,586,20,20);
         Rectangle r4 = new Rectangle(630,348,20,20);
@@ -480,7 +482,7 @@ public class MainScreen extends JFrame {
         markerList.add(m1);
         markerList.add(m2);
         markerList.add(m3);
-        markerList.add(m4);
+        markerList.add(m4);*/
 
         /*Rectangle r1 = new Rectangle(449,216,20,20);
         Rectangle r2 = new Rectangle(581,101,20,20);
@@ -500,7 +502,7 @@ public class MainScreen extends JFrame {
         markerList.add(m4);*/
 
         // ======== BALL_02 ============
-        /*Rectangle r1 = new Rectangle(352,335,20,20);
+        Rectangle r1 = new Rectangle(352,335,20,20);
         Rectangle r2 = new Rectangle(767,344,20,20);
         Rectangle r3 = new Rectangle(577,187,20,20);
         Marker m1 = new Marker("15# Marker",127, 194, 235, 0.12037037037037036, 0.48333333333333334);
@@ -511,7 +513,7 @@ public class MainScreen extends JFrame {
         m3.setSquare(r3);
         markerList.add(m1);
         markerList.add(m2);
-        markerList.add(m3);*/
+        markerList.add(m3);
 
 
         //======================
@@ -617,9 +619,9 @@ public class MainScreen extends JFrame {
 
         public void addSquare(int x, int y){
             if(image != null) {
-                Rectangle square = new Rectangle(x, y, squareSize, squareSize);
+                //Rectangle square = new Rectangle(x, y, squareSize, squareSize);
                 Marker marker = new Marker(markerNumber+"# Marker");
-                marker.setSquare(square);
+                //marker.setSquare(square);
             /*System.out.println(imgPosX + " "+ imgPosY);
             System.out.println(x + " "+ y);*/
             /*System.out.println("layer: "+ posX +" "+posY);
@@ -779,6 +781,8 @@ public class MainScreen extends JFrame {
 
         public void setSquareSize(int size){
             squareSize = size;
+            System.out.println(size);
+            square = new Rectangle(squareSize,squareSize);
         }
 
     }
@@ -996,7 +1000,7 @@ public class MainScreen extends JFrame {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                g.drawImage(image, 0, 0, null); // see javadoc for more info on the parameters
+                g.drawImage(image, 0, 0, null);
             }
 
             private BufferedImage getPlusPlus(){
@@ -1056,12 +1060,16 @@ public class MainScreen extends JFrame {
 
     private class OriginalMapSettingsBox extends SettingsBox {
         JPanel settingBox;
-        JPanel recalculatePanel,editPanel,markerSizePanel,listPanel;
+        JPanel recalculatePanel,editPanel,markerSizePanel,listPanel,settingsPanel;
         JButton recalculateButton;
         java.util.List<Marker> markerList;
         JList<Marker> displayMarkerList;
         ButtonGroup buttonGroup;
         AlgorithmSettingsDialog algorithmSettingsDialog;
+        JSlider regularSlider,albedoSlider,stepsSlider;
+        int algorithmSteps = 20;
+        double algorithmAlbedo = 1;
+        double algorithmSmoothness = 0.1;
 
         JToggleButton addMarkerButton, editMarkerButton, removeMarkerButton, activeButton;
 
@@ -1109,6 +1117,11 @@ public class MainScreen extends JFrame {
                 markerSizePanel = new JPanel(new BorderLayout());
                 JLabel markerSizeLabel = new JLabel("  Markers size:");
                 markerSizeSlider = new JSlider(JSlider.HORIZONTAL,2,150,50);
+                markerSizeSlider.addChangeListener(changeEvent -> {
+                    originalMapImagePanel.setSquareSize(markerSizeSlider.getValue());
+                    originalMapImagePanel.revalidate();
+                    originalMapImagePanel.repaint();
+                });
                 markerSizePanel.add(markerSizeLabel,BorderLayout.NORTH);
                 markerSizePanel.add(markerSizeSlider,BorderLayout.CENTER);
 
@@ -1126,12 +1139,56 @@ public class MainScreen extends JFrame {
 
                 settingBox.add(listPanel,BorderLayout.CENTER);
 
+                JPanel bottomPanel = new JPanel(new BorderLayout());
+
+                settingsPanel = new JPanel();
+                settingsPanel.setLayout(new BorderLayout());
+                JPanel up = new JPanel(new GridLayout(1,2));
+                JPanel upLeft = new JPanel(new BorderLayout());
+                upLeft.add(new JLabel("Albedo:"),BorderLayout.NORTH);
+                albedoSlider = new JSlider(JSlider.VERTICAL,0,100,100);
+                albedoSlider.setMajorTickSpacing(25);
+                albedoSlider.setMinorTickSpacing(10);
+                albedoSlider.setPaintTicks(true);
+                albedoSlider.setPaintLabels(true);
+                upLeft.add(albedoSlider,BorderLayout.CENTER);
+
+                JPanel upRight = new JPanel(new BorderLayout());
+                upRight.add(new JLabel("Smoothness:"),BorderLayout.NORTH);
+                regularSlider = new JSlider(JSlider.VERTICAL,0,100,10);
+                regularSlider.setMajorTickSpacing(25);
+                regularSlider.setMinorTickSpacing(10);
+                regularSlider.setPaintTicks(true);
+                regularSlider.setPaintLabels(true);
+                upRight.add(regularSlider,BorderLayout.CENTER);
+
+                up.add(upLeft);
+                up.add(upRight);
+
+
+                JPanel down = new JPanel(new BorderLayout());
+                down.add(new JLabel("Calculation steps"),BorderLayout.NORTH);
+                stepsSlider = new JSlider(JSlider.HORIZONTAL,0,100,20);
+                stepsSlider.setMajorTickSpacing(25);
+                stepsSlider.setMinorTickSpacing(10);
+                stepsSlider.setPaintTicks(true);
+                stepsSlider.setPaintLabels(true);
+                down.add(stepsSlider,BorderLayout.CENTER);
+
+                settingsPanel.add(up,BorderLayout.NORTH);
+                settingsPanel.add(down,BorderLayout.CENTER);
+
+                //settingBox.add(settingsPanel,BorderLayout.SOUTH);
+
                 recalculatePanel = new JPanel();
                 recalculateButton = new JButton("Calculate Depth");
                 recalculateButton.addActionListener(reviewActionListener);
                 recalculatePanel.add(recalculateButton);
                 settingBox.setBorder(BorderFactory.createLoweredBevelBorder());
-                settingBox.add(recalculatePanel, BorderLayout.PAGE_END);
+                //settingBox.add(recalculatePanel, BorderLayout.PAGE_END);
+                bottomPanel.add(recalculatePanel, BorderLayout.PAGE_END);
+                bottomPanel.add(settingsPanel,BorderLayout.NORTH);
+                settingBox.add(bottomPanel,BorderLayout.PAGE_END);
 
             }
             return settingBox;
@@ -1157,20 +1214,22 @@ public class MainScreen extends JFrame {
                 if(e.getSource() == recalculateButton){
                     if(!markerList.isEmpty() && markerList.size() >= 3){
 
-                        algorithmSettingsDialog = new AlgorithmSettingsDialog(getMainReference(),"", Dialog.ModalityType.DOCUMENT_MODAL);
-                        algorithmSettingsDialog.startFrame();
+                        /*algorithmSettingsDialog = new AlgorithmSettingsDialog(getMainReference(),"", Dialog.ModalityType.DOCUMENT_MODAL);
+                        algorithmSettingsDialog.startFrame();*/
                         /*System.out.println(algorithmSettingsDialog.steps);
                         System.out.println(algorithmSettingsDialog.q);
                         System.out.println(algorithmSettingsDialog.lm);*/
-                        if(algorithmSettingsDialog.steps != -1) {
-                            imageLoader.calculateHeightMap(markerList, algorithmSettingsDialog.steps, algorithmSettingsDialog.q, algorithmSettingsDialog.lm);
-                            updateHeight(image.getHeightMap());
-                        }
+
+                        imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), ((double)(albedoSlider.getValue()))/100.0, ((double)(regularSlider.getValue()))/100.0);
+                        updateHeight(image.getHeightMap());
+
                     }
                 }
             }
         };
     }
+
+
 
     private class OriginalMapToolBox {
 

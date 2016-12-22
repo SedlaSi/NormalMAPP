@@ -18,6 +18,7 @@ public abstract class ImagePanel extends JPanel {
     int imgPosX,imgPosY;
     BufferedImage image;
     boolean drawSquare = true;
+    Rectangle square = new Rectangle(squareSize,squareSize);
     //java.util.List<Rectangle> squares;
     java.util.List<Marker> markerList;
     //java.util.List<RelativeSquarePosition> relativePos;
@@ -86,7 +87,8 @@ public abstract class ImagePanel extends JPanel {
             if(drawSquare && markerList != null){ // vykreslovani zamerovacich ctvercu
                 for(int i = 0; i < markerList.size(); i++){
                     Marker marker = markerList.get(i);
-                    Rectangle s = marker.getSquare();
+                    //Rectangle s = marker.getSquare();
+                    Rectangle s = square;
                     s.setLocation((int)(x + marker.getPosX()*(double)imageWidth),(int)(y+ marker.getPosY()*(double)imageHeight));
                     g2.draw(s);
                 }
@@ -130,6 +132,8 @@ public abstract class ImagePanel extends JPanel {
         posX = x;
         posY = y;
     }
+
+
 
     /*public void setActiveLayer(Layer layer){
         activeLayer = layer;
