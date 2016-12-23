@@ -8,6 +8,8 @@ import gui.session.Session;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import java.awt.*;
@@ -731,6 +733,14 @@ public class MainScreen extends JFrame {
             }
         }
 
+        public void hightlightIfListClicked(int item){
+            if(image != null) {
+                originalMapImagePanel.setHighlightedSquare(item);
+                originalMapImagePanel.revalidate();
+                originalMapImagePanel.repaint();
+            }
+        }
+
         public void removeSquare(int x, int y){
             if(image != null) {
                 double xRel;
@@ -1111,6 +1121,8 @@ public class MainScreen extends JFrame {
                 scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
                 listPanel = new JPanel(new BorderLayout());
                 displayMarkerList = new JList<>();
+                displayMarkerList.addListSelectionListener(listSelectionEvent ->
+                        originalMapImagePanel.hightlightIfListClicked(displayMarkerList.getSelectedIndex()));
                 displayMarkerList.setListData(markerList.toArray(new Marker[markerList.size()]));
                 scrollPane.setViewportView(displayMarkerList);
                 listPanel.add(scrollPane,BorderLayout.CENTER);
