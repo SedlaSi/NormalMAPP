@@ -14,6 +14,9 @@ public class Marker {
     private double posX;
     private double posY;
 
+    private int direction;
+    private int angle;
+
     Rectangle square;
 
     private String name;
@@ -85,6 +88,22 @@ public class Marker {
 
     public void setSquare(Rectangle square){
         this.square = square;
+    }
+
+    public void setDirection(int direction) {
+        this.direction = direction;
+    }
+
+    public void setAngle(int angle) {
+        this.angle = angle;
+    }
+
+    public int getDirection() {
+        return direction;
+    }
+
+    public int getAngle() {
+        return angle;
     }
 
     @Override

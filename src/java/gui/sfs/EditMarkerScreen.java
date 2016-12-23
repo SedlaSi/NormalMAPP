@@ -18,6 +18,7 @@ public class EditMarkerScreen extends JDialog {
     JPanel topPanel,bottomPanel,directionPanel,anglePanel,namePanel,buttonPanel;
     DirectionPanel directionImagePanel;
     AnglePanel angleImagePanel;
+    private boolean edit;
 
     JSlider directionSlider, angleSlider;
     Dimension imageDimension;
@@ -108,6 +109,8 @@ public class EditMarkerScreen extends JDialog {
                 marker.setX((int)x);
                 marker.setY((int)y);
                 marker.setZ((int)z);
+                marker.setAngle(angleSlider.getValue());
+                marker.setDirection(directionSlider.getValue());
 
                 // ---------------------
                 disposeDialog();
@@ -132,6 +135,13 @@ public class EditMarkerScreen extends JDialog {
         this.setLayout(new BorderLayout());
         this.add(topPanel,BorderLayout.CENTER);
         this.add(bottomPanel,BorderLayout.SOUTH);
+
+        if(edit){
+            angleSlider.setValue(marker.getAngle());
+            directionSlider.setValue(marker.getDirection());
+        }
+
+
         setVisible(true);
         //setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -224,6 +234,10 @@ public class EditMarkerScreen extends JDialog {
             angleMult = 1;
         }
 
+    }
+
+    public void isEdit(boolean edit){
+        this.edit = edit;
     }
 
 }

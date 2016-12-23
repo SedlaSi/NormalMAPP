@@ -206,6 +206,7 @@ public class MainScreen extends JFrame {
 
             @Override
             public void mouseMoved(MouseEvent mouseEvent) {
+                originalMapImagePanel.hightlightIfInterselectWithMouse(mouseEvent.getX(),mouseEvent.getY());
                 //imagePanel.setMouseInit(mouseEvent.getX(),mouseEvent.getY());
             }
         });
@@ -216,15 +217,17 @@ public class MainScreen extends JFrame {
                 if(originalMapSettingsBox.activeButton == originalMapSettingsBox.addMarkerButton){
                     originalMapImagePanel.addSquare(mouseEvent.getX(), mouseEvent.getY());
                     originalMapSettingsBox.updateList();
-                    revalidate();
-                    repaint();
+                    originalMapImagePanel.revalidate();
+                    originalMapImagePanel.repaint();
                 } else if(originalMapSettingsBox.activeButton == originalMapSettingsBox.editMarkerButton){
-
+                    originalMapImagePanel.editSquare(mouseEvent.getX(),mouseEvent.getY());
+                    originalMapImagePanel.revalidate();
+                    originalMapImagePanel.repaint();
                 } else if(originalMapSettingsBox.activeButton == originalMapSettingsBox.removeMarkerButton){
                     originalMapImagePanel.removeSquare(mouseEvent.getX(), mouseEvent.getY());
                     originalMapSettingsBox.updateList();
-                    revalidate();
-                    repaint();
+                    originalMapImagePanel.revalidate();
+                    originalMapImagePanel.repaint();
                 }
             }
 
@@ -719,7 +722,10 @@ public class MainScreen extends JFrame {
 
                 for(Marker m : markerList){
                     if(m.getPosX() >= xMin && m.getPosX() <= xMax && m.getPosY() >= yMin && m.getPosY() <= yMax){
-                        Rectangle s = m.getSquare();
+                        //Rectangle s = m.getSquare();
+                        originalMapImagePanel.setHighlightedSquare(markerList.indexOf(m));
+                        originalMapImagePanel.revalidate();
+                        originalMapImagePanel.repaint();
                         break;
                     }
                 }
@@ -781,11 +787,86 @@ public class MainScreen extends JFrame {
 
         public void setSquareSize(int size){
             squareSize = size;
-            System.out.println(size);
             square = new Rectangle(squareSize,squareSize);
         }
 
-    }
+        public void editSquare(int x, int y) {
+            if(image != null) {
+                double xRel;
+                double yRel;
+                if (imgPosX < 0) {
+                    xRel = (Math.abs(scale * imgPosX) + x - scale * squareSize);
+                } else {
+                    xRel = (x - scale * imgPosX - scale * squareSize);
+                }
+                if (posX < 0) {
+                    xRel += Math.abs(posX);
+                } else {
+                    xRel -= posX;
+                }
+                xRel /= (scale * image.getWidth());
+                if (imgPosY < 0) {
+                    yRel = (Math.abs(scale * imgPosY) + y - scale * squareSize);
+                } else {
+                    yRel = (y - scale * imgPosY - scale * squareSize);
+                }
+                if (posY < 0) {
+                    yRel += Math.abs(posY);
+                } else {
+                    yRel -= posY;
+                }
+                yRel /= (scale * image.getHeight());
+
+                double xMin = xRel;
+                double xMax = xRel + scale * squareSize/(scale * image.getWidth());
+                double yMin = yRel;
+                double yMax = yRel + scale * squareSize/(scale * image.getHeight());
+
+                for(Marker m : markerList){
+                    if(m.getPosX() >= xMin && m.getPosX() <= xMax && m.getPosY() >= yMin && m.getPosY() <= yMax){
+                        /*System.out.println("mouse: \n"+xMin+" - "+xMax+"\n"+yMin+" - "+yMax);
+                        System.out.println("square: \n"+m.getPosX()+" \n "+m.getPosY());*/
+                        //markerList.remove(m);
+
+                        /**
+                         * ZDE SE POTOM SPUSTI OBRAZOVKA NA UPRAVU UDAJU x, y A name
+                         */
+                        EditMarkerScreen editMarkerScreen = new EditMarkerScreen(getMainReference(),"",Dialog.ModalityType.DOCUMENT_MODAL);
+                        editMarkerScreen.setMarker(m);
+                        editMarkerScreen.isEdit(true);
+                        editMarkerScreen.startFrame();
+
+                        if(m.getX() == -1 || m.getY() == -1 || m.getZ() == -1){ // Uzivatel dal "cancel"
+                            return;
+                        }
+                        // marker info
+                        System.out.println("marker:");
+                        System.out.println(m.getName());
+                        System.out.println("X: "+m.getX());
+                        System.out.println("Y: "+m.getY());
+                        System.out.println("Z: "+m.getZ());
+                        System.out.println("PosX: "+m.getPosX());
+                        System.out.println("PosY: "+m.getPosY());
+                        System.out.println();
+                        System.out.println("rectangle:");
+                        System.out.println("x: "+x);
+                        System.out.println("y: "+y);
+                        System.out.println("size: "+squareSize);
+                        System.out.println("=============================");
+                        // marker info
+                        break;
+                    }
+
+
+
+
+                    }
+                }
+
+            }
+
+        }
+
 
     private class HeightMapImagePanel extends ImagePanel {
 

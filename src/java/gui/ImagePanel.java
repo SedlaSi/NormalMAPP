@@ -16,13 +16,17 @@ public abstract class ImagePanel extends JPanel {
     int posY = 0;
     int squareSize = 20;
     int imgPosX,imgPosY;
+
+    int highlightedSquare = -1;
+
     BufferedImage image;
     boolean drawSquare = true;
     Rectangle square = new Rectangle(squareSize,squareSize);
+    Rectangle highlightSquare = new Rectangle(squareSize,squareSize);
     //java.util.List<Rectangle> squares;
     java.util.List<Marker> markerList;
-    //java.util.List<RelativeSquarePosition> relativePos;
-    //private Layer activeLayer = Layer.originalImage;
+
+
 
 
     class RelativeSquarePosition {
@@ -86,11 +90,22 @@ public abstract class ImagePanel extends JPanel {
             g2.drawRenderedImage(image,at);
             if(drawSquare && markerList != null){ // vykreslovani zamerovacich ctvercu
                 for(int i = 0; i < markerList.size(); i++){
-                    Marker marker = markerList.get(i);
-                    //Rectangle s = marker.getSquare();
-                    Rectangle s = square;
-                    s.setLocation((int)(x + marker.getPosX()*(double)imageWidth),(int)(y+ marker.getPosY()*(double)imageHeight));
-                    g2.draw(s);
+                    if(i == highlightedSquare){
+                        Marker marker = markerList.get(i);
+                        //Rectangle s = marker.getSquare();
+                        Rectangle s = square;
+                        s.setLocation((int)(x + marker.getPosX()*(double)imageWidth),(int)(y+ marker.getPosY()*(double)imageHeight));
+                        g2.draw(s);
+                        g2.setColor(Color.GREEN);
+                        g2.fillRect((int)(x + marker.getPosX()*(double)imageWidth),(int)(y+ marker.getPosY()*(double)imageHeight),squareSize,squareSize);
+                        g2.setColor(Color.gray);
+                    } else {
+                        Marker marker = markerList.get(i);
+                        //Rectangle s = marker.getSquare();
+                        Rectangle s = square;
+                        s.setLocation((int) (x + marker.getPosX() * (double) imageWidth), (int) (y + marker.getPosY() * (double) imageHeight));
+                        g2.draw(s);
+                    }
                 }
             }
         }
@@ -115,6 +130,10 @@ public abstract class ImagePanel extends JPanel {
         if(scale - 0.5 > 0){
             scale -= 0.5;
         }
+    }
+
+    public void setHighlightedSquare(int i){
+        highlightedSquare = i;
     }
 
     public void moveImg(int x, int y){
