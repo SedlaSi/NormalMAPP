@@ -183,8 +183,8 @@ public class NormalMap implements Algorithm {
                 valY = -(gray[(readen_lines-1)*collumns + i - 1] & 0xFF) - 2*(gray[(readen_lines-1)*collumns + i] & 0xFF) - (gray[(readen_lines-1)*collumns + i + 1] & 0xFF)
                         +(gray[(readen_lines+1)*collumns + i - 1] & 0xFF) + 2*(gray[(readen_lines+1)*collumns + i] & 0xFF) + (gray[(readen_lines+1)*collumns + i + 1] & 0xFF);
 
-                valX = ((valX*Math.cos(angle)) - (valY*Math.sin(angle)))/255.0;
-                valY = ((valY*Math.cos(angle)) + (valX*Math.sin(angle)))/255.0;
+                valX = ((valX*Math.cos(Math.toRadians(angle))) - (valY*Math.sin(Math.toRadians(angle))))/255.0;
+                valY = ((valY*Math.cos(Math.toRadians(angle))) + (valX*Math.sin(Math.toRadians(angle))))/255.0;
                 /*if(valX < 0) valX = 0;
                 else if(valX > 255) valX = 255;
                 if(valY < 0) valY = 0;

@@ -196,18 +196,20 @@ public class ImageLoader extends JFrame{
     }
 
     public void refreshNormalMap(double angle ,double height){
-        LoadingImageProgressBar loadingImageProgressBar = new LoadingImageProgressBar(mainFrameReference,"",Dialog.ModalityType.DOCUMENT_MODAL);
-        //loadingImageProgressBar.startLoading(normalMap.getSteps(),false);
-        normalMap.setLoadingScreen(loadingImageProgressBar);
-        normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME), angle,height),sessionFolder + Session.SLASH + NORMAL_NAME);
+        if(image.getHeightMap() != null) {
+            LoadingImageProgressBar loadingImageProgressBar = new LoadingImageProgressBar(mainFrameReference, "", Dialog.ModalityType.DOCUMENT_MODAL);
+            //loadingImageProgressBar.startLoading(normalMap.getSteps(),false);
+            normalMap.setLoadingScreen(loadingImageProgressBar);
+            normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME), angle, height), sessionFolder + Session.SLASH + NORMAL_NAME);
 
-        try {
-            image.setNormalMap(ImageIO.read(new File(sessionFolder + Session.SLASH + NORMAL_NAME)));
-        } catch (IOException e) {
-            e.printStackTrace();
+            try {
+                image.setNormalMap(ImageIO.read(new File(sessionFolder + Session.SLASH + NORMAL_NAME)));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            loadingImageProgressBar.stopLoading();
+            normalMap.setLoadingScreen(null);
         }
-        loadingImageProgressBar.stopLoading();
-        normalMap.setLoadingScreen(null);
     }
 
     public void calculateHeightMap(java.util.List<Marker> markerList, int steps, double q, double lm){
