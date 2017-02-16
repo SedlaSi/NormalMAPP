@@ -15,6 +15,8 @@ import javax.swing.event.MenuListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -464,11 +466,11 @@ public class MainScreen extends JFrame {
         });
 
         // TEST SEGMENT
-        image = imageLoader.testloadImage();
+        /*image = imageLoader.testloadImage();
         if(image != null){
             updateImagePanels(); // uvodni obrazek po nacteni
             //imagePanel.setActiveLayer(Layer.normalMap);
-        }
+        }*/
         // ====== COIN ============
         /*Rectangle r1 = new Rectangle(661,153,20,20);
         Rectangle r2 = new Rectangle(746,400,20,20);
@@ -505,7 +507,7 @@ public class MainScreen extends JFrame {
         markerList.add(m4);*/
 
         // ======== BALL_02 ============
-        Rectangle r1 = new Rectangle(352,335,20,20);
+        /*Rectangle r1 = new Rectangle(352,335,20,20);
         Rectangle r2 = new Rectangle(767,344,20,20);
         Rectangle r3 = new Rectangle(577,187,20,20);
         Marker m1 = new Marker("15# Marker",127, 194, 235, 0.12037037037037036, 0.48333333333333334);
@@ -516,7 +518,7 @@ public class MainScreen extends JFrame {
         m3.setSquare(r3);
         markerList.add(m1);
         markerList.add(m2);
-        markerList.add(m3);
+        markerList.add(m3);*/
 
 
         //======================
@@ -668,7 +670,7 @@ public class MainScreen extends JFrame {
                 }
                 markerNumber++;
                 // marker info
-                System.out.println("marker:");
+                /*System.out.println("marker:");
                 System.out.println(marker.getName());
                 System.out.println("X: "+marker.getX());
                 System.out.println("Y: "+marker.getY());
@@ -680,7 +682,7 @@ public class MainScreen extends JFrame {
                 System.out.println("x: "+x);
                 System.out.println("y: "+y);
                 System.out.println("size: "+squareSize);
-                System.out.println("=============================");
+                System.out.println("=============================");*/
                 // marker info
 
                 markerList.add(marker);
@@ -848,7 +850,7 @@ public class MainScreen extends JFrame {
                             return;
                         }
                         // marker info
-                        System.out.println("marker:");
+                        /*System.out.println("marker:");
                         System.out.println(m.getName());
                         System.out.println("X: "+m.getX());
                         System.out.println("Y: "+m.getY());
@@ -860,7 +862,7 @@ public class MainScreen extends JFrame {
                         System.out.println("x: "+x);
                         System.out.println("y: "+y);
                         System.out.println("size: "+squareSize);
-                        System.out.println("=============================");
+                        System.out.println("=============================");*/
                         // marker info
                         break;
                     }
@@ -1171,7 +1173,7 @@ public class MainScreen extends JFrame {
                 //settingBox.add(settingsPanel,BorderLayout.SOUTH);
 
                 recalculatePanel = new JPanel();
-                recalculateButton = new JButton("Calculate Depth");
+                recalculateButton = new JButton(new WaitAction("Calculate Depth"));
                 recalculateButton.addActionListener(reviewActionListener);
                 recalculatePanel.add(recalculateButton);
                 settingBox.setBorder(BorderFactory.createLoweredBevelBorder());
@@ -1204,20 +1206,69 @@ public class MainScreen extends JFrame {
                 if(e.getSource() == recalculateButton){
                     if(!markerList.isEmpty() && markerList.size() >= 3){
 
-                        /*algorithmSettingsDialog = new AlgorithmSettingsDialog(getMainReference(),"", Dialog.ModalityType.DOCUMENT_MODAL);
-                        algorithmSettingsDialog.startFrame();*/
-                        /*System.out.println(algorithmSettingsDialog.steps);
-                        System.out.println(algorithmSettingsDialog.q);
-                        System.out.println(algorithmSettingsDialog.lm);*/
 
-                        imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), ((double)(albedoSlider.getValue()))/100.0, ((double)(regularSlider.getValue()))/100.0);
-                        updateHeight(image.getHeightMap());
+                        //puvodni
+                        //imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), ((double)(albedoSlider.getValue()))/100.0, ((double)(regularSlider.getValue()))/100.0);
+                        //updateHeight(image.getHeightMap());
 
                     }
                 }
             }
         };
+
+        private class WaitAction extends AbstractAction {
+            protected static final long SLEEP_TIME = 3 * 1000;
+
+
+            public WaitAction(String name) {
+                super(name);
+            }
+
+
+            @Override
+            public void actionPerformed(ActionEvent evt) {
+                SwingWorker<Void, Void> mySwingWorker = new SwingWorker<Void, Void>(){
+                    @Override
+                    protected Void doInBackground() throws Exception {
+
+                        imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), ((double)(albedoSlider.getValue()))/100.0, ((double)(regularSlider.getValue()))/100.0);
+                        updateHeight(image.getHeightMap());
+                        return null;
+                    }
+                };
+
+                Window win = SwingUtilities.getWindowAncestor((AbstractButton)evt.getSource());
+                final JDialog dialog = new JDialog(win, "Dialog", Dialog.ModalityType.APPLICATION_MODAL);
+
+                mySwingWorker.addPropertyChangeListener(new PropertyChangeListener() {
+
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        if (evt.getPropertyName().equals("state")) {
+                            if (evt.getNewValue() == SwingWorker.StateValue.DONE) {
+                                dialog.dispose();
+                            }
+                        }
+                    }
+                });
+                mySwingWorker.execute();
+
+                JProgressBar progressBar = new JProgressBar();
+                progressBar.setIndeterminate(true);
+                JPanel panel = new JPanel(new BorderLayout());
+                panel.add(progressBar, BorderLayout.CENTER);
+                panel.add(new JLabel("Please wait......."), BorderLayout.PAGE_START);
+                dialog.add(panel);
+                dialog.pack();
+                dialog.setLocationRelativeTo(win);
+                dialog.setVisible(true);
+            }
+        }
+
+
     }
+
+
 
 
 

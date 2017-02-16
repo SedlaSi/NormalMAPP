@@ -92,6 +92,8 @@ public class ShapeFromShading implements Algorithm {
 
         // VYPISOVANI VYSKOVE MAPY
         //finishDepths(relativeHeights());
+
+        // SKUTECNY KONEC
         absoluteHeights(relativeHeights());
         gong();
         return fr;
