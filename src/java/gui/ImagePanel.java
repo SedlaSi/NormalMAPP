@@ -18,7 +18,7 @@ public abstract class ImagePanel extends JPanel {
     int imgPosX = 0;
     int imgPosY = 0;
 
-    int highlightedSquare = -1;
+    private int highlightedSquare = -1;
 
     BufferedImage image;
     boolean drawSquare = true;

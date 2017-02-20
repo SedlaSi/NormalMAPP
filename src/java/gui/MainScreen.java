@@ -1075,9 +1075,27 @@ public class MainScreen extends JFrame {
 
                 editPanel = new JPanel(new GridLayout(0,3));
                 buttonGroup = new ButtonGroup();
-                addMarkerButton = new JToggleButton("ADD");
-                editMarkerButton = new JToggleButton("EDT");
-                removeMarkerButton = new JToggleButton("RMV");
+                addMarkerButton = new JToggleButton();
+                try {
+                    Image img = ImageIO.read(getClass().getResource("/Resources/original_marker_button/add.png"));
+                    addMarkerButton.setIcon(new ImageIcon(img));
+                } catch (Exception ex) {
+                    System.out.println(ex);
+                }
+                editMarkerButton = new JToggleButton();
+                try {
+                    Image img = ImageIO.read(getClass().getResource("/Resources/original_marker_button/edt.png"));
+                    editMarkerButton.setIcon(new ImageIcon(img));
+                } catch (Exception ex) {
+                    System.out.println(ex);
+                }
+                removeMarkerButton = new JToggleButton();
+                try {
+                    Image img = ImageIO.read(getClass().getResource("/Resources/original_marker_button/rmv.png"));
+                    removeMarkerButton.setIcon(new ImageIcon(img));
+                } catch (Exception ex) {
+                    System.out.println(ex);
+                }
                 buttonGroup.add(addMarkerButton);
                 buttonGroup.add(editMarkerButton);
                 buttonGroup.add(removeMarkerButton);

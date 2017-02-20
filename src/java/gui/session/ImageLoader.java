@@ -70,7 +70,6 @@ public class ImageLoader extends JFrame{
                     ConvertCmd convert = new ConvertCmd(true);
                     // Run
                     convert.run(op);
-                    //System.out.println("converted");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -118,14 +117,6 @@ public class ImageLoader extends JFrame{
         dialog.pack();
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
-
-
-
-
-
-
-
-
 
         return image;
     }
