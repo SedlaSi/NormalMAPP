@@ -1,18 +1,12 @@
 package algorithms;
 
-import gui.session.LoadingScreen;
-import main.NormalMAPP;
-import sun.misc.IOUtils;
-
 import java.io.*;
-import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
 public class NormalMap implements Algorithm {
 
-    private LoadingScreen loadingScreen;
     private static final int STEPS = 5;
 
     public static double NORMAL_HEIGHT = 0.1;
@@ -20,38 +14,13 @@ public class NormalMap implements Algorithm {
     public static void main(String [] args){
         //convolution(read());
         //normalMap(read());
-        LoadingScreen loadingScreen = new LoadingScreen() {
-
-            @Override
-            public void startLoading(int maximum, boolean visible) {
-
-            }
-
-            @Override
-            public void addProgress(int amount) {
-
-            }
-
-            @Override
-            public void setText(String text) {
-
-            }
-
-            @Override
-            public void stopLoading() {
-
-            }
-        };
         NormalMap normalMap = new NormalMap();
-        normalMap.setLoadingScreen(loadingScreen);
         normalMap.write(normalMap.normalMap(normalMap.read("/home/sedlasi1/Desktop/obrazky/5415-small.ppm"),90,1),"/home/sedlasi1/Desktop/obrazky/MP_min.ppm");
         //getGrayscale(read());
     }
 
     public byte [] read(String path){
         try {
-            loadingScreen.setText("Loading height maps");
-            loadingScreen.addProgress(1);
             return Files.readAllBytes(Paths.get(path));
         } catch (IOException e) {
             e.printStackTrace();
@@ -62,8 +31,6 @@ public class NormalMap implements Algorithm {
     public void write(byte [] picture, String path){
         FileOutputStream fos = null;
         try {
-            loadingScreen.setText("Preparing Normal Maps to open");
-            loadingScreen.addProgress(1);
             fos = new FileOutputStream(path);
             fos.write(picture);
             fos.close();
@@ -125,8 +92,6 @@ public class NormalMap implements Algorithm {
     }
 
     public byte [] normalMap(byte [] fr, double angle ,double height){
-        loadingScreen.setText("Starting calculation of normals");
-        loadingScreen.addProgress(1);
         byte [] gray = getGrayscale(fr);
         byte [] out = Arrays.copyOf(fr,fr.length);
 
@@ -166,8 +131,6 @@ public class NormalMap implements Algorithm {
         rows = Integer.parseInt(stb.toString());
 
         off += 5;
-        loadingScreen.setText("Starting Sobel Operations");
-        loadingScreen.addProgress(1);
         int readen_lines = 1;
         double valX;
         double valY;
@@ -202,8 +165,6 @@ public class NormalMap implements Algorithm {
             }
             readen_lines++;
         }
-        loadingScreen.setText("Normals calculated");
-        loadingScreen.addProgress(1);
         return out;
     }
 
@@ -317,8 +278,4 @@ public class NormalMap implements Algorithm {
         return STEPS;
     }
 
-    @Override
-    public void setLoadingScreen(LoadingScreen loadingScreen) {
-        this.loadingScreen = loadingScreen;
-    }
 }

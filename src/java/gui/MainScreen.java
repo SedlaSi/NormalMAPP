@@ -8,10 +8,7 @@ import gui.session.Session;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.MenuEvent;
-import javax.swing.event.MenuListener;
+import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -44,11 +41,8 @@ public class MainScreen extends JFrame {
 
 
     OriginalMapSettingsBox originalMapSettingsBox;
-    OriginalMapToolBox originalMapToolBox;
     NormalMapSettingsBox normalMapSettingsBox;
-    NormalMapToolBox normalMapToolBox;
     HeightMapSettingsBox heightMapSettingsBox;
-    HeightMapToolBox heightMapToolBox;
 
     OriginalMapImagePanel originalMapImagePanel;
     HeightMapImagePanel heightMapImagePanel;
@@ -415,11 +409,8 @@ public class MainScreen extends JFrame {
 
         originalMapSettingsBox = new OriginalMapSettingsBox();
         originalMapSettingsBox.setMarkerList(markerList);
-        originalMapToolBox = new OriginalMapToolBox();
         normalMapSettingsBox = new NormalMapSettingsBox();
-        normalMapToolBox = new NormalMapToolBox();
         heightMapSettingsBox = new HeightMapSettingsBox();
-        heightMapToolBox = new HeightMapToolBox();
 
         leftBoxPanel = new JPanel(new BorderLayout());
         //leftBoxPanel.setLayout(new BorderLayout());
@@ -634,9 +625,9 @@ public class MainScreen extends JFrame {
                 double xRel;
                 double yRel;
                 if (imgPosX < 0) {
-                    xRel = (Math.abs(scale * imgPosX) + x - scale * squareSize / 2);
+                    xRel = (Math.abs(scale * imgPosX) + x /*- scale * squareSize / 2*/);
                 } else {
-                    xRel = (x - scale * imgPosX - scale * squareSize / 2);
+                    xRel = (x - scale * imgPosX/* - scale * squareSize / 2*/);
                 }
                 if (posX < 0) {
                     xRel += Math.abs(posX);
@@ -645,9 +636,9 @@ public class MainScreen extends JFrame {
                 }
                 xRel /= (scale * image.getWidth());
                 if (imgPosY < 0) {
-                    yRel = (Math.abs(scale * imgPosY) + y - scale * squareSize / 2);
+                    yRel = (Math.abs(scale * imgPosY) + y /*- scale * squareSize / 2*/);
                 } else {
-                    yRel = (y - scale * imgPosY - scale * squareSize / 2);
+                    yRel = (y - scale * imgPosY /*- scale * squareSize / 2*/);
                 }
                 if (posY < 0) {
                     yRel += Math.abs(posY);
@@ -695,9 +686,9 @@ public class MainScreen extends JFrame {
                 double xRel;
                 double yRel;
                 if (imgPosX < 0) {
-                    xRel = (Math.abs(scale * imgPosX) + x - scale * squareSize);
+                    xRel = (Math.abs(scale * imgPosX) + x - scale * squareSize/2);
                 } else {
-                    xRel = (x - scale * imgPosX - scale * squareSize);
+                    xRel = (x - scale * imgPosX - scale * squareSize/2);
                 }
                 if (posX < 0) {
                     xRel += Math.abs(posX);
@@ -706,9 +697,9 @@ public class MainScreen extends JFrame {
                 }
                 xRel /= (scale * image.getWidth());
                 if (imgPosY < 0) {
-                    yRel = (Math.abs(scale * imgPosY) + y - scale * squareSize);
+                    yRel = (Math.abs(scale * imgPosY) + y - scale * squareSize/2);
                 } else {
-                    yRel = (y - scale * imgPosY - scale * squareSize);
+                    yRel = (y - scale * imgPosY - scale * squareSize/2);
                 }
                 if (posY < 0) {
                     yRel += Math.abs(posY);
@@ -748,9 +739,9 @@ public class MainScreen extends JFrame {
                 double xRel;
                 double yRel;
                 if (imgPosX < 0) {
-                    xRel = (Math.abs(scale * imgPosX) + x - scale * squareSize);
+                    xRel = (Math.abs(scale * imgPosX) + x - scale * squareSize/2);
                 } else {
-                    xRel = (x - scale * imgPosX - scale * squareSize);
+                    xRel = (x - scale * imgPosX - scale * squareSize/2);
                 }
                 if (posX < 0) {
                     xRel += Math.abs(posX);
@@ -759,9 +750,9 @@ public class MainScreen extends JFrame {
                 }
                 xRel /= (scale * image.getWidth());
                 if (imgPosY < 0) {
-                    yRel = (Math.abs(scale * imgPosY) + y - scale * squareSize);
+                    yRel = (Math.abs(scale * imgPosY) + y - scale * squareSize/2);
                 } else {
-                    yRel = (y - scale * imgPosY - scale * squareSize);
+                    yRel = (y - scale * imgPosY - scale * squareSize/2);
                 }
                 if (posY < 0) {
                     yRel += Math.abs(posY);
@@ -805,9 +796,9 @@ public class MainScreen extends JFrame {
                 double xRel;
                 double yRel;
                 if (imgPosX < 0) {
-                    xRel = (Math.abs(scale * imgPosX) + x - scale * squareSize);
+                    xRel = (Math.abs(scale * imgPosX) + x - scale * squareSize/2);
                 } else {
-                    xRel = (x - scale * imgPosX - scale * squareSize);
+                    xRel = (x - scale * imgPosX - scale * squareSize/2);
                 }
                 if (posX < 0) {
                     xRel += Math.abs(posX);
@@ -816,9 +807,9 @@ public class MainScreen extends JFrame {
                 }
                 xRel /= (scale * image.getWidth());
                 if (imgPosY < 0) {
-                    yRel = (Math.abs(scale * imgPosY) + y - scale * squareSize);
+                    yRel = (Math.abs(scale * imgPosY) + y - scale * squareSize/2);
                 } else {
-                    yRel = (y - scale * imgPosY - scale * squareSize);
+                    yRel = (y - scale * imgPosY - scale * squareSize/2);
                 }
                 if (posY < 0) {
                     yRel += Math.abs(posY);
@@ -866,9 +857,6 @@ public class MainScreen extends JFrame {
                         // marker info
                         break;
                     }
-
-
-
 
                     }
                 }
@@ -1003,14 +991,10 @@ public class MainScreen extends JFrame {
         };
     }
 
-    private class NormalMapToolBox {
-
-    }
-
     private class HeightMapSettingsBox extends SettingsBox {
         JPanel settingBox;
         JPanel calculateNormalPanel;
-        JButton calculateNormalButton;
+        JButton calculateNormalButton, invert;
 
         @Override
         public JPanel getPanel(){
@@ -1018,11 +1002,15 @@ public class MainScreen extends JFrame {
                 settingBox = new JPanel();
                 settingBox.setLayout(new BorderLayout());
 
+
                 calculateNormalPanel = new JPanel();
+                invert = new JButton("Invert Heights");
+                invert.addActionListener(invertActionListener);
                 calculateNormalButton = new JButton("Calculate Normals");
                 calculateNormalButton.addActionListener(reviewActionListener);
                 calculateNormalPanel.add(calculateNormalButton);
                 settingBox.setBorder(BorderFactory.createLoweredBevelBorder());
+                settingBox.add(invert,BorderLayout.NORTH);
                 settingBox.add(calculateNormalPanel, BorderLayout.SOUTH);
             }
             return settingBox;
@@ -1042,11 +1030,20 @@ public class MainScreen extends JFrame {
                 }
             }
         };
+
+        private ActionListener invertActionListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                if(actionEvent.getSource() == invert){
+                    if(imageLoader != null && image != null && image.getHeightMap() != null){
+                        imageLoader.invertHeightMap();
+                        updateHeight(image.getHeightMap());
+                    }
+                }
+            }
+        };
     }
 
-    private class HeightMapToolBox {
-
-    }
 
     private class OriginalMapSettingsBox extends SettingsBox {
         JPanel settingBox;
@@ -1057,6 +1054,7 @@ public class MainScreen extends JFrame {
         ButtonGroup buttonGroup;
         AlgorithmSettingsDialog algorithmSettingsDialog;
         JSlider regularSlider,albedoSlider,stepsSlider;
+        JLabel warning;
         int algorithmSteps = 20;
         double algorithmAlbedo = 1;
         double algorithmSmoothness = 0.1;
@@ -1165,16 +1163,25 @@ public class MainScreen extends JFrame {
                 stepsSlider.setMinorTickSpacing(10);
                 stepsSlider.setPaintTicks(true);
                 stepsSlider.setPaintLabels(true);
-                down.add(stepsSlider,BorderLayout.CENTER);
 
+                down.add(stepsSlider,BorderLayout.CENTER);
+                warning = new JLabel("    Warning: long calculation time");
+                warning.setForeground(Color.RED);
+                warning.setVisible(false);
+                down.add(warning,BorderLayout.PAGE_END);
                 settingsPanel.add(up,BorderLayout.NORTH);
                 settingsPanel.add(down,BorderLayout.CENTER);
-
+                stepsSlider.addChangeListener(changeEvent -> {
+                    if(stepsSlider.getValue() > 50){
+                        warning.setVisible(true);
+                    } else {
+                        warning.setVisible(false);
+                    }
+                });
                 //settingBox.add(settingsPanel,BorderLayout.SOUTH);
 
                 recalculatePanel = new JPanel();
                 recalculateButton = new JButton(new WaitAction("Calculate Depth"));
-                recalculateButton.addActionListener(reviewActionListener);
                 recalculatePanel.add(recalculateButton);
                 settingBox.setBorder(BorderFactory.createLoweredBevelBorder());
                 //settingBox.add(calculateNormalPanel, BorderLayout.PAGE_END);
@@ -1200,30 +1207,11 @@ public class MainScreen extends JFrame {
             return markerList;
         }
 
-        private ActionListener reviewActionListener = new ActionListener(){
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(e.getSource() == recalculateButton){
-                    if(!markerList.isEmpty() && markerList.size() >= 3){
-
-
-                        //puvodni
-                        //imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), ((double)(albedoSlider.getValue()))/100.0, ((double)(regularSlider.getValue()))/100.0);
-                        //updateHeight(image.getHeightMap());
-
-                    }
-                }
-            }
-        };
-
         private class WaitAction extends AbstractAction {
-            protected static final long SLEEP_TIME = 3 * 1000;
-
 
             public WaitAction(String name) {
                 super(name);
             }
-
 
             @Override
             public void actionPerformed(ActionEvent evt) {
@@ -1233,12 +1221,13 @@ public class MainScreen extends JFrame {
 
                         imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), ((double)(albedoSlider.getValue()))/100.0, ((double)(regularSlider.getValue()))/100.0);
                         updateHeight(image.getHeightMap());
+
                         return null;
                     }
                 };
 
                 Window win = SwingUtilities.getWindowAncestor((AbstractButton)evt.getSource());
-                final JDialog dialog = new JDialog(win, "Dialog", Dialog.ModalityType.APPLICATION_MODAL);
+                final JDialog dialog = new JDialog(win, "Calculating Depthmap" , Dialog.ModalityType.APPLICATION_MODAL);
 
                 mySwingWorker.addPropertyChangeListener(new PropertyChangeListener() {
 
@@ -1255,9 +1244,9 @@ public class MainScreen extends JFrame {
 
                 JProgressBar progressBar = new JProgressBar();
                 progressBar.setIndeterminate(true);
+                progressBar.setPreferredSize(new Dimension(250,20));
                 JPanel panel = new JPanel(new BorderLayout());
                 panel.add(progressBar, BorderLayout.CENTER);
-                panel.add(new JLabel("Please wait......."), BorderLayout.PAGE_START);
                 dialog.add(panel);
                 dialog.pack();
                 dialog.setLocationRelativeTo(win);
@@ -1268,13 +1257,6 @@ public class MainScreen extends JFrame {
 
     }
 
-
-
-
-
-    private class OriginalMapToolBox {
-
-    }
 
 }
 

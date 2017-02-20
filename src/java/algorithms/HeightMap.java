@@ -1,7 +1,5 @@
 package algorithms;
 
-import gui.session.LoadingScreen;
-
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -14,7 +12,6 @@ import java.util.Arrays;
  */
 public class HeightMap implements Algorithm {
 
-    private LoadingScreen loadingScreen;
     private static final int STEPS = 13;
 
     public static void main(String [] args){
@@ -30,8 +27,6 @@ public class HeightMap implements Algorithm {
 
     public byte [] read(String path){
         try {
-            loadingScreen.setText("Loading Image");
-            loadingScreen.addProgress(1);
             return Files.readAllBytes(Paths.get(path));
         } catch (IOException e) {
             e.printStackTrace();
@@ -41,13 +36,10 @@ public class HeightMap implements Algorithm {
 
     public void write(byte [] picture, String path){
         FileOutputStream fos = null;
-        loadingScreen.setText("Opening Maps");
-        loadingScreen.addProgress(1);
         try {
             fos = new FileOutputStream(path);
             fos.write(picture);
             fos.close();
-            loadingScreen.addProgress(1);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -57,17 +49,10 @@ public class HeightMap implements Algorithm {
     }
 
     public byte [] heightMap(byte [] fr){
-        loadingScreen.setText("Calculating Enviroment");
-        loadingScreen.addProgress(1);
         byte [] sobel = sobelEdgeDetector(fr);
-        loadingScreen.addProgress(1);
         byte [] out = Arrays.copyOf(fr,fr.length);
-        loadingScreen.setText("Estimating Shapes");
-        loadingScreen.addProgress(1);
         GrayscaleResultClass res = getGrayscale(sobel);
-        loadingScreen.addProgress(1);
         byte [] edges = threshold(res.out,res.average);
-        loadingScreen.addProgress(1);
 
         if(edges == null){
             System.out.println("edges field null!!");
@@ -76,15 +61,10 @@ public class HeightMap implements Algorithm {
 
         byte [] blackWhiteEdges = blackWhiteSummerize(edges,res.collumns,res.rows);
         blackWhiteEdges = invert(blackWhiteEdges);
-        loadingScreen.addProgress(1);
 
         byte [] noNoise = noiseRemoval(blackWhiteEdges,res.collumns,res.rows);
-        loadingScreen.addProgress(1);
         byte [] distortionMap = blackBlur(noNoise,res.collumns,res.rows);
-        loadingScreen.setText("Calculating height maps");
-        loadingScreen.addProgress(1);
         byte [] finalMap = combineEnviromentWithNoise(distortionMap,getGrayscale(fr).out);
-        loadingScreen.addProgress(1);
         for(int i = 0; i < finalMap.length; i++){
             /*out[i*3 + offset] = (byte)(0.2126*distortionMap[i]);
             out[i*3 + offset + 1] = (byte)(0.7152*distortionMap[i]);
@@ -94,8 +74,6 @@ public class HeightMap implements Algorithm {
             out[i*3 + res.offset + 1] = finalMap[i];
             out[i*3 + res.offset + 2] = finalMap[i];
         }
-        loadingScreen.setText("Height maps calculated");
-        loadingScreen.addProgress(1);
         return out;
     }
 
@@ -116,8 +94,27 @@ public class HeightMap implements Algorithm {
         return out;
     }
 
-    private byte [] invert(byte [] fr){
-        for(int i = 0; i < fr.length; i++){
+    public byte [] invert(byte [] fr){
+        int off = 3; // offset in array
+
+        while(fr[off] != 10) off++;
+        int i = 3;
+        while(true){
+            if(fr[i] == '#'){
+                i++;
+                while(fr[i] != '\n') i++;
+                while(fr[i] == '\n') i++;
+            } else break;
+
+        }
+        off = i;
+        while(fr[off] != 10 && fr[off] != ' ') off++;
+
+        off++;
+        while(fr[off] != 10 && fr[off] != ' ') off++;
+        off += 5;
+
+        for(i = off; i < fr.length; i++){
             fr[i] = (byte)(255 - (fr[i] & 0xFF));
         }
         return fr;
@@ -446,11 +443,6 @@ public class HeightMap implements Algorithm {
     @Override
     public int getSteps() {
         return STEPS;
-    }
-
-    @Override
-    public void setLoadingScreen(LoadingScreen loadingScreen) {
-        this.loadingScreen = loadingScreen;
     }
 
     private class GrayscaleResultClass {

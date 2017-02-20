@@ -2,19 +2,16 @@ package algorithms;
 
 import Jama.Matrix;
 import gui.sfs.Marker;
-import gui.session.LoadingScreen;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.DataLine;
-import java.awt.*;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.DoubleSummaryStatistics;
 import java.util.List;
 
 /**
@@ -1391,11 +1388,6 @@ public class ShapeFromShading implements Algorithm {
     @Override
     public int getSteps() {
         return 0;
-    }
-
-    @Override
-    public void setLoadingScreen(LoadingScreen loadingScreen) {
-
     }
 
     public void setAlbedo(double albedo) {

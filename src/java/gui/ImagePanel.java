@@ -15,7 +15,8 @@ public abstract class ImagePanel extends JPanel {
     int posX = 0;
     int posY = 0;
     int squareSize = 20;
-    int imgPosX,imgPosY;
+    int imgPosX = 0;
+    int imgPosY = 0;
 
     int highlightedSquare = -1;
 
@@ -83,27 +84,31 @@ public abstract class ImagePanel extends JPanel {
             imgPosY = (int)y;
 
             AffineTransform at = AffineTransform.getTranslateInstance(x,y);
-            //at.scale(1, 1);
-            //at.translate(posX,posY);
-            g2.translate(posX,posY);
+            /*at.scale(1, 1);
+            at.translate(posX,posY);*/
+
             g2.scale(scale,scale);
+            g2.translate(posX,posY);
             g2.drawRenderedImage(image,at);
+            //g2.drawImage(image,imgPosX,imgPosY,this);
+            imgPosX +=posX;
+            imgPosY +=posY;
             if(drawSquare && markerList != null){ // vykreslovani zamerovacich ctvercu
                 for(int i = 0; i < markerList.size(); i++){
                     if(i == highlightedSquare){
                         Marker marker = markerList.get(i);
                         //Rectangle s = marker.getSquare();
                         Rectangle s = square;
-                        s.setLocation((int)(x + marker.getPosX()*(double)imageWidth),(int)(y+ marker.getPosY()*(double)imageHeight));
+                        s.setLocation((int)(x + marker.getPosX()*(double)imageWidth - (squareSize / 2)),(int)(y+ marker.getPosY()*(double)imageHeight - (squareSize / 2)));
                         g2.draw(s);
                         g2.setColor(Color.GREEN);
-                        g2.fillRect((int)(x + marker.getPosX()*(double)imageWidth),(int)(y+ marker.getPosY()*(double)imageHeight),squareSize,squareSize);
+                        g2.fillRect((int)(x + marker.getPosX()*(double)imageWidth - (squareSize / 2)),(int)(y+ marker.getPosY()*(double)imageHeight - (squareSize / 2)),squareSize,squareSize);
                         g2.setColor(Color.gray);
                     } else {
                         Marker marker = markerList.get(i);
                         //Rectangle s = marker.getSquare();
                         Rectangle s = square;
-                        s.setLocation((int) (x + marker.getPosX() * (double) imageWidth), (int) (y + marker.getPosY() * (double) imageHeight));
+                        s.setLocation((int) (x + marker.getPosX() * (double) imageWidth - (squareSize / 2)), (int) (y + marker.getPosY() * (double) imageHeight - (squareSize / 2)));
                         g2.draw(s);
                     }
                 }
@@ -148,8 +153,8 @@ public abstract class ImagePanel extends JPanel {
                 posY = y - posY;
             }*/
 
-        posX = x;
-        posY = y;
+        posX = (int)(x);
+        posY = (int)(y);
     }
 
 

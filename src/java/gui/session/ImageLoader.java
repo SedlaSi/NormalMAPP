@@ -12,6 +12,8 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.PriorityQueue;
@@ -54,57 +56,76 @@ public class ImageLoader extends JFrame{
             return null;
         }
 
-        LoadingScreen loadingImageProgressBar = new LoadingImageProgressBar(mainFrameReference,"",Dialog.ModalityType.DOCUMENT_MODAL);
-        loadingImageProgressBar.startLoading(heightMap.getSteps() + normalMap.getSteps(),true);
-        //loadingImageProgressBar.startLoading(heightMap.getSteps() + normalMap.getSteps());
-        heightMap.setLoadingScreen(loadingImageProgressBar);
-        normalMap.setLoadingScreen(loadingImageProgressBar);
+        SwingWorker<Void, Void> mySwingWorker = new SwingWorker<Void, Void>(){
+            @Override
+            protected Void doInBackground() throws Exception {
+                String newImagePath = sessionFolder + Session.SLASH + ORIGINAL_NAME;
+                try {
+                    // Use IM
+                    IMOperation op = new IMOperation();
+                    // Pipe
+                    op.addImage(file.getAbsolutePath());
+                    op.addImage("ppm:"+newImagePath);
+                    // CC command
+                    ConvertCmd convert = new ConvertCmd(true);
+                    // Run
+                    convert.run(op);
+                    //System.out.println("converted");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                heightMap.write(heightMap.heightMap(heightMap.read(newImagePath)),sessionFolder + Session.SLASH + HEIGHT_NAME);
+                normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME),0,0.1),sessionFolder + Session.SLASH + NORMAL_NAME);
 
-        String newImagePath = sessionFolder + Session.SLASH + ORIGINAL_NAME;
-        try {
-            // Use IM
-            IMOperation op = new IMOperation();
-            // Pipe
-            op.addImage(file.getAbsolutePath());
-            op.addImage("ppm:"+newImagePath);
-            // CC command
-            ConvertCmd convert = new ConvertCmd(true);
-            // Run
-            convert.run(op);
-            //System.out.println("converted");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+                image = null;
+                try {
+                    File imageFile = new File(newImagePath);
+                    BufferedImage imData = ImageIO.read(imageFile);
+                    image = new Image(imageFile,imData);
+                    File normalFile = new File(sessionFolder + Session.SLASH + NORMAL_NAME);
 
-        //new Thread(()->{
-            heightMap.write(heightMap.heightMap(heightMap.read(newImagePath)),sessionFolder + Session.SLASH + HEIGHT_NAME);
-            normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME),0,0.1),sessionFolder + Session.SLASH + NORMAL_NAME);
-        //}).start();
-        //heightMap.write(heightMap.heightMap(heightMap.read(newImagePath)),sessionFolder + Session.SLASH + HEIGHT_NAME);
-        //normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME),1,1,0.1),sessionFolder + Session.SLASH + NORMAL_NAME);
+                    image.setHeightMap(ImageIO.read(new File(sessionFolder + Session.SLASH + HEIGHT_NAME)));
+                    image.setNormalMap(ImageIO.read(new File(sessionFolder + Session.SLASH + NORMAL_NAME)));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        };
 
-        image = null;
-        try {
-            File imageFile = new File(newImagePath);
-            BufferedImage imData = ImageIO.read(imageFile);
-            image = new Image(imageFile,imData);
-            File normalFile = new File(sessionFolder + Session.SLASH + NORMAL_NAME);
+        //Window win = SwingUtilities.getWindowAncestor((AbstractButton)evt.getSource());
+        final JDialog dialog = new JDialog(this, "Loading Image" , Dialog.ModalityType.APPLICATION_MODAL);
 
-            /*while(!normalFile.exists()){
+        mySwingWorker.addPropertyChangeListener(new PropertyChangeListener() {
 
-            }*/
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equals("state")) {
+                    if (evt.getNewValue() == SwingWorker.StateValue.DONE) {
+                        dialog.dispose();
+                    }
+                }
+            }
+        });
+        mySwingWorker.execute();
 
-            image.setHeightMap(ImageIO.read(new File(sessionFolder + Session.SLASH + HEIGHT_NAME)));
-            image.setNormalMap(ImageIO.read(new File(sessionFolder + Session.SLASH + NORMAL_NAME)));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        JProgressBar progressBar = new JProgressBar();
+        progressBar.setIndeterminate(true);
+        progressBar.setPreferredSize(new Dimension(250,20));
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(progressBar, BorderLayout.CENTER);
+        dialog.add(panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
 
-        loadingImageProgressBar.stopLoading();
 
 
-        heightMap.setLoadingScreen(null);
-        normalMap.setLoadingScreen(null);
+
+
+
+
+
 
         return image;
     }
@@ -155,51 +176,75 @@ public class ImageLoader extends JFrame{
             return null;
         }
 
-        LoadingScreen loadingImageProgressBar = new LoadingImageProgressBar(mainFrameReference,"",Dialog.ModalityType.DOCUMENT_MODAL);
-        loadingImageProgressBar.startLoading(normalMap.getSteps(),true);
-        //loadingImageProgressBar.startLoading(heightMap.getSteps() + normalMap.getSteps());
-        //heightMap.setLoadingScreen(loadingImageProgressBar);
-        normalMap.setLoadingScreen(loadingImageProgressBar);
+        SwingWorker<Void, Void> mySwingWorker = new SwingWorker<Void, Void>(){
+            @Override
+            protected Void doInBackground() throws Exception {
+                String newImagePath = sessionFolder + Session.SLASH + HEIGHT_NAME;
+                try {
+                    // Use IM
+                    IMOperation op = new IMOperation();
+                    // Pipe
+                    op.addImage(file.getAbsolutePath());
+                    op.addImage("ppm:"+newImagePath);
+                    // CC command
+                    ConvertCmd convert = new ConvertCmd(true);
+                    // Run
+                    convert.run(op);
+                    //System.out.println("converted");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                //heightMap.write(heightMap.heightMap(heightMap.read(newImagePath)),sessionFolder + "/" + HEIGHT_NAME);
+                normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME),0,0.1),sessionFolder + "/" + NORMAL_NAME);
 
-        String newImagePath = sessionFolder + Session.SLASH + HEIGHT_NAME;
-        try {
-            // Use IM
-            IMOperation op = new IMOperation();
-            // Pipe
-            op.addImage(file.getAbsolutePath());
-            op.addImage("ppm:"+newImagePath);
-            // CC command
-            ConvertCmd convert = new ConvertCmd(true);
-            // Run
-            convert.run(op);
-            //System.out.println("converted");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        //heightMap.write(heightMap.heightMap(heightMap.read(newImagePath)),sessionFolder + "/" + HEIGHT_NAME);
-        normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME),0,0.1),sessionFolder + "/" + NORMAL_NAME);
+                image = null;
+                try {
+                    image = new Image(null,null);
+                    image.setHeightMap(ImageIO.read(new File(sessionFolder + Session.SLASH + HEIGHT_NAME)));
+                    image.setNormalMap(ImageIO.read(new File(sessionFolder + Session.SLASH + NORMAL_NAME)));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
-        image = null;
-        try {
-            image = new Image(null,null);
-            image.setHeightMap(ImageIO.read(new File(sessionFolder + Session.SLASH + HEIGHT_NAME)));
-            image.setNormalMap(ImageIO.read(new File(sessionFolder + Session.SLASH + NORMAL_NAME)));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        loadingImageProgressBar.stopLoading();
+                return null;
+            }
+        };
 
-        heightMap.setLoadingScreen(null);
-        normalMap.setLoadingScreen(null);
+        //Window win = SwingUtilities.getWindowAncestor((AbstractButton)evt.getSource());
+        final JDialog dialog = new JDialog(this, "Loading Image" , Dialog.ModalityType.APPLICATION_MODAL);
+
+        mySwingWorker.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equals("state")) {
+                    if (evt.getNewValue() == SwingWorker.StateValue.DONE) {
+                        dialog.dispose();
+                    }
+                }
+            }
+        });
+        mySwingWorker.execute();
+
+        JProgressBar progressBar = new JProgressBar();
+        progressBar.setIndeterminate(true);
+        progressBar.setPreferredSize(new Dimension(250,20));
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(progressBar, BorderLayout.CENTER);
+        dialog.add(panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+
+
+
 
         return image;
     }
 
     public void refreshNormalMap(double angle ,double height){
         if(image.getHeightMap() != null) {
-            LoadingImageProgressBar loadingImageProgressBar = new LoadingImageProgressBar(mainFrameReference, "", Dialog.ModalityType.DOCUMENT_MODAL);
             //loadingImageProgressBar.startLoading(normalMap.getSteps(),false);
-            normalMap.setLoadingScreen(loadingImageProgressBar);
             normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME), angle, height), sessionFolder + Session.SLASH + NORMAL_NAME);
 
             try {
@@ -207,8 +252,6 @@ public class ImageLoader extends JFrame{
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            loadingImageProgressBar.stopLoading();
-            normalMap.setLoadingScreen(null);
         }
     }
 
@@ -279,161 +322,13 @@ public class ImageLoader extends JFrame{
         return image;
     }
 
-    private class LoadingImageProgressBar extends JDialog implements LoadingScreen {
 
-
-        private JProgressBar progressBar;
-        private java.util.PriorityQueue<Integer> addProgressList;
-        private java.util.PriorityQueue<String> messages;
-        private ProgressWorker pw;
-
-        /*public static void main(String[] args) throws InterruptedException {
-
-            LoadingImageProgressBar loadingImageProgressBar = new LoadingImageProgressBar();
-            loadingImageProgressBar.startLoading(100);
-            loadingImageProgressBar.setText("progress");
-            loadingImageProgressBar.addProgress(60);
-
-
-        }*/
-
-        public LoadingImageProgressBar(JFrame mainFrameReference,String name, Dialog.ModalityType modalityType){
-            super(mainFrameReference,"", ModalityType.MODELESS);
+    public void invertHeightMap() {
+        heightMap.write(heightMap.invert(heightMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME)),sessionFolder + Session.SLASH + HEIGHT_NAME);
+        try {
+            image.setHeightMap(ImageIO.read(new File(sessionFolder + Session.SLASH + HEIGHT_NAME)));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        @Override
-        public void startLoading(int maximum, boolean visible) {
-
-            //new Thread(() -> {
-                //pw = new ProgressWorker();
-
-                this.setPreferredSize(new Dimension(300,30));
-                this.setResizable(false);
-                //setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                progressBar = new JProgressBar();
-                progressBar.setMinimum(0);
-                progressBar.setMaximum(maximum);
-                //progressBar.setIndeterminate(true);
-                setLocationRelativeTo(null);
-                setTitle("Loading image, please wait...");
-                this.add(progressBar);
-                pack();
-                setVisible(visible);
-
-            //}).start();
-
-
-
-            //startThread();
-        }
-
-        public ProgressWorker getProgressWorker(){
-            return pw;
-        }
-
-        private void startThread(){
-            addProgressList = new PriorityQueue<>();
-            messages = new PriorityQueue<>();
-            new Thread(()->{
-                Integer progress;
-                String message;
-                while(true) {
-                    while ((progress = addProgressList.poll()) != null) ;
-
-                    try{
-                        if(progress == -1){
-                            break;
-                        }
-                    } catch (Exception e){
-                        break;
-                    }
-
-                    final int val = progress;
-                    //while((message = messages.poll())!= null);
-                    SwingUtilities.invokeLater(() -> {
-                        progressBar.invalidate();
-                        progressBar.setValue(val);
-                        //progressBar.setString(message);
-                        progressBar.revalidate();
-                        progressBar.repaint();
-
-                    });
-
-                }
-                //SwingUtilities.invokeLater(() -> progressBar.setIndeterminate(false));
-
-
-            }).start();
-        }
-
-        @Override
-        public void addProgress(int amount) {
-            //progressBar.setValue(progressBar.getValue() + amount);
-            //addProgressList.add(progressBar.getValue() + amount);
-            //System.out.println(progressBar.getValue());
-            //repaint(0);
-            /*EventQueue.invokeLater(() -> {
-                pw.newUpdate();
-            });*/
-
-        }
-
-        /**
-         * METHOD DOES NOT UPDATE JFRAME!!!!!!
-         * @param text
-         */
-        @Override
-        public void setText(String text) {
-            //messages.add(text);
-            /*EventQueue.invokeLater(() -> {
-                pw.newMessage(text);
-            });*/
-        }
-
-        @Override
-        public void stopLoading() {
-            //this.notifyAll();
-            this.dispose();
-        }
-
-        public class ProgressWorker extends SwingWorker<Object, Object> {
-
-            private boolean update = false;
-            private String message = "";
-
-            @Override
-            protected Object doInBackground() throws Exception {
-
-                while(message != null){
-                    System.out.println("blah");
-                    if(true) return null;
-                    while(!update);
-                    System.out.println("doing");
-                    setText(message);
-                    addProgress(1);
-
-                    update = false;
-
-                    invalidate();
-                    revalidate();
-                    repaint(0);
-                }
-
-                return null;
-            }
-
-            protected void newUpdate(){
-                update = true;
-            }
-
-            protected void newMessage(String message){
-                this.message = message;
-            }
-        }
-
-
     }
-
-
-
 }
