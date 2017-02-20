@@ -24,7 +24,7 @@ public class MainScreen extends JFrame {
 
     JMenuBar menuBar;
     JMenu file, help, save, load, edit, filters, view;
-    JMenuItem exit, openTexture, saveAll, loadAll, saveHeighMap, saveNormalMap, loadHeightMap, invertNormal;
+    JMenuItem exit, openTexture, saveHeighMap, saveNormalMap, loadHeightMap, invertNormal;
     JMenuItem undo, redo, sharpen, smooth;
     ImageLoader imageLoader;
     image.Image image;
@@ -189,8 +189,8 @@ public class MainScreen extends JFrame {
         originalMapImagePanel.addMouseMotionListener(new MouseMotionListener() {
             @Override
             public void mouseDragged(MouseEvent mouseEvent) {
-                int x = (int)(mouseEvent.getPoint().getX()-mouseStartX);
-                int y = (int)(mouseEvent.getPoint().getY()-mouseStartY);
+                int x = (int)(mouseEvent.getX()-mouseStartX);
+                int y = (int)(mouseEvent.getY()-mouseStartY);
                 if(updateAllImages){
                     heightMapImagePanel.moveImg(x,y);
                     normalMapImagePanel.moveImg(x,y);

@@ -12,12 +12,13 @@ import java.awt.image.BufferedImage;
  */
 public abstract class ImagePanel extends JPanel {
     double scale;
+    double initScale = 0.0;
     int posX = 0;
     int posY = 0;
     int squareSize = 20;
     int imgPosX = 0;
     int imgPosY = 0;
-
+    JLabel imageLabel;
     private int highlightedSquare = -1;
 
     BufferedImage image;
@@ -51,6 +52,8 @@ public abstract class ImagePanel extends JPanel {
     public ImagePanel() {
         scale = 1.0;
         setBackground(Color.gray);
+        //imageLabel = new JLabel();
+        //this.add(imageLabel);
         //relativePos = new ArrayList<>(3);
     }
 
@@ -60,6 +63,14 @@ public abstract class ImagePanel extends JPanel {
 
     public void setBufferedImage(BufferedImage image){
         this.image = image;
+        initScale = 1.0;
+        /*while(this.getSize().height*(-initScale) < image.getHeight() || this.getSize().width*(-initScale) < image.getWidth()){
+            initScale -= 2.0;
+        }*/
+        if(scale < initScale){
+            scale  = initScale + 1.0;
+        }
+        //imageLabel.setIcon(new ImageIcon(this.image));
     }
 
     @Override
@@ -84,15 +95,18 @@ public abstract class ImagePanel extends JPanel {
             imgPosY = (int)y;
 
             AffineTransform at = AffineTransform.getTranslateInstance(x,y);
-            /*at.scale(1, 1);
-            at.translate(posX,posY);*/
-
-            g2.scale(scale,scale);
+            //at.scale(1, 1);
+            //at.translate(posX,posY);
             g2.translate(posX,posY);
+            g2.scale(scale,scale);
             g2.drawRenderedImage(image,at);
             //g2.drawImage(image,imgPosX,imgPosY,this);
-            imgPosX +=posX;
-            imgPosY +=posY;
+            /*int prevX = imageLabel.getLocation().x;
+            int prevY = imageLabel.getLocation().y;
+            imageLabel.setLocation(prevX + posX,prevY + posY);
+            imageLabel.repaint();
+            posX = 0;
+            posY = 0;*/
             if(drawSquare && markerList != null){ // vykreslovani zamerovacich ctvercu
                 for(int i = 0; i < markerList.size(); i++){
                     if(i == highlightedSquare){
@@ -126,14 +140,14 @@ public abstract class ImagePanel extends JPanel {
     }
 
     public void increaseScale(){
-        if(scale + 0.5 <= 3) {
-            scale += 0.5;
+        if(scale + 0.25 <= 3 + initScale) {
+            scale += 0.25;
         }
     }
 
     public void decreaseScale(){
-        if(scale - 0.5 > 0){
-            scale -= 0.5;
+        if(scale - 0.25 > initScale){
+            scale -= 0.25;
         }
     }
 
