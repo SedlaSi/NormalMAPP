@@ -264,13 +264,26 @@ public class EditMarkerScreen extends JDialog {
                     angleImageR = op.filter(getAngleImage(), null);
                 }
                 g.drawImage(angleImageR,0,0,this);
+
+                g.rotate(Math.toRadians(-angle+45), 200, 200);
                 //angleImagePanel.switchToRightAngle();
             } else {
                 g.rotate(Math.toRadians(-angle+45), 0, 200);
                 g.drawImage(getAngleImage(),0,0,this);
+
+                g.rotate(Math.toRadians(angle-45), 0, 200);
                 //angleImagePanel.switchToLeftAngle();
             }
 
+            // vycisteni okraju
+            g.translate(-8,-13);
+            g.setColor(Color.WHITE);
+            g.fillRect(0,0,8,250);
+            g.translate(8,13+200);
+            g.fillRect(0,0,250,30);
+            g.translate(-8,-13-200);
+            g.translate(8+200,0);
+            g.fillRect(0,0,15,250);
             /*int endX = (int)(startX - angleMult*Math.cos(Math.toRadians(angle)) * length);
             int endY = (int)(startY - Math.sin(Math.toRadians(angle)) * length);*/
 
