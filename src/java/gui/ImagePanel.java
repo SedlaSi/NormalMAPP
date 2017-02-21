@@ -63,9 +63,9 @@ public abstract class ImagePanel extends JPanel {
 
     public void setBufferedImage(BufferedImage image){
         this.image = image;
-        initScale = 1.0;
-        /*while(this.getSize().height*(-initScale) < image.getHeight() || this.getSize().width*(-initScale) < image.getWidth()){
-            initScale -= 2.0;
+        initScale = 0.0;
+        /*while(this.getSize().height*(-initScale) < image.getHeight() && this.getSize().width*(-initScale) < image.getWidth()){
+            initScale -= 1.0;
         }*/
         if(scale < initScale){
             scale  = initScale + 1.0;
@@ -140,7 +140,7 @@ public abstract class ImagePanel extends JPanel {
     }
 
     public void increaseScale(){
-        if(scale + 0.25 <= 3 + initScale) {
+        if(scale + 0.25 <= 3.0 + initScale) {
             scale += 0.25;
         }
     }

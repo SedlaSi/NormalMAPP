@@ -1,6 +1,7 @@
 package gui.session;
 
 import algorithms.HeightMap;
+import algorithms.LambertShader;
 import algorithms.NormalMap;
 import algorithms.ShapeFromShading;
 import gui.sfs.Marker;
@@ -30,9 +31,11 @@ public class ImageLoader extends JFrame{
     private static final String ORIGINAL_NAME = "original.ppm";
     private static final String HEIGHT_NAME = "height.ppm";
     private static final String NORMAL_NAME = "normal.ppm";
+    private static final String PREVIEW_NAME = "preview.ppm";
     private final HeightMap heightMap = new HeightMap();
     private final NormalMap normalMap = new NormalMap();
     private final ShapeFromShading shapeFromShading = new ShapeFromShading();
+    private final LambertShader lambertShader = new LambertShader();
 
     Image image;
 
@@ -244,6 +247,7 @@ public class ImageLoader extends JFrame{
                 e.printStackTrace();
             }
         }
+        calculatePreview();
     }
 
     public void calculateHeightMap(java.util.List<Marker> markerList, int steps, double q, double lm){
@@ -259,6 +263,19 @@ public class ImageLoader extends JFrame{
             e.printStackTrace();
         }
 
+    }
+
+    public void calculatePreview(){
+        if(image.getNormalMap() != null) {
+            //loadingImageProgressBar.startLoading(normalMap.getSteps(),false);
+            lambertShader.write(lambertShader.shader(lambertShader.read(sessionFolder + Session.SLASH + NORMAL_NAME)), sessionFolder + Session.SLASH + PREVIEW_NAME);
+
+            try {
+                image.setPreview(ImageIO.read(new File(sessionFolder + Session.SLASH + PREVIEW_NAME)));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void saveHeightMap(){
@@ -279,7 +296,7 @@ public class ImageLoader extends JFrame{
             ConvertCmd convert = new ConvertCmd(true);
             // Run
             convert.run(op);
-            System.out.println("saved");
+            //System.out.println("saved");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -303,7 +320,7 @@ public class ImageLoader extends JFrame{
             ConvertCmd convert = new ConvertCmd(true);
             // Run
             convert.run(op);
-            System.out.println("saved");
+            //System.out.println("saved");
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -15,6 +15,7 @@ public class Image {
     private BufferedImage originalMap;
     private BufferedImage heightMap;
     private BufferedImage normalMap;
+    private BufferedImage preview;
 
     public Image(File sourceFile,BufferedImage originalMap){
         this.sourceFile = sourceFile;
@@ -29,6 +30,10 @@ public class Image {
         this.normalMap = normalMap;
     }
 
+    public void setPreview(BufferedImage preview){
+        this.preview = preview;
+    }
+
     public BufferedImage getNormalMap() {
         return normalMap;
     }
@@ -39,6 +44,10 @@ public class Image {
 
     public BufferedImage getOriginalMap() {
         return originalMap;
+    }
+
+    public BufferedImage getPreview() {
+        return preview;
     }
 
 }

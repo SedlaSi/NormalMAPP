@@ -82,7 +82,7 @@ public class ShapeFromShading implements Algorithm {
         }*/
 
         // VYPISOVANI PLOCHYCH NORMAL
-        /*for(int i = bodyStart; i< normalField.length ; i++){
+        /*for(int i = bodyStart; i < normalField.length ; i++){
             //fr[i] = (byte)((normalField[i]+1)*127.5);
             fr[i] = (byte)((normalField[i])*255);
         }*/
