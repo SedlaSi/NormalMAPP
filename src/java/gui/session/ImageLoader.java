@@ -279,6 +279,7 @@ public class ImageLoader extends JFrame{
     }
 
     public void saveHeightMap(){
+        fileChooser.setSelectedFile(new File("heightmap.png"));
         int ret = fileChooser.showSaveDialog(ImageLoader.this);
         File file;
         if(ret == JFileChooser.APPROVE_OPTION){
@@ -303,6 +304,7 @@ public class ImageLoader extends JFrame{
     }
 
     public void saveNormalMap(){
+        fileChooser.setSelectedFile(new File("normalmap.png"));
         int ret = fileChooser.showSaveDialog(ImageLoader.this);
         File file;
         if(ret == JFileChooser.APPROVE_OPTION){

@@ -5,6 +5,8 @@ import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
@@ -25,7 +27,8 @@ public class EditMarkerScreen extends JDialog {
     JTextArea nameArea;
     JButton cancelButton,okButton;
 
-    BufferedImage directionImage,angleImage;
+    BufferedImage directionImage,angleImage, backgroundDirectionImage, backgroundAngleImage;
+    BufferedImage angleImageR,backgroundDirectionImageR;
 
     public EditMarkerScreen(JFrame mainFrame, String name,Dialog.ModalityType modalityType){
         super(mainFrame,name,modalityType);
@@ -155,7 +158,8 @@ public class EditMarkerScreen extends JDialog {
     private BufferedImage getDirectionImage(){
         if(directionImage == null) {
             try {
-                directionImage = ImageIO.read(this.getClass().getResourceAsStream("/review_marker_edit/dirMarkerImage.png"));
+                //directionImage = ImageIO.read(this.getClass().getResourceAsStream("/review_marker_edit/dirMarkerImage.png"));
+                directionImage = ImageIO.read(this.getClass().getResourceAsStream("/review_marker_edit/direction_row.png"));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -163,15 +167,38 @@ public class EditMarkerScreen extends JDialog {
         return directionImage;
     }
 
+    private BufferedImage getBackgroundDirectionImage(){
+        if(backgroundDirectionImage == null){
+            try {
+                backgroundDirectionImage = ImageIO.read(this.getClass().getResourceAsStream("/review_marker_edit/direction_background.png"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return backgroundDirectionImage;
+    }
+
     private BufferedImage getAngleImage(){
         if(angleImage == null) {
             try {
-                angleImage = ImageIO.read(this.getClass().getResourceAsStream("/review_marker_edit/angleMarkerImage.png"));
+                //angleImage = ImageIO.read(this.getClass().getResourceAsStream("/review_marker_edit/angleMarkerImage.png"));
+                angleImage = ImageIO.read(this.getClass().getResourceAsStream("/review_marker_edit/angle_row.png"));
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
         return angleImage;
+    }
+
+    private BufferedImage getBackgroundAngleImage(){
+        if(backgroundAngleImage == null) {
+            try {
+                backgroundAngleImage = ImageIO.read(this.getClass().getResourceAsStream("/review_marker_edit/angle_background.png"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return backgroundAngleImage;
     }
 
     public void setMarker(Marker marker){
@@ -184,16 +211,12 @@ public class EditMarkerScreen extends JDialog {
         protected void paintComponent(Graphics g) {
             //super.paint(g);
             Graphics2D g2d = (Graphics2D)g;
+            g2d.drawImage(getBackgroundDirectionImage(),8,13,this);
             g2d.translate(this.getWidth()/2,this.getHeight()/2);
             g2d.rotate(Math.toRadians(directionSlider.getValue()) );
             g2d.translate(-getDirectionImage().getWidth(this) / 2, -getDirectionImage().getHeight(this) / 2);
             g2d.drawImage(getDirectionImage(),0,0,this);
 
-            if(directionSlider.getValue() > 90 && directionSlider.getValue() <= 270){
-                angleImagePanel.switchToRightAngle();
-            } else {
-                angleImagePanel.switchToLeftAngle();
-            }
 
             revalidate();
             repaint();
@@ -208,17 +231,50 @@ public class EditMarkerScreen extends JDialog {
         private int angleMult = 1;
 
         @Override
-        protected void paintComponent(Graphics g) {
+        protected void paintComponent(Graphics g2) {
             //super.paint(g);
-            g.drawImage(getAngleImage(),0,0,this);
+            Graphics2D g = (Graphics2D) g2;
+            g.translate(8,13);
+            g.drawImage(getBackgroundAngleImage(),0,0,this);
+            if(directionSlider.getValue() > 90 && directionSlider.getValue() <= 270){
+                if(backgroundDirectionImageR == null){
+                    AffineTransform tx = AffineTransform.getScaleInstance(-1, 1);
+                    tx.translate(-getBackgroundAngleImage().getWidth(null), 0);
+                    AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+                    backgroundDirectionImageR = op.filter(getBackgroundAngleImage(), null);
+                }
+                g.drawImage(backgroundDirectionImageR,0,0,this);
+                //angleImagePanel.switchToRightAngle();
+            } else {
+                g.drawImage(getBackgroundAngleImage(),0,0,this);
+                //angleImagePanel.switchToLeftAngle();
+            }
+
             int angle = angleSlider.getValue();
 
             int length = 150;
 
-            int endX = (int)(startX - angleMult*Math.cos(Math.toRadians(angle)) * length);
-            int endY = (int)(startY - Math.sin(Math.toRadians(angle)) * length);
+            if(directionSlider.getValue() > 90 && directionSlider.getValue() <= 270){
+                g.rotate(Math.toRadians(angle-45), 200, 200);
+                if(angleImageR == null){
 
-            g.drawLine(startX, startY, endX, endY);
+                    AffineTransform tx = AffineTransform.getScaleInstance(-1, 1);
+                    tx.translate(-getAngleImage().getWidth(null), 0);
+                    AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+                    angleImageR = op.filter(getAngleImage(), null);
+                }
+                g.drawImage(angleImageR,0,0,this);
+                //angleImagePanel.switchToRightAngle();
+            } else {
+                g.rotate(Math.toRadians(-angle+45), 0, 200);
+                g.drawImage(getAngleImage(),0,0,this);
+                //angleImagePanel.switchToLeftAngle();
+            }
+
+            /*int endX = (int)(startX - angleMult*Math.cos(Math.toRadians(angle)) * length);
+            int endY = (int)(startY - Math.sin(Math.toRadians(angle)) * length);*/
+
+            //g.drawLine(startX, startY, endX, endY);
 
             revalidate();
             repaint();

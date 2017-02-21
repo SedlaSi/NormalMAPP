@@ -70,6 +70,14 @@ public abstract class ImagePanel extends JPanel {
         if(scale < initScale){
             scale  = initScale + 1.0;
         }
+        int w = getWidth();
+        int h = getHeight();
+        int imageWidth = image.getWidth();
+        int imageHeight = image.getHeight();
+        double x = (w - scale * imageWidth) / 2;
+        double y = (h - scale * imageHeight) / 2;
+        imgPosX = (int)x;
+        imgPosY = (int)y;
         //imageLabel.setIcon(new ImageIcon(this.image));
     }
 
@@ -80,21 +88,13 @@ public abstract class ImagePanel extends JPanel {
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                     RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            int w = getWidth();
-            int h = getHeight();
-            int imageWidth = image.getWidth();
-            int imageHeight = image.getHeight();
-            double x = (w - scale * imageWidth) / 2;
-            double y = (h - scale * imageHeight) / 2;
 
                 /*System.out.println(w + " -> " + imageWidth);
                 System.out.println(x);
                 System.out.println(h + " -> " + imageHeight);
                 System.out.println(y);*/
-            imgPosX = (int)x;
-            imgPosY = (int)y;
 
-            AffineTransform at = AffineTransform.getTranslateInstance(x,y);
+            AffineTransform at = AffineTransform.getTranslateInstance(imgPosX,imgPosY);
             //at.scale(1, 1);
             //at.translate(posX,posY);
             g2.translate(posX,posY);
@@ -113,16 +113,16 @@ public abstract class ImagePanel extends JPanel {
                         Marker marker = markerList.get(i);
                         //Rectangle s = marker.getSquare();
                         Rectangle s = square;
-                        s.setLocation((int)(x + marker.getPosX()*(double)imageWidth - (squareSize / 2)),(int)(y+ marker.getPosY()*(double)imageHeight - (squareSize / 2)));
+                        s.setLocation((int)(imgPosX + marker.getPosX()*(double)image.getWidth() - (squareSize / 2)),(int)(imgPosY+ marker.getPosY()*(double)image.getHeight() - (squareSize / 2)));
                         g2.draw(s);
                         g2.setColor(Color.GREEN);
-                        g2.fillRect((int)(x + marker.getPosX()*(double)imageWidth - (squareSize / 2)),(int)(y+ marker.getPosY()*(double)imageHeight - (squareSize / 2)),squareSize,squareSize);
+                        g2.fillRect((int)(imgPosX + marker.getPosX()*(double)image.getWidth() - (squareSize / 2)),(int)(imgPosY+ marker.getPosY()*(double)image.getHeight() - (squareSize / 2)),squareSize,squareSize);
                         g2.setColor(Color.gray);
                     } else {
                         Marker marker = markerList.get(i);
                         //Rectangle s = marker.getSquare();
                         Rectangle s = square;
-                        s.setLocation((int) (x + marker.getPosX() * (double) imageWidth - (squareSize / 2)), (int) (y + marker.getPosY() * (double) imageHeight - (squareSize / 2)));
+                        s.setLocation((int) (imgPosX + marker.getPosX() * (double) image.getWidth() - (squareSize / 2)), (int) (imgPosY + marker.getPosY() * (double) image.getHeight() - (squareSize / 2)));
                         g2.draw(s);
                     }
                 }

@@ -23,9 +23,8 @@ import java.util.ArrayList;
 public class MainScreen extends JFrame {
 
     JMenuBar menuBar;
-    JMenu file, help, save, load, edit, filters, view;
-    JMenuItem exit, openTexture, saveHeighMap, saveNormalMap, loadHeightMap, invertNormal;
-    JMenuItem undo, redo, sharpen, smooth;
+    JMenu file, help, save, load;
+    JMenuItem exit, openTexture, saveHeighMap, saveNormalMap, loadHeightMap;
     ImageLoader imageLoader;
     image.Image image;
     //ImagePanel imagePanel;
@@ -87,38 +86,6 @@ public class MainScreen extends JFrame {
         file = new JMenu("File");
         file.addMenuListener(menuListener);
         menuBar.add(file);
-
-        edit = new JMenu("Edit");
-        edit.addMenuListener(menuListener);
-        menuBar.add(edit);
-
-        undo = new JMenuItem("Undo");
-        undo.addActionListener(actionListener);
-        edit.add(undo);
-
-        redo = new JMenuItem("Redo");
-        redo.addActionListener(actionListener);
-        edit.add(redo);
-
-        invertNormal = new JMenuItem("Invert Normals");
-        invertNormal.addActionListener(actionListener);
-        edit.add(invertNormal);
-
-        view = new JMenu("View");
-        view.addMenuListener(menuListener);
-        menuBar.add(view);
-
-        filters = new JMenu("Filters");
-        filters.addMenuListener(menuListener);
-        menuBar.add(filters);
-
-        smooth = new JMenuItem("Smooth");
-        smooth.addActionListener(actionListener);
-        filters.add(smooth);
-
-        sharpen = new JMenuItem("Sharpen");
-        sharpen.addActionListener(actionListener);
-        filters.add(sharpen);
 
         help = new JMenu("Help");
         help.addMenuListener(menuListener);
@@ -590,10 +557,6 @@ public class MainScreen extends JFrame {
                 }
                 dispose();
                 System.exit(0);
-            } else if(e.getSource() == invertNormal){
-                angle = (Math.PI/2);
-                imageLoader.refreshNormalMap(angle,normalHeight);
-                updateImagePanels();
             } else if(e.getSource() == loadHeightMap){  // uvodni obrazek po nacteni
                 image = imageLoader.loadHeightMap();
 
@@ -906,6 +869,7 @@ public class MainScreen extends JFrame {
                 lightToolPanel = new JPanel();
                 lightToolPanel.setLayout(new BorderLayout());
                 lightToolPanel.setBackground(new Color(128,127,255));
+                //lightToolPanel.setPreferredSize(new Dimension(20,165));
                 lightDirectionPanel = new DirectionPanel();
                 lightDirectionPanel.setBackground(new Color(128,127,255));
                 lightDirectionPanel.setPreferredSize(new Dimension(120,120));
@@ -956,6 +920,7 @@ public class MainScreen extends JFrame {
                 g2d.translate(this.getWidth()/2,this.getHeight()/2);
                 g2d.rotate(Math.toRadians(lightAngle.getValue()) );
                 g2d.translate(-getLightImage().getWidth(this) / 2, -getLightImage().getHeight(this) / 2);
+
                 g2d.drawImage(getLightImage(),0,0,this);
 
                 revalidate();
