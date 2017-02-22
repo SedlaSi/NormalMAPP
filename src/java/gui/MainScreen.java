@@ -1009,6 +1009,9 @@ public class MainScreen extends JFrame {
         };
     }
 
+    private JFrame getFrame(){
+        return this;
+    }
 
     private class OriginalMapSettingsBox extends SettingsBox {
         JPanel settingBox;
@@ -1198,42 +1201,47 @@ public class MainScreen extends JFrame {
 
             @Override
             public void actionPerformed(ActionEvent evt) {
-                SwingWorker<Void, Void> mySwingWorker = new SwingWorker<Void, Void>(){
-                    @Override
-                    protected Void doInBackground() throws Exception {
+                if(markerList.size() < 3){
+                    JOptionPane.showMessageDialog(getFrame(), "You must provide at least 3 markers.");
+                } else {
+                    SwingWorker<Void, Void> mySwingWorker = new SwingWorker<Void, Void>(){
+                        @Override
+                        protected Void doInBackground() throws Exception {
 
-                        imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), ((double)(albedoSlider.getValue()))/100.0, ((double)(regularSlider.getValue()))/100.0);
-                        updateHeight(image.getHeightMap());
+                            imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), ((double)(albedoSlider.getValue()))/100.0, ((double)(regularSlider.getValue()))/100.0);
+                            updateHeight(image.getHeightMap());
 
-                        return null;
-                    }
-                };
+                            return null;
+                        }
+                    };
 
-                Window win = SwingUtilities.getWindowAncestor((AbstractButton)evt.getSource());
-                final JDialog dialog = new JDialog(win, "Calculating Depthmap" , Dialog.ModalityType.APPLICATION_MODAL);
+                    Window win = SwingUtilities.getWindowAncestor((AbstractButton)evt.getSource());
+                    final JDialog dialog = new JDialog(win, "Calculating Depthmap" , Dialog.ModalityType.APPLICATION_MODAL);
 
-                mySwingWorker.addPropertyChangeListener(new PropertyChangeListener() {
+                    mySwingWorker.addPropertyChangeListener(new PropertyChangeListener() {
 
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        if (evt.getPropertyName().equals("state")) {
-                            if (evt.getNewValue() == SwingWorker.StateValue.DONE) {
-                                dialog.dispose();
+                        @Override
+                        public void propertyChange(PropertyChangeEvent evt) {
+                            if (evt.getPropertyName().equals("state")) {
+                                if (evt.getNewValue() == SwingWorker.StateValue.DONE) {
+                                    dialog.dispose();
+                                }
                             }
                         }
-                    }
-                });
-                mySwingWorker.execute();
+                    });
+                    mySwingWorker.execute();
 
-                JProgressBar progressBar = new JProgressBar();
-                progressBar.setIndeterminate(true);
-                progressBar.setPreferredSize(new Dimension(250,20));
-                JPanel panel = new JPanel(new BorderLayout());
-                panel.add(progressBar, BorderLayout.CENTER);
-                dialog.add(panel);
-                dialog.pack();
-                dialog.setLocationRelativeTo(win);
-                dialog.setVisible(true);
+                    JProgressBar progressBar = new JProgressBar();
+                    progressBar.setIndeterminate(true);
+                    progressBar.setPreferredSize(new Dimension(250,20));
+                    JPanel panel = new JPanel(new BorderLayout());
+                    panel.add(progressBar, BorderLayout.CENTER);
+                    dialog.add(panel);
+                    dialog.pack();
+                    dialog.setLocationRelativeTo(win);
+                    dialog.setVisible(true);
+                }
+
             }
         }
 
