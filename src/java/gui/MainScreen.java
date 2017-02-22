@@ -165,6 +165,17 @@ public class MainScreen extends JFrame {
                 originalMapImagePanel.moveImg(x,y);
                 revalidate();
                 repaint();
+               /* Graphics2D g2O = originalMapImagePanel.getGraphic();
+                Graphics2D g2H = originalMapImagePanel.getGraphic();
+                Graphics2D g2N = originalMapImagePanel.getGraphic();
+                g2O.
+                if (g2O.getBounds2D().contains(mouseStartX, mouseStartY)) {
+                    myRect.x += x;
+                    myRect.y += y;
+                    repaint();
+                }
+                mouseStartX += x;
+                mouseStartY += y;*/
             }
 
             @Override
@@ -198,12 +209,17 @@ public class MainScreen extends JFrame {
             public void mousePressed(MouseEvent mouseEvent) {
                 mouseStartX = mouseEvent.getPoint().getX();
                 mouseStartY = mouseEvent.getY();
+                originalMapImagePanel.mousePosition(mouseStartX,mouseStartY);
                 mouseIsDragged = true;
 
             }
 
             @Override
             public void mouseReleased(MouseEvent mouseEvent) {
+                originalMapImagePanel.setInitPosition(mouseEvent.getX(),mouseEvent.getY());
+                /*System.out.println(mouseEvent.getX());
+                System.out.println(mouseEvent.getY());
+                System.out.println();*/
                 mouseIsDragged = false;
             }
 
@@ -342,6 +358,7 @@ public class MainScreen extends JFrame {
             public void mousePressed(MouseEvent mouseEvent) {
                 mouseStartX = mouseEvent.getPoint().getX();
                 mouseStartY = mouseEvent.getY();
+                originalMapImagePanel.mousePosition(mouseStartX,mouseStartY);
                 mouseIsDragged = true;
 
             }
@@ -612,6 +629,9 @@ public class MainScreen extends JFrame {
                 marker.setPosX(xRel);
                 marker.setPosY(yRel);
 
+                if(xRel < 0.0  || yRel < 0.0 || xRel > 1.0 || yRel > 1.0){
+                    return;
+                }
                 /**
                  * ZDE SE POTOM SPUSTI OBRAZOVKA NA UPRAVU UDAJU x, y A name
                  */

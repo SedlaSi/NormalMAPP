@@ -16,10 +16,17 @@ public abstract class ImagePanel extends JPanel {
     int posX = 0;
     int posY = 0;
     int squareSize = 20;
-    int imgPosX = 0;
-    int imgPosY = 0;
+    double imgPosX = 0;
+    double imgPosY = 0;
+    double initX = 0;
+    double initY = 0;
+
+    double mouseX = 0;
+    double mouseY = 0;
+
     JLabel imageLabel;
     private int highlightedSquare = -1;
+    Graphics2D g2;
 
     BufferedImage image;
     boolean drawSquare = true;
@@ -57,6 +64,45 @@ public abstract class ImagePanel extends JPanel {
         //relativePos = new ArrayList<>(3);
     }
 
+    public void mousePosition(double x, double y){
+        /*double xRel;
+        double yRel;
+        if (imgPosX < 0) {
+            xRel = (Math.abs(scale * imgPosX) + x );
+        } else {
+            xRel = (x - scale * imgPosX);
+        }
+        if (posX < 0) {
+            xRel += Math.abs(posX);
+        } else {
+            xRel -= posX;
+        }
+        xRel /= (scale * image.getWidth());
+        if (imgPosY < 0) {
+            yRel = (Math.abs(scale * imgPosY) + y );
+        } else {
+            yRel = (y - scale * imgPosY);
+        }
+        if (posY < 0) {
+            yRel += Math.abs(posY);
+        } else {
+            yRel -= posY;
+        }
+        yRel /= (scale * image.getHeight());
+
+        mouseX = xRel;
+        mouseY = yRel;
+        System.out.println(x);
+        System.out.println(y);
+        System.out.println("--");
+        System.out.println(mouseX);
+        System.out.println(mouseY);
+        System.out.println("--");
+        System.out.println(imgPosX);
+        System.out.println(imgPosY);
+        System.out.println();*/
+    }
+
     public void setMarkerList(java.util.List<Marker> markerList){
         this.markerList = markerList;
     }
@@ -81,11 +127,24 @@ public abstract class ImagePanel extends JPanel {
         //imageLabel.setIcon(new ImageIcon(this.image));
     }
 
+    public void setInitPosition(int x,int y){
+        /*imgPosX = x;
+        imgPosY = y;*/
+        /*this.imgPosX = (int)(imgPosX*scale);
+        this.imgPosY = (int)(imgPosY*scale);*/
+        //******************
+        /*imgPosX -= Math.abs(mouseX*image.getWidth()*scale);
+        imgPosY -= Math.abs(mouseY*image.getHeight()*scale);*/
+        /*imgPosX -= image.getWidth()*scale/2;
+        imgPosY -= image.getHeight()*scale/2;*/
+        //**************************
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         if(image != null) {
-            Graphics2D g2 = (Graphics2D) g;
+            g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                     RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 
@@ -94,12 +153,27 @@ public abstract class ImagePanel extends JPanel {
                 System.out.println(h + " -> " + imageHeight);
                 System.out.println(y);*/
 
+            // puvodni reseni
+            int w = getWidth();
+            int h = getHeight();
+            int imageWidth = image.getWidth();
+            int imageHeight = image.getHeight();
+            double x = (w - scale * imageWidth) / 2;
+            double y = (h - scale * imageHeight) / 2;
+            imgPosX = (int)x;
+            imgPosY = (int)y;
+
             AffineTransform at = AffineTransform.getTranslateInstance(imgPosX,imgPosY);
             //at.scale(1, 1);
             //at.translate(posX,posY);
+            //g2.translate(initX-posX,initY-posY);
+            //g2.translate(posX,posY);
             g2.translate(posX,posY);
+            /*initX = g2.getTransform().getTranslateX();
+            initY = g2.getTransform().getTranslateY();*/
             g2.scale(scale,scale);
             g2.drawRenderedImage(image,at);
+            //g2.drawRenderedImage(image,null);
             //g2.drawImage(image,imgPosX,imgPosY,this);
             /*int prevX = imageLabel.getLocation().x;
             int prevY = imageLabel.getLocation().y;
@@ -128,6 +202,10 @@ public abstract class ImagePanel extends JPanel {
                 }
             }
         }
+    }
+
+    public Graphics2D getGraphic(){
+        return g2;
     }
 
     /**

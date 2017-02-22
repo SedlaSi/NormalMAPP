@@ -237,6 +237,9 @@ public class EditMarkerScreen extends JDialog {
             g.translate(8,13);
             g.drawImage(getBackgroundAngleImage(),0,0,this);
             if(directionSlider.getValue() > 90 && directionSlider.getValue() <= 270){
+                g.drawImage(getBackgroundAngleImage(),0,0,this);
+                //angleImagePanel.switchToLeftAngle();
+            } else {
                 if(backgroundDirectionImageR == null){
                     AffineTransform tx = AffineTransform.getScaleInstance(-1, 1);
                     tx.translate(-getBackgroundAngleImage().getWidth(null), 0);
@@ -245,9 +248,6 @@ public class EditMarkerScreen extends JDialog {
                 }
                 g.drawImage(backgroundDirectionImageR,0,0,this);
                 //angleImagePanel.switchToRightAngle();
-            } else {
-                g.drawImage(getBackgroundAngleImage(),0,0,this);
-                //angleImagePanel.switchToLeftAngle();
             }
 
             int angle = angleSlider.getValue();
@@ -255,6 +255,13 @@ public class EditMarkerScreen extends JDialog {
             int length = 150;
 
             if(directionSlider.getValue() > 90 && directionSlider.getValue() <= 270){
+                g.rotate(Math.toRadians(-angle+45), 0, 200);
+                g.drawImage(getAngleImage(),0,0,this);
+
+                g.rotate(Math.toRadians(angle-45), 0, 200);
+                //angleImagePanel.switchToLeftAngle();
+
+            } else {
                 g.rotate(Math.toRadians(angle-45), 200, 200);
                 if(angleImageR == null){
 
@@ -267,12 +274,6 @@ public class EditMarkerScreen extends JDialog {
 
                 g.rotate(Math.toRadians(-angle+45), 200, 200);
                 //angleImagePanel.switchToRightAngle();
-            } else {
-                g.rotate(Math.toRadians(-angle+45), 0, 200);
-                g.drawImage(getAngleImage(),0,0,this);
-
-                g.rotate(Math.toRadians(angle-45), 0, 200);
-                //angleImagePanel.switchToLeftAngle();
             }
 
             // vycisteni okraju
