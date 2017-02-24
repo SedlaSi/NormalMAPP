@@ -21,8 +21,8 @@ public abstract class ImagePanel extends JPanel {
     double initX = 0;
     double initY = 0;
 
-    double mouseX = 0;
-    double mouseY = 0;
+    int mouseX = 0;
+    int mouseY = 0;
 
     JLabel imageLabel;
     private int highlightedSquare = -1;
@@ -64,43 +64,10 @@ public abstract class ImagePanel extends JPanel {
         //relativePos = new ArrayList<>(3);
     }
 
-    public void mousePosition(double x, double y){
-        /*double xRel;
-        double yRel;
-        if (imgPosX < 0) {
-            xRel = (Math.abs(scale * imgPosX) + x );
-        } else {
-            xRel = (x - scale * imgPosX);
-        }
-        if (posX < 0) {
-            xRel += Math.abs(posX);
-        } else {
-            xRel -= posX;
-        }
-        xRel /= (scale * image.getWidth());
-        if (imgPosY < 0) {
-            yRel = (Math.abs(scale * imgPosY) + y );
-        } else {
-            yRel = (y - scale * imgPosY);
-        }
-        if (posY < 0) {
-            yRel += Math.abs(posY);
-        } else {
-            yRel -= posY;
-        }
-        yRel /= (scale * image.getHeight());
-
-        mouseX = xRel;
-        mouseY = yRel;
-        System.out.println(x);
-        System.out.println(y);
-        System.out.println("--");
-        System.out.println(mouseX);
-        System.out.println(mouseY);
-        System.out.println("--");
-        System.out.println(imgPosX);
-        System.out.println(imgPosY);
-        System.out.println();*/
+    public void mousePosition(int x, int y){
+        //System.out.println("released "+x +" "+posX+ "  old mouseX "+mouseX);
+        mouseX = x+mouseX;
+        mouseY = y+mouseY;
     }
 
     public void setMarkerList(java.util.List<Marker> markerList){
@@ -168,12 +135,14 @@ public abstract class ImagePanel extends JPanel {
             //at.translate(posX,posY);
             //g2.translate(initX-posX,initY-posY);
             //g2.translate(posX,posY);
-            g2.translate(posX,posY);
+            g2.scale(scale,scale);
+            g2.translate(posX+mouseX,posY+mouseY);
+            //System.out.println(posX+" "+mouseX);
             /*initX = g2.getTransform().getTranslateX();
             initY = g2.getTransform().getTranslateY();*/
-            g2.scale(scale,scale);
+
+            //g2.drawRenderedImage(image,at);
             g2.drawRenderedImage(image,at);
-            //g2.drawRenderedImage(image,null);
             //g2.drawImage(image,imgPosX,imgPosY,this);
             /*int prevX = imageLabel.getLocation().x;
             int prevY = imageLabel.getLocation().y;

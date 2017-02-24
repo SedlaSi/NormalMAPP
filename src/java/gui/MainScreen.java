@@ -31,7 +31,7 @@ public class MainScreen extends JFrame {
     JPanel mainPanel,leftBoxPanel;
     Session session;
 
-    private final boolean updateAllImages = true;
+    private final boolean updateAllImages = false;
 
 
     JTabbedPane tabbedPanel;
@@ -207,19 +207,24 @@ public class MainScreen extends JFrame {
 
             @Override
             public void mousePressed(MouseEvent mouseEvent) {
-                mouseStartX = mouseEvent.getPoint().getX();
+                mouseStartX = mouseEvent.getX();
                 mouseStartY = mouseEvent.getY();
-                originalMapImagePanel.mousePosition(mouseStartX,mouseStartY);
+
                 mouseIsDragged = true;
 
             }
 
             @Override
             public void mouseReleased(MouseEvent mouseEvent) {
-                originalMapImagePanel.setInitPosition(mouseEvent.getX(),mouseEvent.getY());
+                //originalMapImagePanel.setInitPosition(mouseEvent.getX(),mouseEvent.getY());
                 /*System.out.println(mouseEvent.getX());
                 System.out.println(mouseEvent.getY());
                 System.out.println();*/
+                int x = (int)(mouseEvent.getX()-mouseStartX);
+                int y = (int)(mouseEvent.getY()-mouseStartY);
+
+                originalMapImagePanel.mousePosition(x,y);
+                originalMapImagePanel.moveImg(0,0);
                 mouseIsDragged = false;
             }
 
@@ -257,13 +262,14 @@ public class MainScreen extends JFrame {
         heightMapImagePanel.addMouseMotionListener(new MouseMotionListener() {
             @Override
             public void mouseDragged(MouseEvent mouseEvent) {
-                int x = (int)(mouseEvent.getPoint().getX()-mouseStartX);
-                int y = (int)(mouseEvent.getPoint().getY()-mouseStartY);
+                int x = (int)(mouseEvent.getX()-mouseStartX);
+                int y = (int)(mouseEvent.getY()-mouseStartY);
                 if(updateAllImages){
                     originalMapImagePanel.moveImg(x,y);
                     normalMapImagePanel.moveImg(x,y);
                 }
                 heightMapImagePanel.moveImg(x,y);
+
                 revalidate();
                 repaint();
             }
@@ -284,14 +290,20 @@ public class MainScreen extends JFrame {
 
             @Override
             public void mousePressed(MouseEvent mouseEvent) {
-                mouseStartX = mouseEvent.getPoint().getX();
+                mouseStartX = mouseEvent.getX();
                 mouseStartY = mouseEvent.getY();
+
                 mouseIsDragged = true;
 
             }
 
             @Override
             public void mouseReleased(MouseEvent mouseEvent) {
+                int x = (int)(mouseEvent.getX()-mouseStartX);
+                int y = (int)(mouseEvent.getY()-mouseStartY);
+
+                heightMapImagePanel.mousePosition(x,y);
+                heightMapImagePanel.moveImg(0,0);
                 mouseIsDragged = false;
             }
 
@@ -329,8 +341,8 @@ public class MainScreen extends JFrame {
         normalMapImagePanel.addMouseMotionListener(new MouseMotionListener() {
             @Override
             public void mouseDragged(MouseEvent mouseEvent) {
-                int x = (int)(mouseEvent.getPoint().getX()-mouseStartX);
-                int y = (int)(mouseEvent.getPoint().getY()-mouseStartY);
+                int x = (int)(mouseEvent.getX()-mouseStartX);
+                int y = (int)(mouseEvent.getY()-mouseStartY);
                 if(updateAllImages){
                     originalMapImagePanel.moveImg(x,y);
                     heightMapImagePanel.moveImg(x,y);
@@ -356,15 +368,19 @@ public class MainScreen extends JFrame {
 
             @Override
             public void mousePressed(MouseEvent mouseEvent) {
-                mouseStartX = mouseEvent.getPoint().getX();
+                mouseStartX = mouseEvent.getX();
                 mouseStartY = mouseEvent.getY();
-                originalMapImagePanel.mousePosition(mouseStartX,mouseStartY);
-                mouseIsDragged = true;
 
+                mouseIsDragged = true;
             }
 
             @Override
             public void mouseReleased(MouseEvent mouseEvent) {
+                int x = (int)(mouseEvent.getX()-mouseStartX);
+                int y = (int)(mouseEvent.getY()-mouseStartY);
+
+                normalMapImagePanel.mousePosition(x,y);
+                normalMapImagePanel.moveImg(0,0);
                 mouseIsDragged = false;
             }
 
@@ -443,7 +459,8 @@ public class MainScreen extends JFrame {
         // TEST SEGMENT
         /*image = imageLoader.testloadImage();
         if(image != null){
-            updateImagePanels(); // uvodni obrazek po nacteni
+            updateOriginal(image.getOriginalMap());
+            //updateImagePanels(); // uvodni obrazek po nacteni
             //imagePanel.setActiveLayer(Layer.normalMap);
         }*/
         // ====== COIN ============
@@ -522,12 +539,12 @@ public class MainScreen extends JFrame {
     }
 
     private void updateImagePanels(){
-
-        updateNormal(image.getNormalMap());
-        updateHeight(image.getHeightMap());
         if(image.getOriginalMap() != null){
             updateOriginal(image.getOriginalMap());
         }
+        updateNormal(image.getNormalMap());
+        updateHeight(image.getHeightMap());
+
 
     }
 
@@ -610,9 +627,9 @@ public class MainScreen extends JFrame {
                     xRel = (x - scale * imgPosX/* - scale * squareSize / 2*/);
                 }
                 if (posX < 0) {
-                    xRel += Math.abs(posX);
+                    xRel += Math.abs(posX + mouseX*scale);
                 } else {
-                    xRel -= posX;
+                    xRel -= (posX + mouseX*scale);
                 }
                 xRel /= (scale * image.getWidth());
                 if (imgPosY < 0) {
@@ -621,14 +638,15 @@ public class MainScreen extends JFrame {
                     yRel = (y - scale * imgPosY /*- scale * squareSize / 2*/);
                 }
                 if (posY < 0) {
-                    yRel += Math.abs(posY);
+                    yRel += Math.abs(posY + mouseY*scale);
                 } else {
-                    yRel -= posY;
+                    yRel -= (posY + mouseY*scale);
                 }
                 yRel /= (scale * image.getHeight());
                 marker.setPosX(xRel);
                 marker.setPosY(yRel);
 
+                //System.out.println(xRel + " "+ yRel);
                 if(xRel < 0.0  || yRel < 0.0 || xRel > 1.0 || yRel > 1.0){
                     return;
                 }
@@ -674,9 +692,9 @@ public class MainScreen extends JFrame {
                     xRel = (x - scale * imgPosX - scale * squareSize/2);
                 }
                 if (posX < 0) {
-                    xRel += Math.abs(posX);
+                    xRel += Math.abs(posX + mouseX*scale);
                 } else {
-                    xRel -= posX;
+                    xRel -= posX + mouseX*scale;
                 }
                 xRel /= (scale * image.getWidth());
                 if (imgPosY < 0) {
@@ -685,9 +703,9 @@ public class MainScreen extends JFrame {
                     yRel = (y - scale * imgPosY - scale * squareSize/2);
                 }
                 if (posY < 0) {
-                    yRel += Math.abs(posY);
+                    yRel += Math.abs(posY + mouseY*scale);
                 } else {
-                    yRel -= posY;
+                    yRel -= posY + mouseY*scale;
                 }
                 yRel /= (scale * image.getHeight());
 
@@ -727,9 +745,9 @@ public class MainScreen extends JFrame {
                     xRel = (x - scale * imgPosX - scale * squareSize/2);
                 }
                 if (posX < 0) {
-                    xRel += Math.abs(posX);
+                    xRel += Math.abs(posX + mouseX*scale);
                 } else {
-                    xRel -= posX;
+                    xRel -= posX + mouseX*scale;
                 }
                 xRel /= (scale * image.getWidth());
                 if (imgPosY < 0) {
@@ -738,9 +756,9 @@ public class MainScreen extends JFrame {
                     yRel = (y - scale * imgPosY - scale * squareSize/2);
                 }
                 if (posY < 0) {
-                    yRel += Math.abs(posY);
+                    yRel += Math.abs(posY + mouseY*scale);
                 } else {
-                    yRel -= posY;
+                    yRel -= posY + mouseY*scale;
                 }
                 yRel /= (scale * image.getHeight());
 
@@ -784,9 +802,9 @@ public class MainScreen extends JFrame {
                     xRel = (x - scale * imgPosX - scale * squareSize/2);
                 }
                 if (posX < 0) {
-                    xRel += Math.abs(posX);
+                    xRel += Math.abs(posX + mouseX*scale);
                 } else {
-                    xRel -= posX;
+                    xRel -= posX + mouseX*scale;
                 }
                 xRel /= (scale * image.getWidth());
                 if (imgPosY < 0) {
@@ -795,9 +813,9 @@ public class MainScreen extends JFrame {
                     yRel = (y - scale * imgPosY - scale * squareSize/2);
                 }
                 if (posY < 0) {
-                    yRel += Math.abs(posY);
+                    yRel += Math.abs(posY + mouseY*scale);
                 } else {
-                    yRel -= posY;
+                    yRel -= posY + mouseY*scale;
                 }
                 yRel /= (scale * image.getHeight());
 

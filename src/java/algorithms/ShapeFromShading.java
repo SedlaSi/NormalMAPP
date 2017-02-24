@@ -962,7 +962,8 @@ public class ShapeFromShading implements Algorithm {
             n[3*i+1] = y;
             n[3*i+2] = z;
         }
-
+        /*if(n != null)
+        return n;*/
         // buffer field
         double mod = 2*3*collumns;
         double [] buffer = new double [(int)mod];
@@ -1305,6 +1306,7 @@ public class ShapeFromShading implements Algorithm {
         Marker m;
         for(int i = 0; i < markers.size(); i++){
             m = markers.get(i);
+            //System.out.println(m.getX()+" "+m.getY()+" "+m.getZ());
             valsA[i] = new double[]{m.getX(),m.getY(),m.getZ()};
             valsB[i] = new double[]{(double)(grayscale[(int)((rows*m.getPosY())*collumns+collumns*m.getPosX())-1])};
         }

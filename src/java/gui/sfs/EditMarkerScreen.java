@@ -102,12 +102,29 @@ public class EditMarkerScreen extends JDialog {
                 }
                 //  Vypocteni x y a z pro marker
                 int angle = angleSlider.getValue();
-                double x =(Math.cos(angle)*Math.sin(directionSlider.getValue()));
-                double y =(Math.cos(angle)*Math.cos(directionSlider.getValue()));
+                int dir = directionSlider.getValue();
+
+                // stary segment
+                /*double x =(Math.cos(angle)*Math.sin(dir));
+                double y =(Math.cos(angle)*Math.cos(dir));
                 double z = (Math.sin(angle));
                 x = 127.5*(x+1);
                 y = 127.5*(y+1);
+                z = 127.5*(z+1);*/
+
+                // novy segment
+                double x = Math.sqrt(1/(Math.tan(angle)*Math.tan(angle) + 1 + Math.tan(dir)*Math.tan(dir) +
+                        Math.tan(dir)*Math.tan(dir)*Math.tan(angle)*Math.tan(angle)
+                ));
+                if((dir <= 90 && dir >= 0) || (dir <= 360 && dir >= 270)) {
+                    x *= -1;
+                }
+                double y = Math.tan(dir)*x;
+                double z = Math.sqrt(1 - x*x - y*y);
+                x = 127.5*(x+1);
+                y = 127.5*(y+1);
                 z = 127.5*(z+1);
+                //*******************
 
                 marker.setX((int)x);
                 marker.setY((int)y);
