@@ -13,16 +13,16 @@ import java.awt.image.BufferedImage;
 public abstract class ImagePanel extends JPanel {
     double scale;
     double initScale = 0.0;
-    int posX = 0;
-    int posY = 0;
+    static int posX = 0;
+    static int posY = 0;
     int squareSize = 20;
     double imgPosX = 0;
     double imgPosY = 0;
     double initX = 0;
     double initY = 0;
 
-    int mouseX = 0;
-    int mouseY = 0;
+    static int mouseX = 0;
+    static int mouseY = 0;
 
     JLabel imageLabel;
     private int highlightedSquare = -1;

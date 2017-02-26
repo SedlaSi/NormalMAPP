@@ -39,8 +39,27 @@ public class EditMarkerScreen extends JDialog {
     }
 
     public static void main(String [] args){
-        EditMarkerScreen editMarkerScreen = new EditMarkerScreen();
-        editMarkerScreen.startFrame();
+        double angle = Math.toRadians(0.0);
+        double dir = Math.toRadians(250.0);
+
+        double z = Math.sqrt((Math.tan(angle)*Math.tan(angle))/(1+Math.tan(angle)*Math.tan(angle)));
+        double x = Math.sqrt(1/(Math.tan(angle)*Math.tan(angle) + 1 + Math.tan(dir)*Math.tan(dir) +
+                Math.tan(dir)*Math.tan(dir)*Math.tan(angle)*Math.tan(angle)
+        ));
+        if(dir >= Math.toRadians(90.0) && dir <= Math.toRadians(270.0)) {
+            x *= -1;
+        }
+        double y = Math.tan(dir)*x;
+
+        x = 127.5*(x+1);
+        y = 127.5*(y+1);
+        z = 127.5*(z+1);
+
+        System.out.println(x + " " + y + " " + z);
+        double k = Math.sqrt(x*x + y*y + z*z);
+        System.out.println(k);
+        /*EditMarkerScreen editMarkerScreen = new EditMarkerScreen();
+        editMarkerScreen.startFrame();*/
     }
 
     public void startFrame(){
@@ -101,8 +120,8 @@ public class EditMarkerScreen extends JDialog {
                     marker.setName(nameArea.getText());
                 }
                 //  Vypocteni x y a z pro marker
-                int angle = angleSlider.getValue();
-                int dir = directionSlider.getValue();
+                /*int angle = angleSlider.getValue();
+                int dir = directionSlider.getValue();*/
 
                 // stary segment
                 /*double x =(Math.cos(angle)*Math.sin(dir));
@@ -113,17 +132,24 @@ public class EditMarkerScreen extends JDialog {
                 z = 127.5*(z+1);*/
 
                 // novy segment
+                double angle = Math.toRadians(angleSlider.getValue());
+                double dir = Math.toRadians(directionSlider.getValue());
+
+                double z = Math.sqrt((Math.tan(angle)*Math.tan(angle))/(1+Math.tan(angle)*Math.tan(angle)));
                 double x = Math.sqrt(1/(Math.tan(angle)*Math.tan(angle) + 1 + Math.tan(dir)*Math.tan(dir) +
                         Math.tan(dir)*Math.tan(dir)*Math.tan(angle)*Math.tan(angle)
                 ));
-                if((dir <= 90 && dir >= 0) || (dir <= 360 && dir >= 270)) {
+                if(dir >= Math.toRadians(90.0) && dir <= Math.toRadians(270.0)) {
                     x *= -1;
                 }
                 double y = Math.tan(dir)*x;
-                double z = Math.sqrt(1 - x*x - y*y);
+
                 x = 127.5*(x+1);
                 y = 127.5*(y+1);
                 z = 127.5*(z+1);
+
+                //System.out.println(x + " " + y + " " + z);
+
                 //*******************
 
                 marker.setX((int)x);
@@ -230,7 +256,7 @@ public class EditMarkerScreen extends JDialog {
             Graphics2D g2d = (Graphics2D)g;
             g2d.drawImage(getBackgroundDirectionImage(),8,13,this);
             g2d.translate(this.getWidth()/2,this.getHeight()/2);
-            g2d.rotate(Math.toRadians(directionSlider.getValue()) );
+            g2d.rotate(-Math.toRadians(directionSlider.getValue()) );
             g2d.translate(-getDirectionImage().getWidth(this) / 2, -getDirectionImage().getHeight(this) / 2);
             g2d.drawImage(getDirectionImage(),0,0,this);
 
@@ -254,9 +280,6 @@ public class EditMarkerScreen extends JDialog {
             g.translate(8,13);
             g.drawImage(getBackgroundAngleImage(),0,0,this);
             if(directionSlider.getValue() > 90 && directionSlider.getValue() <= 270){
-                g.drawImage(getBackgroundAngleImage(),0,0,this);
-                //angleImagePanel.switchToLeftAngle();
-            } else {
                 if(backgroundDirectionImageR == null){
                     AffineTransform tx = AffineTransform.getScaleInstance(-1, 1);
                     tx.translate(-getBackgroundAngleImage().getWidth(null), 0);
@@ -264,6 +287,10 @@ public class EditMarkerScreen extends JDialog {
                     backgroundDirectionImageR = op.filter(getBackgroundAngleImage(), null);
                 }
                 g.drawImage(backgroundDirectionImageR,0,0,this);
+                //angleImagePanel.switchToLeftAngle();
+            } else {
+                g.drawImage(getBackgroundAngleImage(),0,0,this);
+
                 //angleImagePanel.switchToRightAngle();
             }
 
@@ -272,13 +299,6 @@ public class EditMarkerScreen extends JDialog {
             int length = 150;
 
             if(directionSlider.getValue() > 90 && directionSlider.getValue() <= 270){
-                g.rotate(Math.toRadians(-angle+45), 0, 200);
-                g.drawImage(getAngleImage(),0,0,this);
-
-                g.rotate(Math.toRadians(angle-45), 0, 200);
-                //angleImagePanel.switchToLeftAngle();
-
-            } else {
                 g.rotate(Math.toRadians(angle-45), 200, 200);
                 if(angleImageR == null){
 
@@ -290,6 +310,14 @@ public class EditMarkerScreen extends JDialog {
                 g.drawImage(angleImageR,0,0,this);
 
                 g.rotate(Math.toRadians(-angle+45), 200, 200);
+                //angleImagePanel.switchToLeftAngle();
+
+            } else {
+                g.rotate(Math.toRadians(-angle+45), 0, 200);
+                g.drawImage(getAngleImage(),0,0,this);
+
+                g.rotate(Math.toRadians(angle-45), 0, 200);
+
                 //angleImagePanel.switchToRightAngle();
             }
 

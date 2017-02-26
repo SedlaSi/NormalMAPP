@@ -31,7 +31,7 @@ public class MainScreen extends JFrame {
     JPanel mainPanel,leftBoxPanel;
     Session session;
 
-    private final boolean updateAllImages = false;
+    private final boolean updateAllImages = true;
 
 
     JTabbedPane tabbedPanel;
