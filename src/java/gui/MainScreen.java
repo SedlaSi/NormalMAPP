@@ -457,14 +457,14 @@ public class MainScreen extends JFrame {
         });
 
         // TEST SEGMENT
-        /*image = imageLoader.testloadImage();
+        image = imageLoader.testloadImage();
         if(image != null){
             updateOriginal(image.getOriginalMap());
             //updateImagePanels(); // uvodni obrazek po nacteni
             //imagePanel.setActiveLayer(Layer.normalMap);
-        }*/
+        }
         // ====== COIN ============
-        /*Rectangle r1 = new Rectangle(661,153,20,20);
+        Rectangle r1 = new Rectangle(661,153,20,20);
         Rectangle r2 = new Rectangle(746,400,20,20);
         Rectangle r3 = new Rectangle(474,586,20,20);
         Rectangle r4 = new Rectangle(630,348,20,20);
@@ -479,7 +479,7 @@ public class MainScreen extends JFrame {
         markerList.add(m1);
         markerList.add(m2);
         markerList.add(m3);
-        markerList.add(m4);*/
+        markerList.add(m4);
 
         /*Rectangle r1 = new Rectangle(449,216,20,20);
         Rectangle r2 = new Rectangle(581,101,20,20);

@@ -20,9 +20,9 @@ import java.util.List;
 public class ShapeFromShading implements Algorithm {
 
     private final static double ROUND_ANGLE = 2.0;
-    private final static double FLAT_ANGLE = 10.0;
+    private final static double FLAT_ANGLE = 5.0;
     //private final static double FLAT_ANGLE = 0;
-    private final static double MAX_RELATIVE_HEIGHT = 2;
+    private final static double MAX_RELATIVE_HEIGHT = 2.0;
     //private final static double MAX_RELATIVE_HEIGHT = Double.MAX_VALUE;
     private int collumns;
     private int rows;
@@ -69,8 +69,9 @@ public class ShapeFromShading implements Algorithm {
         getGrayscale(); // 2. step
         getLightSource(); // 3. step
 
-        //getDepthMap();
-        normalField = getHeightMap();
+
+        //normalField = getHeightMap();
+        normalField = getDepthMap2();
         grayscale = null;
 
         // VYPISOVANI RELATIVNICH VYSEK
@@ -80,6 +81,14 @@ public class ShapeFromShading implements Algorithm {
             fr[(i/2)*3+1] = (byte)((rel[i+1])*255);
             fr[(i/2)*3+2] = (byte)((rel[i+1])*255);
         }*/
+
+        /*for(int i = bodyStart; i < normalField.length ; i+=3){
+            //fr[i] = (byte)((normalField[i]+1)*127.5);
+            fr[i] = (byte)((lightX*255));
+            fr[i+1] = (byte)((lightY*255));
+            fr[i+2] = (byte)((lightZ*255));
+        }*/
+
 
         // VYPISOVANI PLOCHYCH NORMAL
         /*for(int i = bodyStart; i < normalField.length ; i++){
@@ -257,6 +266,10 @@ public class ShapeFromShading implements Algorithm {
         double [] h = new double[size];
         double h1,h2,h3,h4;
         double height;
+
+        double mod = 2*collumns;
+        double [] buffer = new double [(int)mod];
+
         for(int gauss = steps; gauss >= 0; gauss--){ // LOOP GAUSS-SEIDEL
             // HORNI RADKA
 
@@ -267,6 +280,12 @@ public class ShapeFromShading implements Algorithm {
             height = (h1 + h2)/2;
             h[0] = height;
 
+
+            //buffer[(int)((0) % mod)] = height;
+
+
+
+
             //horni radka
             for(int i = 1; i < collumns-1; i++){
                 h1 = h[i+1] + q[2*i];
@@ -275,6 +294,9 @@ public class ShapeFromShading implements Algorithm {
 
                 height = (h1 + h2 + h3)/3;
                 h[i] = height;
+
+
+                //buffer[(int)((i) % mod)] = height;
             }
 
             // pravy horni roh
@@ -283,6 +305,11 @@ public class ShapeFromShading implements Algorithm {
 
             height = (h2 + h3)/2;
             h[collumns-1] = height;
+
+            //buffer[(int)((collumns-1) % mod)] = height;
+
+
+
 
             //TELO
             for(int j = collumns; j <= (rows-2)*collumns; j++){ // projizdime radky
@@ -293,6 +320,11 @@ public class ShapeFromShading implements Algorithm {
                 height = (h1 + h2 + h4)/3;
                 h[j] = height;
 
+                /*if((j - 2*collumns) >= 0){ // pokud jsme v poli
+                    h[(j - 2*collumns)] = buffer[(int)(((j - 2*collumns)) % mod)];
+                }
+                buffer[(int)((j) % mod)] = height;*/
+
                 for(int i = 1; i < collumns-1; i++){ // projizdime bunky v radcich
                     h1 = h[(j + i) + 1] + q[2*(j + i)];
                     h2 = h[(j + i) + collumns] + q[2*(j + i) + 1];
@@ -301,6 +333,11 @@ public class ShapeFromShading implements Algorithm {
 
                     height = (h1 + h2 + h3 + h4)/4;
                     h[(j + i)] = height;
+
+                    /*if((j+i - 2*collumns) >= 0){ // pokud jsme v poli
+                        h[(j+i - 2*collumns)] = buffer[(int)(((j+i - 2*collumns)) % mod)];
+                    }
+                    buffer[(int)((j+i) % mod)] = height;*/
                 }
 
                 //pravy prvek
@@ -309,6 +346,11 @@ public class ShapeFromShading implements Algorithm {
                 h4 = h[(j + collumns-1) - collumns] - q[2*((j + collumns-1)-collumns)+1];
                 height = (h2 + h3 + h4)/3;
                 h[(j + collumns-1)] = height;
+
+                /*if((j + collumns-1 - 2*collumns) >= 0){ // pokud jsme v poli
+                    h[(j + collumns-1 - 2*collumns)] = buffer[(int)(((j + collumns-1 - 2*collumns)) % mod)];
+                }
+                buffer[(int)((j + collumns-1) % mod)] = height;*/
 
 
             }
@@ -321,6 +363,11 @@ public class ShapeFromShading implements Algorithm {
             height = (h1 + h4)/2;
             h[(size - collumns)] = height;
 
+            /*if((size - collumns - 2*collumns) >= 0){ // pokud jsme v poli
+                h[(size - collumns - 2*collumns)] = buffer[(int)(((size - collumns - 2*collumns)) % mod)];
+            }
+            buffer[(int)((size - collumns) % mod)] = height;*/
+
             //spodni radek
             for(int i = size-collumns; i < size-1; i++){
                 h1 = h[i+1] + q[2*i];
@@ -329,12 +376,29 @@ public class ShapeFromShading implements Algorithm {
 
                 height = (h1 + h3 + h4)/3;
                 h[i] = height;
+
+                /*if((i - 2*collumns) >= 0){ // pokud jsme v poli
+                    h[(i - 2*collumns)] = buffer[(int)(((i - 2*collumns)) % mod)];
+                }
+                buffer[(int)((i) % mod)] = height;*/
             }
+
 
             //pravy spodni roh
             h3 = h[(size-1)-1] - q[2*((size-1)-1)];
             h4 = h[(size-1) - collumns] - q[2*((size-1)-collumns)+1];
 
+            height = (h3 + h4)/2;
+            h[size-1] = height;
+
+            /*if((size-1 - 2*collumns) >= 0){ // pokud jsme v poli
+                h[(size-1 - 2*collumns)] = buffer[(int)(((size-1 - 2*collumns)) % mod)];
+            }
+            buffer[(int)((size-1) % mod)] = height;
+
+            for(int i = (size - 2*collumns); i < size; i++){
+                h[i] = buffer[(int)(i % mod)];
+            }*/
 
         }
         double max = Double.MIN_VALUE;
@@ -399,10 +463,11 @@ public class ShapeFromShading implements Algorithm {
                 beta += 180d;
             }
             if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
-                if((180-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
+                if((180d-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
                     qij = MAX_RELATIVE_HEIGHT;
                 } else { // prolozime primku
-                    qij = -(b/a);
+                    //qij = -(b/a);
+                    qij = -(a/b);
                 }
             } else { // mame rozdilne uhly -> kruznice
                 cEq = (b/a)*c + d;
@@ -467,7 +532,8 @@ public class ShapeFromShading implements Algorithm {
                 if((180-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
                     qij = MAX_RELATIVE_HEIGHT;
                 } else { // prolozime primku
-                    qij = -(b/a);
+                    //qij = -(b/a);
+                    qij = -(a/b);
                 }
             } else { // mame rozdilne uhly -> kruznice
                 cEq = (b/a)*c + d;
@@ -536,7 +602,8 @@ public class ShapeFromShading implements Algorithm {
                 if((180-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
                     qij = MAX_RELATIVE_HEIGHT;
                 } else { // prolozime primku
-                    qij = -(b/a);
+                    //qij = -(b/a);
+                    qij = -(a/b);
                 }
             } else { // mame rozdilne uhly -> kruznice
                 cEq = (b/a)*c + d;
@@ -603,7 +670,8 @@ public class ShapeFromShading implements Algorithm {
                 if((180-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
                     qij = MAX_RELATIVE_HEIGHT;
                 } else { // prolozime primku
-                    qij = -(b/a);
+                    //qij = -(b/a);
+                    qij = -(a/b);
                 }
             } else { // mame rozdilne uhly -> kruznice
                 cEq = (b/a)*c + d;
@@ -639,6 +707,7 @@ public class ShapeFromShading implements Algorithm {
         }
         normalField = null;
 
+        // Nejspis nepotrebne
         // normalizace
         double range;
         double min = Double.MAX_VALUE;
@@ -941,7 +1010,7 @@ public class ShapeFromShading implements Algorithm {
         normalField = xNew;
     }
 
-    // AKTUALNI METODA!!!!!!
+    // PUVODNI METODA!!!!!!
     private double [] getHeightMap(){
         // 4. step
 
@@ -1269,6 +1338,214 @@ public class ShapeFromShading implements Algorithm {
                 buffer[(int)((3*i) % mod)] = newValue_x/n_1;
                 buffer[(int)((3*i+1) % mod)] = newValue_y/n_1;
                 buffer[(int)((3*i+2) % mod)] = newValue_z/n_1;
+                // stary zpusob
+                /*n[3*i] = newValue_x/n_1;
+                n[3*i+1] = newValue_y/n_1;
+                n[3*i+2] = newValue_z/n_1;*/
+
+
+
+                //System.out.println(n[3*i]+" "+n[3*i+1]+" "+n[3*i+2]);
+
+            }
+            for(int i = 3*(size - 2*collumns); i < 3*size; i++){
+                n[i] = buffer[(int)(i % mod)];
+            }
+        }
+
+        //normalizace
+        /*double len;
+        for(int i = 0; i< size; i++){
+            len = Math.sqrt(n[3*i]*n[3*i]+n[3*i+1]*n[3*i+1]+n[3*i+2]*n[3*i+2]);
+            n[3*i] = n[3*i]/len;
+            n[3*i+1] = n[3*i+1]/len;
+            n[3*i+2] = n[3*i+2]/len;
+        }*/
+        //
+        return n;
+    }
+
+
+    // 27.2.2017 METODA!!!!!! -- moje vypocty
+    private double [] getDepthMap2(){
+        // 4. step
+
+        //uvodni estimate bez regularizace
+        int size = collumns*rows;
+        double [] n = new double[3*size];
+        double x,y,z;
+        for(int i = 0; i < size; i++){
+            x = (q*grayscale[i])/lightX;
+            y = (q*grayscale[i])/lightY;
+            z = (q*grayscale[i])/lightZ;
+            if(z < 0) {
+                x = -x;
+                y = -y;
+                z = -z;
+            }
+            n[3*i] = x;
+            n[3*i+1] = y;
+            n[3*i+2] = z;
+        }
+        /*if(n != null)
+        return n;*/
+        // buffer field
+        double mod = 2*3*collumns;
+        double [] buffer = new double [(int)mod];
+
+        // matice s neighbours = nei
+
+        double [] nei = new double[]{2*lm+lightX,2*lm+lightY,2*lm+lightZ, // 0 + 0; 0+1; 0+2
+                3*lm+lightX,3*lm+lightY,3*lm+lightZ, // 3+0; 3+1; 3+2
+                4*lm+lightX,4*lm+lightY,4*lm+lightZ // 6 + 0; 6 + 1; 6+2
+        };
+
+
+        // vytvoreni matice index - matice sousednosti
+
+        //prvni radek
+        int [] index = new int[(4*collumns)*rows];
+
+        index[0] = 3;
+        index[1] = 3*collumns;
+        index[2] = -1;
+        index[3] = -1;
+
+        for(int i=1; i < collumns-1; i++){
+            index[4*i] = 3*i+3;
+            index[4*i+1] = 3*i-3;
+            index[4*i+2] = 3*(i+collumns);
+            index[4*i+3] = -1;
+        }
+
+        index[4*collumns-4] = 3*collumns-2*3;
+        index[4*collumns-3] = 2*3*collumns-3;
+        index[4*collumns-2] = -1;
+        index[4*collumns-1] = -1;
+
+        //stred matice
+
+        for(int j = 1; j < rows-1; j++){
+
+            index[j*4*collumns] = j*3*collumns-3*collumns;
+            index[j*4*collumns+1] = j*3*collumns+3;
+            index[j*4*collumns+2] = j*3*collumns+3*collumns;
+            index[j*4*collumns+3] = -1;
+
+            for(int i=1; i < collumns-1; i++){
+                index[j*4*collumns + i*4 ] = j*3*collumns + i*3 +3;
+                index[j*4*collumns + i*4 + 1] = j*3*collumns + i*3 -3;
+                index[j*4*collumns + i*4 + 2] = j*3*collumns + i*3 +3*collumns;
+                index[j*4*collumns + i*4 + 3] = j*3*collumns + i*3 -3*collumns;
+                //break;
+            }
+
+
+            index[(j+1)*4*collumns-4] = (j+1)*3*collumns-3-3*collumns;
+            index[(j+1)*4*collumns-3] = (j+1)*3*collumns-3-3;
+            index[(j+1)*4*collumns-2] = (j+1)*3*collumns-3+3*collumns;
+            index[(j+1)*4*collumns-1] = -1;
+
+        }
+
+        //posledni radek
+        int start = 4*(collumns)*(rows-1);
+        index[start] = 3*(collumns)*(rows-2);
+        index[start + 1] = 3*(collumns)*(rows-1)+3;
+        index[start + 2] = -1;
+        index[start + 3] = -1;
+
+        for(int i=1; i < collumns-1; i++){
+            index[4*i + start] = 3*i+3 + 3*(collumns)*(rows-1);
+            index[4*i+1 + start] = 3*i-3 + 3*(collumns)*(rows-1);
+            index[4*i+2+ start] = 3*(i-collumns) + 3*(collumns)*(rows-1);
+            index[4*i+3+start] = -1;
+        }
+
+        start = (4*collumns)*rows -4;
+
+        index[start] = 3*(collumns)*(rows-1)-3;
+        index[start+1] = 3*(collumns)*rows-2*3;
+        index[start+2] = -1;
+        index[start+3] = -1;
+
+        //
+        /*for(int j =0; j< rows; j++){
+            for(int i=0;i<4*collumns;i+=4){
+                System.out.print(index[j*4*collumns+i]+" "+index[j*4*collumns+i+1]+" "+index[j*4*collumns+i+2]+" "+index[j*4*collumns+i+3]+"|");
+            }
+            System.out.println();
+        }*/
+
+        //
+        // Pocitame rovnici x_i = a_i /d_i
+
+        int neighbourSize;
+        double s;
+        double n_y_left;
+        double n_x_left;
+        double n_z_left;
+        //double [] s = new double[size];
+        for(int g = 0; g < steps; g++){ // hlavni loop = pocet kroku gauss-siedela
+            for(int i = 0; i <(size); i++){ // prochazim N, v tomto loop spocitam n_x, n_y a n_z pro g-tou iteraci gauss-saidela
+                neighbourSize = 0;
+                while(index[4*i + neighbourSize] != -1 && neighbourSize != 4) neighbourSize++;
+                neighbourSize--;
+                double n_1 = 0;
+                double n_2 = 0;
+                double n_3 = 0;
+
+                double newValue_x;
+                double newValue_y;
+                double newValue_z;
+
+                double sumX = 0;
+                double sumY = 0;
+                double sumZ = 0;
+                for(int ne = 0; ne < neighbourSize; ne++){ //secteme xove/yove/zove slozky normal sousedu
+                    sumX += n[index[4*i + ne]];
+                    sumY += n[index[4*i + ne]+1];
+                    sumZ += n[index[4*i + ne]+2];
+                }
+
+                // pocitani zvlast
+                newValue_x = (lightX*((1/q)*grayscale[i] - n[3*i+1]*lightY - n[3*i+2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize+1));
+                newValue_y = (lightY*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i+2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize+1));
+                newValue_z = (lightZ*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i+1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize+1));
+
+                // pocitani najednou
+                /*newValue_x = (lightX*((1/q)*grayscale[i] - n[3*i+1]*lightY - n[3*i+2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize+1));
+                newValue_y = (lightY*((1/q)*grayscale[i] - newValue_x*lightX - n[3*i+2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize+1));
+                newValue_z = (lightZ*((1/q)*grayscale[i] - newValue_x*lightX - newValue_y*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize+1));
+                */
+
+                // normalizace a prirazeni
+                if(newValue_z < 0){
+                    newValue_z = -newValue_z;
+                    newValue_x = -newValue_x;
+                    newValue_y = -newValue_y;
+                }
+                n_1 = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+
+                // zapiseme do n z bufferu a do bufferu zapiseme nove hodnoty na stejne pozice
+                // obnova dat z bufferu
+                if((i - 2*collumns) >= 0){ // pokud jsme v poli
+                    n[3*(i - 2*collumns)] = buffer[(int)((3*(i - 2*collumns)) % mod)];
+                    n[3*(i - 2*collumns)+1] = buffer[(int)((3*(i - 2*collumns)+1) % mod)];
+                    n[3*(i - 2*collumns)+2] = buffer[(int)((3*(i - 2*collumns)+2) % mod)];
+                }
+                // zapis do bufferu
+                /*System.out.println(i);
+                System.out.println(collumns);
+                System.out.println(buffer.length);
+                System.out.println((int)((3*(i - 2*collumns)) % mod));
+                System.out.println("============");*/
+                buffer[(int)((3*i) % mod)] = newValue_x/n_1;
+                buffer[(int)((3*i+1) % mod)] = newValue_y/n_1;
+                buffer[(int)((3*i+2) % mod)] = newValue_z/n_1;
+                /*buffer[(int)((3*i) % mod)] = newValue_y/n_1;
+                buffer[(int)((3*i+1) % mod)] = newValue_z/n_1;
+                buffer[(int)((3*i+2) % mod)] = newValue_x/n_1;*/
                 // stary zpusob
                 /*n[3*i] = newValue_x/n_1;
                 n[3*i+1] = newValue_y/n_1;
