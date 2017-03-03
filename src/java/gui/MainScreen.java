@@ -7,6 +7,10 @@ import gui.session.ImageLoader;
 import gui.session.Session;
 
 import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.DataLine;
 import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
@@ -1196,7 +1200,7 @@ public class MainScreen extends JFrame {
                 settingsPanel.add(up,BorderLayout.NORTH);
                 settingsPanel.add(down,BorderLayout.CENTER);
                 stepsSlider.addChangeListener(changeEvent -> {
-                    if(stepsSlider.getValue() > 50){
+                    if(stepsSlider.getValue() > 75){
                         warning.setVisible(true);
                     } else {
                         warning.setVisible(false);
@@ -1248,7 +1252,9 @@ public class MainScreen extends JFrame {
 
                             imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), ((double)(albedoSlider.getValue()))/100.0, ((double)(regularSlider.getValue()))/100.0);
                             updateHeight(image.getHeightMap());
-
+                            if(stepsSlider.getValue()> 75){
+                                gong();
+                            }
                             return null;
                         }
                     };
@@ -1277,13 +1283,36 @@ public class MainScreen extends JFrame {
                     dialog.add(panel);
                     dialog.pack();
                     dialog.setLocationRelativeTo(win);
+                    if(stepsSlider.getValue() > 75){
+                        JOptionPane.showMessageDialog(dialog, "Our monkey will hit the gong when calculations are finished.");
+
+                    }
+
                     dialog.setVisible(true);
+
+
                 }
 
             }
         }
 
 
+    }
+
+    private static void gong() {
+        new Thread(() -> {
+            try {
+                Clip clip;
+                AudioInputStream inputStream = AudioSystem.getAudioInputStream(
+                        MainScreen.class.getResourceAsStream("/gong/gong.wav"));
+                DataLine.Info info = new DataLine.Info(Clip.class, inputStream.getFormat());
+                clip = (Clip) AudioSystem.getLine(info);
+                clip.open(inputStream);
+                clip.start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
 

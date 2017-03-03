@@ -42,6 +42,8 @@ public class ShapeFromShading implements Algorithm {
     public ShapeFromShading(){
     }
 
+
+
     public void setImage(String path){
 
         try {
@@ -100,8 +102,11 @@ public class ShapeFromShading implements Algorithm {
         //finishDepths(relativeHeights());
 
         // SKUTECNY KONEC
+        //absoluteHeightsOld(relativeHeights());
         absoluteHeights(relativeHeights());
-        gong();
+        /*if(playGong){
+            gong();
+        }*/
         return fr;
     }
 
@@ -267,22 +272,23 @@ public class ShapeFromShading implements Algorithm {
         double h1,h2,h3,h4;
         double height;
 
-        double mod = 2*collumns;
-        double [] buffer = new double [(int)mod];
-
+        int mod = 0;
+        double [] buffer = new double [2*collumns];
         for(int gauss = steps; gauss >= 0; gauss--){ // LOOP GAUSS-SEIDEL
             // HORNI RADKA
-
+            //System.out.println("1");
             //levy horni roh
             h1 = h[1] + q[0];
             h2 = h[collumns] + q[1];
 
-            height = (h1 + h2)/2;
-            h[0] = height;
+            height = (h1+h2)/2;
+            //h[0] = height;
 
-
-            //buffer[(int)((0) % mod)] = height;
-
+            buffer[mod] = height;
+            mod++;
+            /*if(mod == 2*collumns){
+                mod = 0;
+            }*/
 
 
 
@@ -293,38 +299,48 @@ public class ShapeFromShading implements Algorithm {
                 h3 = h[i-1] - q[2*(i-1)];
 
                 height = (h1 + h2 + h3)/3;
-                h[i] = height;
+                //h[i] = height;
 
 
-                //buffer[(int)((i) % mod)] = height;
+
+                buffer[mod] = height;
+                mod++;
+                /*if(mod == 2*collumns){
+                    mod = 0;
+                }*/
             }
-
             // pravy horni roh
             h2 = h[collumns-1+collumns] + q[2*(collumns-1)+1];
             h3 = h[collumns-1-1] - q[2*(collumns-1-1)];
 
             height = (h2 + h3)/2;
-            h[collumns-1] = height;
-
-            //buffer[(int)((collumns-1) % mod)] = height;
+            //h[collumns-1] = height;
 
 
-
+            buffer[mod] = height;
+            mod++;
+            /*if(mod == 2*collumns){
+                mod = 0;
+            }*/
 
             //TELO
-            for(int j = collumns; j <= (rows-2)*collumns; j++){ // projizdime radky
+            for(int j = collumns; j <= (rows-2)*collumns; j+=collumns){ // projizdime radky
                 //levy prvek
                 h1 = h[j + 1] + q[2*j];
                 h2 = h[j + collumns] + q[2*j + 1];
                 h4 = h[j - collumns] - q[2*(j-collumns)+1];
                 height = (h1 + h2 + h4)/3;
-                h[j] = height;
+                //h[j] = height;
 
-                /*if((j - 2*collumns) >= 0){ // pokud jsme v poli
-                    h[(j - 2*collumns)] = buffer[(int)(((j - 2*collumns)) % mod)];
+
+                if((j - 2*collumns) >= 0){ // pokud jsme v poli
+                    h[(j - 2*collumns)] = buffer[mod];
                 }
-                buffer[(int)((j) % mod)] = height;*/
-
+                buffer[mod] = height;
+                mod++;
+                /*if(mod == 2*collumns){
+                    mod = 0;
+                }*/
                 for(int i = 1; i < collumns-1; i++){ // projizdime bunky v radcich
                     h1 = h[(j + i) + 1] + q[2*(j + i)];
                     h2 = h[(j + i) + collumns] + q[2*(j + i) + 1];
@@ -332,79 +348,110 @@ public class ShapeFromShading implements Algorithm {
                     h4 = h[(j + i) - collumns] - q[2*((j + i)-collumns)+1];
 
                     height = (h1 + h2 + h3 + h4)/4;
-                    h[(j + i)] = height;
+                    //h[(j + i)] = height;
 
-                    /*if((j+i - 2*collumns) >= 0){ // pokud jsme v poli
-                        h[(j+i - 2*collumns)] = buffer[(int)(((j+i - 2*collumns)) % mod)];
+
+                    if((j+i - 2*collumns) >= 0){ // pokud jsme v poli
+                        h[(j+i - 2*collumns)] = buffer[mod];
                     }
-                    buffer[(int)((j+i) % mod)] = height;*/
+                    buffer[mod] = height;
+                    mod++;
+                    /*if(mod == 2*collumns){
+                        mod = 0;
+                    }*/
                 }
-
                 //pravy prvek
                 h2 = h[(j + collumns-1) + collumns] + q[2*(j + collumns-1) + 1];
                 h3 = h[(j + collumns-1)-1] - q[2*((j + collumns-1)-1)];
                 h4 = h[(j + collumns-1) - collumns] - q[2*((j + collumns-1)-collumns)+1];
                 height = (h2 + h3 + h4)/3;
-                h[(j + collumns-1)] = height;
+                //h[(j + collumns-1)] = height;
 
-                /*if((j + collumns-1 - 2*collumns) >= 0){ // pokud jsme v poli
-                    h[(j + collumns-1 - 2*collumns)] = buffer[(int)(((j + collumns-1 - 2*collumns)) % mod)];
+
+                if((j + collumns-1 - 2*collumns) >= 0){ // pokud jsme v poli
+                    h[(j + collumns-1 - 2*collumns)] = buffer[mod];
                 }
-                buffer[(int)((j + collumns-1) % mod)] = height;*/
+                buffer[mod] = height;
+                mod++;
+                if(mod == 2*collumns){
+                    mod = 0;
+                }
 
 
             }
-            // SPODNI RADKA
 
+            // SPODNI RADKA
             //levy spodni roh
             h1 = h[(size - collumns)+1] + q[2*(size - collumns)];
             h4 = h[(size - collumns) - collumns] - q[2*((size - collumns)-collumns)+1];
 
             height = (h1 + h4)/2;
-            h[(size - collumns)] = height;
+            //h[(size - collumns)] = height;
 
-            /*if((size - collumns - 2*collumns) >= 0){ // pokud jsme v poli
-                h[(size - collumns - 2*collumns)] = buffer[(int)(((size - collumns - 2*collumns)) % mod)];
+
+            if((size - collumns - 2*collumns) >= 0){ // pokud jsme v poli
+                h[(size - collumns - 2*collumns)] = buffer[mod];
             }
-            buffer[(int)((size - collumns) % mod)] = height;*/
-
+            buffer[mod] = height;
+            mod++;
+            /*if(mod == 2*collumns){
+                mod = 0;
+            }*/
             //spodni radek
-            for(int i = size-collumns; i < size-1; i++){
+            for(int i = size-collumns+1; i < size-1; i++){
                 h1 = h[i+1] + q[2*i];
                 h3 = h[i-1] - q[2*(i-1)];
                 h4 = h[i - collumns] - q[2*(i-collumns)+1];
 
                 height = (h1 + h3 + h4)/3;
-                h[i] = height;
+                //h[i] = height;
 
-                /*if((i - 2*collumns) >= 0){ // pokud jsme v poli
-                    h[(i - 2*collumns)] = buffer[(int)(((i - 2*collumns)) % mod)];
+
+                if((i - 2*collumns) >= 0){ // pokud jsme v poli
+                    h[(i - 2*collumns)] = buffer[mod];
                 }
-                buffer[(int)((i) % mod)] = height;*/
+                buffer[mod] = height;
+                mod++;
+                /*if(mod == 2*collumns){
+                    mod = 0;
+                }*/
             }
-
+            //System.out.println("6");
 
             //pravy spodni roh
             h3 = h[(size-1)-1] - q[2*((size-1)-1)];
             h4 = h[(size-1) - collumns] - q[2*((size-1)-collumns)+1];
 
             height = (h3 + h4)/2;
-            h[size-1] = height;
+            //h[size-1] = height;
 
-            /*if((size-1 - 2*collumns) >= 0){ // pokud jsme v poli
-                h[(size-1 - 2*collumns)] = buffer[(int)(((size-1 - 2*collumns)) % mod)];
+
+            if((size-1 - 2*collumns) >= 0){ // pokud jsme v poli
+                h[(size-1 - 2*collumns)] = buffer[mod];
             }
-            buffer[(int)((size-1) % mod)] = height;
+
+            buffer[mod] = height;
+            mod++;
+            if(mod == 2*collumns){
+                mod = 0;
+            }
 
             for(int i = (size - 2*collumns); i < size; i++){
-                h[i] = buffer[(int)(i % mod)];
-            }*/
-
+                h[i] = buffer[mod];
+                mod++;
+                if(mod == 2*collumns){
+                    mod = 0;
+                }
+            }
+            //System.out.println("l");
+            mod = 0;
+            //System.out.println(gauss);
         }
         double max = Double.MIN_VALUE;
         double min = Double.MAX_VALUE;
         double range;
         for(int i = 0; i < size; i++){
+
             if(h[i] > max){
                 max = h[i];
             }
@@ -424,6 +471,210 @@ public class ShapeFromShading implements Algorithm {
             fr[3*i + bodyStart + 2] = value;
         }
 
+    }
+
+    private void absoluteHeightsOld(double [] q){
+        int size = collumns*rows;
+        double [] h = new double[size];
+        double h1,h2,h3,h4;
+        double height;
+
+        int mod = 0;
+        double [] buffer = new double [2*collumns];
+        for(int gauss = steps; gauss >= 0; gauss--){ // LOOP GAUSS-SEIDEL
+            // HORNI RADKA
+            //System.out.println("1");
+            //levy horni roh
+            h1 = h[1] + q[0];
+            h2 = h[collumns] + q[1];
+
+            height = (h1+h2)/2;
+            h[0] = height;
+
+            /*buffer[mod] = height;
+            mod++;
+            if(mod == 2*collumns){
+                mod = 0;
+            }*/
+
+
+
+            //horni radka
+            for(int i = 1; i < collumns-1; i++){
+                h1 = h[i+1] + q[2*i];
+                h2 = h[i+collumns] + q[2*i+1];
+                h3 = h[i-1] - q[2*(i-1)];
+
+                height = (h1 + h2 + h3)/3;
+                h[i] = height;
+
+
+
+                /*buffer[mod] = height;
+                mod++;
+                if(mod == 2*collumns){
+                    mod = 0;
+                }*/
+            }
+            // pravy horni roh
+            h2 = h[collumns-1+collumns] + q[2*(collumns-1)+1];
+            h3 = h[collumns-1-1] - q[2*(collumns-1-1)];
+
+            height = (h2 + h3)/2;
+            h[collumns-1] = height;
+
+
+            /*buffer[mod] = height;
+            mod++;
+            if(mod == 2*collumns){
+                mod = 0;
+            }*/
+
+            //TELO
+            for(int j = collumns; j <= (rows-2)*collumns; j+=collumns){ // projizdime radky
+                //levy prvek
+                h1 = h[j + 1] + q[2*j];
+                h2 = h[j + collumns] + q[2*j + 1];
+                h4 = h[j - collumns] - q[2*(j-collumns)+1];
+                height = (h1 + h2 + h4)/3;
+                h[j] = height;
+
+
+                /*if((j - 2*collumns) >= 0){ // pokud jsme v poli
+                    h[(j - 2*collumns)] = buffer[mod];
+                }
+                buffer[mod] = height;
+                mod++;
+                if(mod == 2*collumns){
+                    mod = 0;
+                }*/
+                for(int i = 1; i < collumns-1; i++){ // projizdime bunky v radcich
+                    h1 = h[(j + i) + 1] + q[2*(j + i)];
+                    h2 = h[(j + i) + collumns] + q[2*(j + i) + 1];
+                    h3 = h[(j + i)-1] - q[2*((j + i)-1)];
+                    h4 = h[(j + i) - collumns] - q[2*((j + i)-collumns)+1];
+
+                    height = (h1 + h2 + h3 + h4)/4;
+                    h[(j + i)] = height;
+
+
+                    /*if((j+i - 2*collumns) >= 0){ // pokud jsme v poli
+                        h[(j+i - 2*collumns)] = buffer[mod];
+                    }
+                    buffer[mod] = height;
+                    mod++;
+                    if(mod == 2*collumns){
+                        mod = 0;
+                    }*/
+                }
+                //pravy prvek
+                h2 = h[(j + collumns-1) + collumns] + q[2*(j + collumns-1) + 1];
+                h3 = h[(j + collumns-1)-1] - q[2*((j + collumns-1)-1)];
+                h4 = h[(j + collumns-1) - collumns] - q[2*((j + collumns-1)-collumns)+1];
+                height = (h2 + h3 + h4)/3;
+                h[(j + collumns-1)] = height;
+
+
+                /*if((j + collumns-1 - 2*collumns) >= 0){ // pokud jsme v poli
+                    h[(j + collumns-1 - 2*collumns)] = buffer[mod];
+                }
+                buffer[mod] = height;
+                mod++;
+                if(mod == 2*collumns){
+                    mod = 0;
+                }*/
+
+
+            }
+            // SPODNI RADKA
+            //levy spodni roh
+            h1 = h[(size - collumns)+1] + q[2*(size - collumns)];
+            h4 = h[(size - collumns) - collumns] - q[2*((size - collumns)-collumns)+1];
+
+            height = (h1 + h4)/2;
+            h[(size - collumns)] = height;
+
+
+            /*if((size - collumns - 2*collumns) >= 0){ // pokud jsme v poli
+                h[(size - collumns - 2*collumns)] = buffer[mod];
+            }
+            buffer[mod] = height;
+            mod++;
+            if(mod == 2*collumns){
+                mod = 0;
+            }*/
+            //spodni radek
+            for(int i = size-collumns+1; i < size-1; i++){
+                h1 = h[i+1] + q[2*i];
+                h3 = h[i-1] - q[2*(i-1)];
+                h4 = h[i - collumns] - q[2*(i-collumns)+1];
+
+                height = (h1 + h3 + h4)/3;
+                h[i] = height;
+
+
+                /*if((i - 2*collumns) >= 0){ // pokud jsme v poli
+                    h[(i - 2*collumns)] = buffer[mod];
+                }
+                buffer[mod] = height;
+                mod++;
+                if(mod == 2*collumns){
+                    mod = 0;
+                }*/
+            }
+            //System.out.println("6");
+
+            //pravy spodni roh
+            h3 = h[(size-1)-1] - q[2*((size-1)-1)];
+            h4 = h[(size-1) - collumns] - q[2*((size-1)-collumns)+1];
+
+            height = (h3 + h4)/2;
+            h[size-1] = height;
+
+
+            /*if((size-1 - 2*collumns) >= 0){ // pokud jsme v poli
+                h[(size-1 - 2*collumns)] = buffer[mod];
+            }*/
+
+            /*buffer[mod] = height;
+            mod++;
+            if(mod == 2*collumns){
+                mod = 0;
+            }*/
+
+            mod = 0;
+            /*for(int i = (size - 2*collumns); i < size; i++){
+                h[i] = buffer[mod];
+                mod++;
+            }*/
+            //System.out.println("l");
+            mod = 0;
+            //System.out.println(gauss);
+
+        }
+        double max = Double.MIN_VALUE;
+        double min = Double.MAX_VALUE;
+        double range;
+        for(int i = 0; i < size; i++){
+
+            if(h[i] > max){
+                max = h[i];
+            }
+            if(h[i] < min){
+                min = h[i];
+            }
+        }
+        min = Math.abs(min);
+        range = min + Math.abs(max);
+
+        byte value;
+        for(int i = 0; i < size; i++){
+            value = (byte)(((h[i]+min)/range)*255);
+            //System.out.println(value);
+            fr[3*i + bodyStart] = value;
+            fr[3*i + bodyStart + 1] = value;
+            fr[3*i + bodyStart + 2] = value;
+        }
     }
 
     private double [] relativeHeights(){
@@ -707,7 +958,6 @@ public class ShapeFromShading implements Algorithm {
         }
         normalField = null;
 
-        // Nejspis nepotrebne
         // normalizace
         double range;
         double min = Double.MAX_VALUE;
@@ -723,7 +973,7 @@ public class ShapeFromShading implements Algorithm {
         min = Math.abs(min);
         range = min + Math.abs(max);
         for(int i = 0; i < relativeHeights.length; i++ ){
-            relativeHeights[i] = (relativeHeights[i]+min)/range;
+            relativeHeights[i] = ((relativeHeights[i]+min)/range);
         }
 
         return relativeHeights;
@@ -745,42 +995,149 @@ public class ShapeFromShading implements Algorithm {
     }
 
     public static void main(String [] args){
-        String headerString = "P3\n2 1\n";
-        byte [] header = headerString.getBytes();
-        byte [] fr = new byte [header.length + 6];
+        double x_1,x_2,z_1,z_2,y_1,y_2;
+        double a,b,c,d;
+        double qij;
+        double A,B,h_1,h_2,beta,alpha;
+        double aEq,bEq,cEq;
+        double [] i = new double[]{0.5,0.0,0.5};
+        double [] j = new double[]{-0.5,0.0,0.5};
 
-        ShapeFromShading sfs = new ShapeFromShading();
-        sfs.normalField = new double[6];
-        sfs.collumns = 2;
-        sfs.rows = 1;
-        double Ax = -1; //Math.sqrt(2)/2
-        double Ay = 0;
-        double Az = 0;
-        double Bx = -Math.sqrt(2)/2;
-        double By = 0;
-        double Bz = Math.sqrt(2)/2;
-        sfs.normalField[0] = Ax;
-        sfs.normalField[1] = Ay;
-        sfs.normalField[2] = Az;
-        sfs.normalField[3] = Bx;
-        sfs.normalField[4] = By;
-        sfs.normalField[5] = Bz;
 
-        double [] relatives = sfs.relativeHeights();
-        /*System.out.println("=================");
-        System.out.println("relative A: "+relatives[0]+" "+relatives[1]);
-        System.out.println("relative B: "+relatives[2]+" "+relatives[3]);*/
-        /*System.out.println("===================");
-        System.out.println("A:");
-        System.out.println("x = "+relatives[0]);
-        System.out.println("y = "+relatives[1]);
-        System.out.println("z = "+relatives[2]);
-        System.out.println();
-        System.out.println("B:");
-        System.out.println("x = "+relatives[3]);
-        System.out.println("y = "+relatives[4]);
-        System.out.println("z = "+relatives[5]);*/
+        x_1 = i[0];
+        x_2 = j[0];
+        z_1 = i[2];
+        z_2 = j[2];
+        // Rovnice pro (x_1,z_1)  a (x_2,z_2)
+        a = x_1;
+        b = z_1;
+        c = x_2;
+        d = z_2;
 
+        if(a == 0){
+            a += Double.MIN_VALUE;
+        }
+        if(c == 0){
+            c += Double.MIN_VALUE;
+        }
+        // uhly vektoru
+        alpha = Math.atan(b/a);
+        alpha = Math.toDegrees(alpha);
+        if(a < 0.0){
+            alpha += 180d;
+        }
+        beta = Math.atan(d/c);
+        beta = Math.toDegrees(beta);
+        if(c < 0){
+            beta += 180d;
+        }
+        if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
+            if((180d-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
+                qij = MAX_RELATIVE_HEIGHT;
+            } else { // prolozime primku
+                //qij = -(b/a);
+                qij = -(a/b);
+            }
+        } else { // mame rozdilne uhly -> kruznice
+            cEq = (b/a)*c + d;
+
+            if(cEq != 0){ // kvadraticka rovnice
+                A = (b/a)*c + d;
+                B = c - (b/a)*d;
+
+                h_1 = B/(-A) + Math.sqrt(B*B + A*A)/(-A);
+                h_2 = B/(-A) - Math.sqrt(B*B + A*A)/(-A);
+            } else { // rovnice ma tvar h*() = 0 takze h = 0
+                h_1 = 0;
+                h_2 = 0;
+            }
+
+            beta = (h_1 - (b/a)) / ((b/a)*c - d);
+            alpha = (beta*c + 1) / a;
+
+            if(beta*alpha > 0){
+                qij = h_1;
+            } else {
+                qij = h_2;
+            }
+
+        }
+        // ========
+        if(qij < -1*MAX_RELATIVE_HEIGHT){
+            qij = -1*MAX_RELATIVE_HEIGHT;
+        } else if(qij > MAX_RELATIVE_HEIGHT){
+            qij = MAX_RELATIVE_HEIGHT;
+        }
+        //relativeHeights[2*i] = qij;
+        System.out.println(qij);
+        System.out.println("MAX_HEIGHT: "+MAX_RELATIVE_HEIGHT);
+
+
+        /*z_2 = normalField[3*i + 3*collumns + 2];
+        y_1 = normalField[3*i + 1];
+        y_2 = normalField[3*i + 3*collumns + 1];
+
+        // Rovnice pro (y_1,z_1)  a (y_2,z_2)
+        a = y_1;
+        b = z_1;
+        c = y_2;
+        d = z_2;
+
+        if(a == 0){
+            a += Double.MIN_VALUE;
+        }
+        if(c == 0){
+            c += Double.MIN_VALUE;
+        }
+        // uhly vektoru
+        alpha = Math.atan(b/a);
+        alpha = Math.toDegrees(alpha);
+        if(a < 0.0){
+            alpha += 180d;
+        }
+        beta = Math.atan(d/c);
+        beta = Math.toDegrees(beta);
+        if(c < 0){
+            beta += 180d;
+        }
+        if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
+            if((180-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
+                qij = MAX_RELATIVE_HEIGHT;
+            } else { // prolozime primku
+                //qij = -(b/a);
+                qij = -(a/b);
+            }
+        } else { // mame rozdilne uhly -> kruznice
+            cEq = (b/a)*c + d;
+
+            if(cEq != 0){ // kvadraticka rovnice
+                A = (b/a)*c + d;
+                B = c - (b/a)*d;
+
+                h_1 = B/(-A) + Math.sqrt(B*B + A*A)/(-A);
+                h_2 = B/(-A) - Math.sqrt(B*B + A*A)/(-A);
+            } else { // rovnice ma tvar h*() = 0 takze h = 0
+                h_1 = 0;
+                h_2 = 0;
+            }
+
+            beta = (h_1 - (b/a)) / ((b/a)*c - d);
+            alpha = (beta*c + 1) / a;
+
+            if(beta*alpha > 0){
+                qij = h_1;
+            } else {
+                qij = h_2;
+            }
+
+        }
+        // =========
+        if(qij < -1*MAX_RELATIVE_HEIGHT){
+            qij = -1*MAX_RELATIVE_HEIGHT;
+        } else if(qij > MAX_RELATIVE_HEIGHT){
+            qij = MAX_RELATIVE_HEIGHT;
+        }
+        relativeHeights[2*i + 1] = qij;*/
     }
 
     private void getDepthMap(){
@@ -1677,19 +2034,5 @@ public class ShapeFromShading implements Algorithm {
         this.lm = regularization;
     }
 
-    public static void gong() {
-        new Thread(() -> {
-            try {
-                Clip clip;
-                AudioInputStream inputStream = AudioSystem.getAudioInputStream(
-                        ShapeFromShading.class.getResourceAsStream("/gong/gong.wav"));
-                DataLine.Info info = new DataLine.Info(Clip.class, inputStream.getFormat());
-                clip = (Clip) AudioSystem.getLine(info);
-                clip.open(inputStream);
-                clip.start();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
-    }
+
 }
