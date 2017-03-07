@@ -5,8 +5,7 @@ import gui.sfs.EditMarkerScreen;
 import gui.sfs.Marker;
 import gui.session.ImageLoader;
 import gui.session.Session;
-import org.im4java.core.ConvertCmd;
-import org.im4java.core.IMOperation;
+import help.Tutorial;
 
 import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;
@@ -30,12 +29,14 @@ public class MainScreen extends JFrame {
 
     JMenuBar menuBar;
     JMenu file, help, save, load;
-    JMenuItem exit, openTexture, saveHeighMap, saveNormalMap, loadHeightMap,previewRender;
+    JMenuItem exit, openTexture, saveHeighMap, saveNormalMap, loadHeightMap,tutorial;
     ImageLoader imageLoader;
     image.Image image;
     //ImagePanel imagePanel;
     JPanel mainPanel,leftBoxPanel;
     Session session;
+    Tutorial tutorialDialog;
+    EditMarkerScreen editMarkerScreen;
 
     private final boolean updateAllImages = true;
 
@@ -94,7 +95,11 @@ public class MainScreen extends JFrame {
         menuBar.add(file);
 
         help = new JMenu("Help");
-        help.addMenuListener(menuListener);
+        //help.addMenuListener(menuListener);
+        tutorial = new JMenuItem("Tutorial");
+        tutorialDialog = new Tutorial();
+        tutorial.addActionListener(actionEvent -> tutorialDialog.start(null));
+        help.add(tutorial);
         menuBar.add(help);
 
         /*previewRender = new JMenuItem("Preview");
@@ -472,6 +477,8 @@ public class MainScreen extends JFrame {
             }
         });
 
+
+
         // TEST SEGMENT
         image = imageLoader.testloadImage();
         if(image != null){
@@ -666,14 +673,18 @@ public class MainScreen extends JFrame {
                 if(xRel < 0.0  || yRel < 0.0 || xRel > 1.0 || yRel > 1.0){
                     return;
                 }
+                markerList.add(marker);
+                originalMapImagePanel.revalidate();
+                originalMapImagePanel.repaint();
+                editMarkerScreen = new EditMarkerScreen(getMainReference(),"",Dialog.ModalityType.DOCUMENT_MODAL);
                 /**
                  * ZDE SE POTOM SPUSTI OBRAZOVKA NA UPRAVU UDAJU x, y A name
                  */
-                EditMarkerScreen editMarkerScreen = new EditMarkerScreen(getMainReference(),"",Dialog.ModalityType.DOCUMENT_MODAL);
                 editMarkerScreen.setMarker(marker);
                 editMarkerScreen.startFrame();
 
                 if(marker.getX() == -1 || marker.getY() == -1 || marker.getZ() == -1){ // Uzivatel dal "cancel"
+                    markerList.remove(marker);
                     return;
                 }
                 markerNumber++;
@@ -693,7 +704,7 @@ public class MainScreen extends JFrame {
                 System.out.println("=============================");*/
                 // marker info
 
-                markerList.add(marker);
+
 
             }
         }
@@ -919,7 +930,10 @@ public class MainScreen extends JFrame {
 
                 lightPanel = new JPanel();
                 lightPanel.setLayout(new BorderLayout());
-                lightPanel.add(new JLabel("Lightning:"),BorderLayout.NORTH);
+                JLabel normRot = new JLabel("   Normals rotation:");
+                normRot.setBorder(BorderFactory.createEmptyBorder(0,0,10,0));
+                lightPanel.add(normRot,BorderLayout.NORTH);
+                lightPanel.setBorder(BorderFactory.createEmptyBorder(5,10,10,10));
                 lightToolPanel = new JPanel();
                 lightToolPanel.setLayout(new BorderLayout());
                 lightToolPanel.setBackground(new Color(128,127,255));
@@ -927,16 +941,18 @@ public class MainScreen extends JFrame {
                 lightDirectionPanel = new DirectionPanel();
                 lightDirectionPanel.setBackground(new Color(128,127,255));
                 lightDirectionPanel.setPreferredSize(new Dimension(120,120));
+                lightDirectionPanel.setBorder(BorderFactory.createEmptyBorder(10,0,50,0));
+
                 lightToolPanel.add(lightDirectionPanel,BorderLayout.NORTH);
                 lightAngle = new JSlider(JSlider.HORIZONTAL,0,360,0);
                 lightAngle.setMajorTickSpacing(90);
                 lightAngle.setMinorTickSpacing(45);
                 lightAngle.setPaintTicks(true);
                 lightAngle.setPaintLabels(true);
+                lightAngle.setBorder(BorderFactory.createEmptyBorder(10,0,0,0));
                 lightToolPanel.add(lightAngle,BorderLayout.SOUTH);
 
                 lightPanel.add(lightToolPanel,BorderLayout.SOUTH);
-
                 heightPanel = new JPanel();
                 JLabel heightLabel = new JLabel("Height:");
                 height = new JSlider(JSlider.HORIZONTAL,0,100,91);
@@ -948,6 +964,7 @@ public class MainScreen extends JFrame {
 
                 heightPanel.add(heightLabel);
                 heightPanel.add(height);
+                //heightPanel.setBorder(BorderFactory.createBevelBorder(1,0,0,0));
 
                 recalculatePanel = new JPanel();
                 recalculateButton = new JButton("Recalculate");
@@ -976,6 +993,18 @@ public class MainScreen extends JFrame {
                 g2d.translate(-getLightImage().getWidth(this) / 2, -getLightImage().getHeight(this) / 2);
 
                 g2d.drawImage(getLightImage(),0,0,this);
+
+                // backwards
+                g2d.translate(getLightImage().getWidth(this) / 2, getLightImage().getHeight(this) / 2);
+                g2d.rotate(-Math.toRadians(lightAngle.getValue()) );
+                g2d.translate(-this.getWidth()/2,-this.getHeight()/2);
+
+                g2d.setColor(new Color(238,238,238));
+                g2d.fillRect(0,0,80,120);
+
+                g2d.translate(getLightImage().getWidth(this)*2-27, 0);
+                g2d.fillRect(0,0,120,120);
+
 
                 revalidate();
                 repaint();
@@ -1029,7 +1058,10 @@ public class MainScreen extends JFrame {
                 calculateNormalButton.addActionListener(reviewActionListener);
                 calculateNormalPanel.add(calculateNormalButton);
                 settingBox.setBorder(BorderFactory.createLoweredBevelBorder());
-                settingBox.add(invert,BorderLayout.NORTH);
+                JPanel in = new JPanel();
+                in.add(invert);
+                in.setBorder(BorderFactory.createEmptyBorder(10,0,0,0));
+                settingBox.add(in,BorderLayout.NORTH);
                 settingBox.add(calculateNormalPanel, BorderLayout.SOUTH);
             }
             return settingBox;
@@ -1152,6 +1184,7 @@ public class MainScreen extends JFrame {
                 });
                 markerSizePanel.add(markerSizeLabel,BorderLayout.NORTH);
                 markerSizePanel.add(markerSizeSlider,BorderLayout.CENTER);
+                markerSizePanel.setBorder(BorderFactory.createEmptyBorder(10,0,10,0));
 
                 topPanel.add(markerSizePanel,BorderLayout.SOUTH);
 
@@ -1166,6 +1199,7 @@ public class MainScreen extends JFrame {
                 displayMarkerList.setListData(markerList.toArray(new Marker[markerList.size()]));
                 scrollPane.setViewportView(displayMarkerList);
                 listPanel.add(scrollPane,BorderLayout.CENTER);
+                listPanel.setBorder(BorderFactory.createEmptyBorder(0,0,10,0));
 
                 settingBox.add(listPanel,BorderLayout.CENTER);
 
@@ -1175,21 +1209,23 @@ public class MainScreen extends JFrame {
                 settingsPanel.setLayout(new BorderLayout());
                 JPanel up = new JPanel(new GridLayout(1,2));
                 JPanel upLeft = new JPanel(new BorderLayout());
-                upLeft.add(new JLabel("Albedo:"),BorderLayout.NORTH);
+                upLeft.add(new JLabel("            Albedo:"),BorderLayout.NORTH);
                 albedoSlider = new JSlider(JSlider.VERTICAL,0,100,100);
                 albedoSlider.setMajorTickSpacing(25);
                 albedoSlider.setMinorTickSpacing(10);
                 albedoSlider.setPaintTicks(true);
                 albedoSlider.setPaintLabels(true);
+                albedoSlider.setBorder(BorderFactory.createEmptyBorder(10,0,0,0));
                 upLeft.add(albedoSlider,BorderLayout.CENTER);
 
                 JPanel upRight = new JPanel(new BorderLayout());
-                upRight.add(new JLabel("Smoothness:"),BorderLayout.NORTH);
+                upRight.add(new JLabel("    Smoothness:"),BorderLayout.NORTH);
                 regularSlider = new JSlider(JSlider.VERTICAL,0,100,10);
                 regularSlider.setMajorTickSpacing(25);
                 regularSlider.setMinorTickSpacing(10);
                 regularSlider.setPaintTicks(true);
                 regularSlider.setPaintLabels(true);
+                regularSlider.setBorder(BorderFactory.createEmptyBorder(10,0,0,0));
                 upRight.add(regularSlider,BorderLayout.CENTER);
 
                 up.add(upLeft);
@@ -1197,7 +1233,9 @@ public class MainScreen extends JFrame {
 
 
                 JPanel down = new JPanel(new BorderLayout());
-                down.add(new JLabel("Calculation steps"),BorderLayout.NORTH);
+                down.setBorder(BorderFactory.createEmptyBorder(20, 0, 10, 0));
+
+                down.add(new JLabel("   Calculation steps"),BorderLayout.NORTH);
                 stepsSlider = new JSlider(JSlider.HORIZONTAL,0,100,20);
                 stepsSlider.setMajorTickSpacing(25);
                 stepsSlider.setMinorTickSpacing(10);

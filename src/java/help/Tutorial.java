@@ -35,7 +35,6 @@ public class Tutorial {
         prepareTutorialPanel();
         prepareDialog(parent,tutorialPanel);
 
-
         dialog.setVisible(true);
 
         cardLayout.show(cardPanel,"0");
@@ -65,31 +64,31 @@ public class Tutorial {
 
             buttonPanel = new JPanel(new BorderLayout());
             next = new JButton("Next");
-            next.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent actionEvent) {
-                    if(pointer < 11){
-                        pointer++;
-                        cardLayout.show(cardPanel, pointer + "");
-                    }
+            next.addActionListener(actionEvent -> {
+                if(pointer < 10){
+                    pointer++;
+                    cardLayout.show(cardPanel, pointer + "");
                 }
             });
             previous = new JButton("Previous");
-            previous.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent actionEvent) {
-                    if(pointer > 0){
-                        pointer--;
-                        cardLayout.show(cardPanel,pointer+"");
-                    }
+            previous.addActionListener(actionEvent -> {
+                if(pointer > 0){
+                    pointer--;
+                    cardLayout.show(cardPanel,pointer+"");
                 }
             });
             end = new JButton("End");
+            end.addActionListener(actionEvent -> dialog.dispose());
 
             // pridani buttonu do buttonPanelu
-            buttonPanel.add(end,BorderLayout.WEST);
-            buttonPanel.add(next,BorderLayout.CENTER);
-            buttonPanel.add(previous,BorderLayout.EAST);
+            JPanel e = new JPanel();
+            e.add(end);
+            buttonPanel.add(e,BorderLayout.WEST);
+            JPanel b = new JPanel();
+            b.add(next);
+            b.add(previous);
+            //buttonPanel.add(next,BorderLayout.CENTER);
+            buttonPanel.add(b,BorderLayout.EAST);
             //=============================
             tutorialPanel.add(buttonPanel,BorderLayout.PAGE_END);
         }
@@ -134,8 +133,8 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-65));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-65));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
 
             panel.add(editorScrollPane);
             return panel;
@@ -163,8 +162,8 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-65));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-65));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
 
             panel.add(editorScrollPane);
             return panel;
@@ -192,8 +191,8 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-65));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-65));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
 
             panel.add(editorScrollPane);
             return panel;
@@ -221,8 +220,8 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-65));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-65));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
 
             panel.add(editorScrollPane);
             return panel;
@@ -250,8 +249,8 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-65));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-65));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
 
             panel.add(editorScrollPane);
             return panel;
@@ -279,8 +278,8 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-65));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-65));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
 
             panel.add(editorScrollPane);
             return panel;
@@ -308,8 +307,8 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-65));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-65));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
 
             panel.add(editorScrollPane);
             return panel;
@@ -337,8 +336,8 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-65));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-65));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
 
             panel.add(editorScrollPane);
             return panel;
@@ -366,8 +365,8 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-65));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-65));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
 
             panel.add(editorScrollPane);
             return panel;
@@ -395,8 +394,8 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-65));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-65));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
 
             panel.add(editorScrollPane);
             return panel;
@@ -424,8 +423,8 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-65));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-65));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
 
             panel.add(editorScrollPane);
             return panel;

@@ -255,7 +255,6 @@ public class ImageLoader extends JFrame{
                 e.printStackTrace();
             }
         }
-        calculatePreview();
     }
 
     public void calculateHeightMap(java.util.List<Marker> markerList, int steps, double q, double lm){
@@ -272,20 +271,6 @@ public class ImageLoader extends JFrame{
         }
 
     }
-
-    public void calculatePreview(){
-        if(image.getNormalMap() != null) {
-            //loadingImageProgressBar.startLoading(normalMap.getSteps(),false);
-            //lambertShader.write(lambertShader.shader(lambertShader.read(sessionFolder + Session.SLASH + NORMAL_NAME)), sessionFolder + Session.SLASH + PREVIEW_NAME);
-
-            try {
-                image.setPreview(ImageIO.read(new File(sessionFolder + Session.SLASH + PREVIEW_NAME)));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     public void saveHeightMap(){
         fileChooser.setSelectedFile(new File("heightmap.png"));
         int ret = fileChooser.showSaveDialog(ImageLoader.this);
