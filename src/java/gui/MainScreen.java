@@ -5,6 +5,8 @@ import gui.sfs.EditMarkerScreen;
 import gui.sfs.Marker;
 import gui.session.ImageLoader;
 import gui.session.Session;
+import org.im4java.core.ConvertCmd;
+import org.im4java.core.IMOperation;
 
 import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;
@@ -28,7 +30,7 @@ public class MainScreen extends JFrame {
 
     JMenuBar menuBar;
     JMenu file, help, save, load;
-    JMenuItem exit, openTexture, saveHeighMap, saveNormalMap, loadHeightMap;
+    JMenuItem exit, openTexture, saveHeighMap, saveNormalMap, loadHeightMap,previewRender;
     ImageLoader imageLoader;
     image.Image image;
     //ImagePanel imagePanel;
@@ -94,6 +96,15 @@ public class MainScreen extends JFrame {
         help = new JMenu("Help");
         help.addMenuListener(menuListener);
         menuBar.add(help);
+
+        /*previewRender = new JMenuItem("Preview");
+        previewRender.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                startPreview();
+            }
+        });
+        menuBar.add(previewRender);*/
 
         openTexture = new JMenuItem("Open Texture");
         openTexture.addActionListener(actionListener);
@@ -402,6 +413,7 @@ public class MainScreen extends JFrame {
         tabbedPanel.add(originalMapImagePanel,"Original Image");
         tabbedPanel.add(heightMapImagePanel,"Height Map");
         tabbedPanel.add(normalMapImagePanel,"Normal Map");
+
 
         //cl.show(tabbedPanel,"Normal Map");
         /*tabbedPanel.revalidate();

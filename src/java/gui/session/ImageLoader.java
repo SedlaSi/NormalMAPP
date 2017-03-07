@@ -35,7 +35,7 @@ public class ImageLoader extends JFrame{
     private final HeightMap heightMap = new HeightMap();
     private final NormalMap normalMap = new NormalMap();
     private final ShapeFromShading shapeFromShading = new ShapeFromShading();
-    private final LambertShader lambertShader = new LambertShader();
+    //private final LambertShader lambertShader = new LambertShader();
 
     Image image;
 
@@ -43,6 +43,14 @@ public class ImageLoader extends JFrame{
         fileChooser = new JFileChooser();
         fileSaver = new JFileChooser();
         this.sessionFolder = sessionFolder;
+    }
+
+    public String getOriginalImagePath(){
+        return sessionFolder + Session.SLASH + ORIGINAL_NAME;
+    }
+
+    public String getNormalMapPath(){
+        return sessionFolder + Session.SLASH + NORMAL_NAME;
     }
 
     public void setMainFrameReference(JFrame mainFrameReference){
@@ -268,7 +276,7 @@ public class ImageLoader extends JFrame{
     public void calculatePreview(){
         if(image.getNormalMap() != null) {
             //loadingImageProgressBar.startLoading(normalMap.getSteps(),false);
-            lambertShader.write(lambertShader.shader(lambertShader.read(sessionFolder + Session.SLASH + NORMAL_NAME)), sessionFolder + Session.SLASH + PREVIEW_NAME);
+            //lambertShader.write(lambertShader.shader(lambertShader.read(sessionFolder + Session.SLASH + NORMAL_NAME)), sessionFolder + Session.SLASH + PREVIEW_NAME);
 
             try {
                 image.setPreview(ImageIO.read(new File(sessionFolder + Session.SLASH + PREVIEW_NAME)));
