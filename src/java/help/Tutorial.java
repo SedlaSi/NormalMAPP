@@ -41,6 +41,7 @@ public class Tutorial {
         dialog.revalidate();
         dialog.repaint();
         dialog.setResizable(false);
+        dialog.setLocationRelativeTo(null);
     }
 
     private void prepareDialog(JFrame parent,JPanel panel) {

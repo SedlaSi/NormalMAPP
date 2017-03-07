@@ -37,6 +37,7 @@ public class MainScreen extends JFrame {
     Session session;
     Tutorial tutorialDialog;
     EditMarkerScreen editMarkerScreen;
+    private static final int IMPATIENT_CUSTOMER_TIME = 30;
 
     private final boolean updateAllImages = true;
 
@@ -1054,7 +1055,7 @@ public class MainScreen extends JFrame {
                 calculateNormalPanel = new JPanel();
                 invert = new JButton("Invert Heights");
                 invert.addActionListener(invertActionListener);
-                calculateNormalButton = new JButton("Calculate Normals");
+                calculateNormalButton = new JButton("Calculate Normal Map");
                 calculateNormalButton.addActionListener(reviewActionListener);
                 calculateNormalPanel.add(calculateNormalButton);
                 settingBox.setBorder(BorderFactory.createLoweredBevelBorder());
@@ -1243,23 +1244,13 @@ public class MainScreen extends JFrame {
                 stepsSlider.setPaintLabels(true);
 
                 down.add(stepsSlider,BorderLayout.CENTER);
-                warning = new JLabel("    Warning: long calculation time");
-                warning.setForeground(Color.RED);
-                warning.setVisible(false);
-                down.add(warning,BorderLayout.PAGE_END);
                 settingsPanel.add(up,BorderLayout.NORTH);
                 settingsPanel.add(down,BorderLayout.CENTER);
-                stepsSlider.addChangeListener(changeEvent -> {
-                    if(stepsSlider.getValue() > 75){
-                        warning.setVisible(true);
-                    } else {
-                        warning.setVisible(false);
-                    }
-                });
+
                 //settingBox.add(settingsPanel,BorderLayout.SOUTH);
 
                 recalculatePanel = new JPanel();
-                recalculateButton = new JButton(new WaitAction("Calculate Depth"));
+                recalculateButton = new JButton(new WaitAction("Calculate Height Map"));
                 recalculatePanel.add(recalculateButton);
                 settingBox.setBorder(BorderFactory.createLoweredBevelBorder());
                 //settingBox.add(calculateNormalPanel, BorderLayout.PAGE_END);
@@ -1287,39 +1278,46 @@ public class MainScreen extends JFrame {
 
         private class WaitAction extends AbstractAction {
 
+            private static final float C = 705400.0f;
+            private static final float t = 0.14f;
+            private boolean doGong = false;
+
             public WaitAction(String name) {
                 super(name);
             }
 
             @Override
             public void actionPerformed(ActionEvent evt) {
+                if(((float)(image.getOriginalMap().getWidth() * image.getOriginalMap().getHeight())/C)*t*(float)stepsSlider.getValue() > IMPATIENT_CUSTOMER_TIME){
+                    doGong = true;
+                } else {
+                    doGong = false;
+                }
                 if(markerList.size() < 3){
                     JOptionPane.showMessageDialog(getFrame(), "You must provide at least 3 markers.");
                 } else {
                     SwingWorker<Void, Void> mySwingWorker = new SwingWorker<Void, Void>(){
                         @Override
                         protected Void doInBackground() throws Exception {
-
+                            //float tic = System.nanoTime();
                             imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), ((double)(albedoSlider.getValue()))/100.0, ((double)(regularSlider.getValue()))/100.0);
                             updateHeight(image.getHeightMap());
-                            if(stepsSlider.getValue()> 75){
+                            if(doGong){
                                 gong();
                             }
+                            /*float toc = System.nanoTime();
+                            System.out.println((double)(toc-tic)/1000000000.0);*/
                             return null;
                         }
                     };
 
                     Window win = SwingUtilities.getWindowAncestor((AbstractButton)evt.getSource());
-                    final JDialog dialog = new JDialog(win, "Calculating Depthmap" , Dialog.ModalityType.APPLICATION_MODAL);
+                    final JDialog dialog = new JDialog(win, "Calculating Height Map" , Dialog.ModalityType.APPLICATION_MODAL);
 
-                    mySwingWorker.addPropertyChangeListener(new PropertyChangeListener() {
-
-                        @Override
-                        public void propertyChange(PropertyChangeEvent evt) {
-                            if (evt.getPropertyName().equals("state")) {
-                                if (evt.getNewValue() == SwingWorker.StateValue.DONE) {
-                                    dialog.dispose();
-                                }
+                    mySwingWorker.addPropertyChangeListener(evt1 -> {
+                        if (evt1.getPropertyName().equals("state")) {
+                            if (evt1.getNewValue() == SwingWorker.StateValue.DONE) {
+                                dialog.dispose();
                             }
                         }
                     });
@@ -1333,7 +1331,7 @@ public class MainScreen extends JFrame {
                     dialog.add(panel);
                     dialog.pack();
                     dialog.setLocationRelativeTo(win);
-                    if(stepsSlider.getValue() > 75){
+                    if(doGong){
                         JOptionPane.showMessageDialog(dialog, "Our monkey will hit the gong when calculations are finished.");
 
                     }
