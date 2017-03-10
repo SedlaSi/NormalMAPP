@@ -46,6 +46,10 @@ public class MainScreen extends JFrame {
     JPanel cardSettingsBoxPanel;
     CardLayout cardSettingsBoxLayout;
 
+    private static final float C = 705400.0f;
+    private static final float t = 0.14f;
+    private boolean doGong = false;
+    JLabel timeText;
 
     OriginalMapSettingsBox originalMapSettingsBox;
     NormalMapSettingsBox normalMapSettingsBox;
@@ -184,8 +188,8 @@ public class MainScreen extends JFrame {
                     normalMapImagePanel.moveImg(x,y);
                 }
                 originalMapImagePanel.moveImg(x,y);
-                revalidate();
-                repaint();
+                originalMapImagePanel.revalidate();
+                originalMapImagePanel.repaint();
                /* Graphics2D g2O = originalMapImagePanel.getGraphic();
                 Graphics2D g2H = originalMapImagePanel.getGraphic();
                 Graphics2D g2N = originalMapImagePanel.getGraphic();
@@ -291,8 +295,8 @@ public class MainScreen extends JFrame {
                 }
                 heightMapImagePanel.moveImg(x,y);
 
-                revalidate();
-                repaint();
+                heightMapImagePanel.revalidate();
+                heightMapImagePanel.repaint();
             }
 
             @Override
@@ -369,8 +373,8 @@ public class MainScreen extends JFrame {
                     heightMapImagePanel.moveImg(x,y);
                 }
                 normalMapImagePanel.moveImg(x,y);
-                revalidate();
-                repaint();
+                normalMapImagePanel.revalidate();
+                normalMapImagePanel.repaint();
             }
 
             @Override
@@ -557,9 +561,11 @@ public class MainScreen extends JFrame {
     }
 
     private void updateNormal(BufferedImage normal){
-        normalMapImagePanel.setBufferedImage(normal);
-        revalidate();
-        repaint();
+        if(image.getHeightMap() != null) {
+            normalMapImagePanel.setBufferedImage(normal);
+            revalidate();
+            repaint();
+        }
     }
 
     private void updateImagePanels(){
@@ -1234,16 +1240,35 @@ public class MainScreen extends JFrame {
 
 
                 JPanel down = new JPanel(new BorderLayout());
-                down.setBorder(BorderFactory.createEmptyBorder(20, 0, 10, 0));
-
-                down.add(new JLabel("   Calculation steps"),BorderLayout.NORTH);
+                //down.setBorder(BorderFactory.createEmptyBorder(20, 0, 10, 0));
+                down.setBorder(BorderFactory.createBevelBorder(1));
+                JLabel calStepsLabel = new JLabel("   Calculation steps");
+                calStepsLabel.setBorder(BorderFactory.createEmptyBorder(10,0,0,0));
+                down.add(calStepsLabel,BorderLayout.NORTH);
                 stepsSlider = new JSlider(JSlider.HORIZONTAL,0,100,20);
                 stepsSlider.setMajorTickSpacing(25);
                 stepsSlider.setMinorTickSpacing(10);
                 stepsSlider.setPaintTicks(true);
                 stepsSlider.setPaintLabels(true);
-
+                stepsSlider.addChangeListener(changeEvent -> {
+                    int time = calculationTime();
+                    if(time > IMPATIENT_CUSTOMER_TIME-1){
+                        timeText.setForeground(Color.RED);
+                        doGong = true;
+                    } else {
+                        doGong = false;
+                        timeText.setForeground(Color.DARK_GRAY);
+                    }
+                    timeText.setText(time+" seconds");
+                });
                 down.add(stepsSlider,BorderLayout.CENTER);
+                JPanel textPanel = new JPanel(new BorderLayout());
+                textPanel.add(new JLabel("  Estimated calculation time:   "),BorderLayout.WEST);
+                timeText = new JLabel(calculationTime()+"");
+                textPanel.add(timeText,BorderLayout.CENTER);
+                textPanel.setBorder(BorderFactory.createEmptyBorder(10,0,10,0));
+                //textPanel.add(new JLabel("seconds"),BorderLayout.EAST);
+                down.add(textPanel,BorderLayout.PAGE_END);
                 settingsPanel.add(up,BorderLayout.NORTH);
                 settingsPanel.add(down,BorderLayout.CENTER);
 
@@ -1262,7 +1287,18 @@ public class MainScreen extends JFrame {
             return settingBox;
         }
 
-        public void updateList(){
+        private int calculationTime(){
+            if(image == null || image.getOriginalMap() == null) return 0;
+            int time = (int)(((float)(image.getOriginalMap().getWidth() * image.getOriginalMap().getHeight())/C)*t*(float)stepsSlider.getValue());
+            if(time > IMPATIENT_CUSTOMER_TIME){
+                doGong = true;
+            } else {
+                doGong = false;
+            }
+            return time+1;
+        }
+
+        void updateList(){
             displayMarkerList.setListData(markerList.toArray(new Marker [markerList.size()]));
             displayMarkerList.revalidate();
             displayMarkerList.repaint();
@@ -1278,21 +1314,13 @@ public class MainScreen extends JFrame {
 
         private class WaitAction extends AbstractAction {
 
-            private static final float C = 705400.0f;
-            private static final float t = 0.14f;
-            private boolean doGong = false;
-
             public WaitAction(String name) {
                 super(name);
             }
 
             @Override
             public void actionPerformed(ActionEvent evt) {
-                if(((float)(image.getOriginalMap().getWidth() * image.getOriginalMap().getHeight())/C)*t*(float)stepsSlider.getValue() > IMPATIENT_CUSTOMER_TIME){
-                    doGong = true;
-                } else {
-                    doGong = false;
-                }
+
                 if(markerList.size() < 3){
                     JOptionPane.showMessageDialog(getFrame(), "You must provide at least 3 markers.");
                 } else {

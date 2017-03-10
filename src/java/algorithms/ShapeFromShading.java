@@ -19,10 +19,10 @@ import java.util.List;
  */
 public class ShapeFromShading implements Algorithm {
 
-    private final static double ROUND_ANGLE = 2.0;
-    private final static double FLAT_ANGLE = 5.0;
+    private final static double ROUND_ANGLE = 2.0; //2.0
+    private final static double FLAT_ANGLE = 5.0; // 5.0
     //private final static double FLAT_ANGLE = 0;
-    private final static double MAX_RELATIVE_HEIGHT = 2.0;
+    private final static double MAX_RELATIVE_HEIGHT = 2.0; // 2.0
     //private final static double MAX_RELATIVE_HEIGHT = Double.MAX_VALUE;
     private int collumns;
     private int rows;
@@ -103,7 +103,8 @@ public class ShapeFromShading implements Algorithm {
 
         // SKUTECNY KONEC
         //absoluteHeightsOld(relativeHeights());
-        absoluteHeights(relativeHeights());
+        //absoluteHeights(relativeHeights());
+        absoluteHeightsNEW(relativeHeights()); // opravuje extremy v okrajich
         /*if(playGong){
             gong();
         }*/
@@ -473,6 +474,187 @@ public class ShapeFromShading implements Algorithm {
 
     }
 
+    private void absoluteHeightsNEW(double [] q){
+        int size = collumns*rows;
+        double [] h = new double[size];
+        double h1,h2,h3,h4;
+        double height;
+
+        int mod = 0;
+        double [] buffer = new double [2*collumns];
+        for(int gauss = steps; gauss >= 0; gauss--){ // LOOP GAUSS-SEIDEL
+            // HORNI RADKA
+            //System.out.println("1");
+            //levy horni roh
+            //h[0] = height;
+
+            //buffer[mod] = height;
+            buffer[mod] = h[1+collumns];
+            mod++;
+            /*if(mod == 2*collumns){
+                mod = 0;
+            }*/
+
+
+
+            //horni radka
+            for(int i = 1; i < collumns-1; i++){
+                //h[i] = height;
+
+
+
+                //buffer[mod] = height;
+                buffer[mod] = h[i+collumns];
+                mod++;
+                /*if(mod == 2*collumns){
+                    mod = 0;
+                }*/
+            }
+            // pravy horni roh
+            //h[collumns-1] = height;
+
+
+            //buffer[mod] = height;
+            buffer[mod] = h[collumns-2+collumns];
+            mod++;
+            /*if(mod == 2*collumns){
+                mod = 0;
+            }*/
+
+            //TELO
+            for(int j = collumns; j <= (rows-2)*collumns; j+=collumns){ // projizdime radky
+                //levy prvek
+                //h[j] = height;
+
+
+                if((j - 2*collumns) >= 0){ // pokud jsme v poli
+                    h[(j - 2*collumns)] = buffer[mod];
+                }
+                //buffer[mod] = height;
+                buffer[mod] = h[j+1];
+                mod++;
+                /*if(mod == 2*collumns){
+                    mod = 0;
+                }*/
+                for(int i = 1; i < collumns-1; i++){ // projizdime bunky v radcich
+                    h1 = h[(j + i) + 1] + q[2*(j + i)];
+                    h2 = h[(j + i) + collumns] + q[2*(j + i) + 1];
+                    h3 = h[(j + i)-1] - q[2*((j + i)-1)];
+                    h4 = h[(j + i) - collumns] - q[2*((j + i)-collumns)+1];
+
+                    height = (h1 + h2 + h3 + h4)/4;
+                    //h[(j + i)] = height;
+
+
+                    if((j+i - 2*collumns) >= 0){ // pokud jsme v poli
+                        h[(j+i - 2*collumns)] = buffer[mod];
+                    }
+                    buffer[mod] = height;
+                    mod++;
+                    /*if(mod == 2*collumns){
+                        mod = 0;
+                    }*/
+                }
+                //pravy prvek
+                //h[(j + collumns-1)] = height;
+
+
+                if((j + collumns-1 - 2*collumns) >= 0){ // pokud jsme v poli
+                    h[(j + collumns-1 - 2*collumns)] = buffer[mod];
+                }
+                //buffer[mod] = height;
+                buffer[mod] = h[(j + collumns-2)];
+                mod++;
+                if(mod == 2*collumns){
+                    mod = 0;
+                }
+
+
+            }
+
+            // SPODNI RADKA
+            //levy spodni roh
+            //h[(size - collumns)] = height;
+
+
+            if((size - collumns - 2*collumns) >= 0){ // pokud jsme v poli
+                h[(size - collumns - 2*collumns)] = buffer[mod];
+            }
+            //buffer[mod] = height;
+            buffer[mod] = h[(size - collumns - 2*collumns)+1-collumns];
+            mod++;
+            /*if(mod == 2*collumns){
+                mod = 0;
+            }*/
+            //spodni radek
+            for(int i = size-collumns+1; i < size-1; i++){
+                //h[i] = height;
+
+
+                if((i - 2*collumns) >= 0){ // pokud jsme v poli
+                    h[(i - 2*collumns)] = buffer[mod];
+                }
+                //buffer[mod] = height;
+                buffer[mod] = h[i-collumns];
+                mod++;
+                /*if(mod == 2*collumns){
+                    mod = 0;
+                }*/
+            }
+            //System.out.println("6");
+
+            //pravy spodni roh
+            //h[size-1] = height;
+
+
+            if((size-1 - 2*collumns) >= 0){ // pokud jsme v poli
+                h[(size-1 - 2*collumns)] = buffer[mod];
+            }
+
+            //buffer[mod] = height;
+            buffer[mod] = h[(size-2)-collumns];
+            mod++;
+            if(mod == 2*collumns){
+                mod = 0;
+            }
+
+            for(int i = (size - 2*collumns); i < size; i++){
+                h[i] = buffer[mod];
+                mod++;
+                if(mod == 2*collumns){
+                    mod = 0;
+                }
+            }
+            //System.out.println("l");
+            mod = 0;
+            //System.out.println(gauss);
+        }
+        double max = Double.MIN_VALUE;
+        double min = Double.MAX_VALUE;
+        double range;
+        for(int i = 0; i < size; i++){
+
+            if(h[i] > max){
+                max = h[i];
+            }
+            if(h[i] < min){
+                min = h[i];
+            }
+        }
+        min = Math.abs(min);
+        range = min + Math.abs(max);
+
+        byte value;
+        for(int i = 0; i < size; i++){
+            value = (byte)(((h[i]+min)/range)*255);
+            //System.out.println(value);
+            fr[3*i + bodyStart] = value;
+            fr[3*i + bodyStart + 1] = value;
+            fr[3*i + bodyStart + 2] = value;
+        }
+
+    }
+
     private void absoluteHeightsOld(double [] q){
         int size = collumns*rows;
         double [] h = new double[size];
@@ -714,7 +896,9 @@ public class ShapeFromShading implements Algorithm {
                 beta += 180d;
             }
             if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
-                if((180d-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
+                if(alpha < FLAT_ANGLE){ // skoro kolmice
+                    qij = -MAX_RELATIVE_HEIGHT;
+                } else if((180d-alpha) < FLAT_ANGLE) {
                     qij = MAX_RELATIVE_HEIGHT;
                 } else { // prolozime primku
                     //qij = -(b/a);
@@ -780,9 +964,11 @@ public class ShapeFromShading implements Algorithm {
                 beta += 180d;
             }
             if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
-                if((180-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
+                if(alpha < FLAT_ANGLE){ // skoro kolmice
+                    qij = -MAX_RELATIVE_HEIGHT;
+                } else if((180d-alpha) < FLAT_ANGLE) {
                     qij = MAX_RELATIVE_HEIGHT;
-                } else { // prolozime primku
+                }  else { // prolozime primku
                     //qij = -(b/a);
                     qij = -(a/b);
                 }
@@ -850,9 +1036,11 @@ public class ShapeFromShading implements Algorithm {
             /*System.out.println("aplha "+alpha);
             System.out.println("beta "+beta);*/
             if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
-                if((180-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
+                if(alpha < FLAT_ANGLE){ // skoro kolmice
+                    qij = -MAX_RELATIVE_HEIGHT;
+                } else if((180d-alpha) < FLAT_ANGLE) {
                     qij = MAX_RELATIVE_HEIGHT;
-                } else { // prolozime primku
+                }  else { // prolozime primku
                     //qij = -(b/a);
                     qij = -(a/b);
                 }
@@ -918,9 +1106,11 @@ public class ShapeFromShading implements Algorithm {
                 beta += 180d;
             }
             if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
-                if((180-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
+                if(alpha < FLAT_ANGLE){ // skoro kolmice
+                    qij = -MAX_RELATIVE_HEIGHT;
+                } else if((180d-alpha) < FLAT_ANGLE) {
                     qij = MAX_RELATIVE_HEIGHT;
-                } else { // prolozime primku
+                }  else { // prolozime primku
                     //qij = -(b/a);
                     qij = -(a/b);
                 }
@@ -1730,7 +1920,7 @@ public class ShapeFromShading implements Algorithm {
         //uvodni estimate bez regularizace
         int size = collumns*rows;
         double [] n = new double[3*size];
-        double x,y,z;
+        double x,y,z,l;
         for(int i = 0; i < size; i++){
             x = (q*grayscale[i])/lightX;
             y = (q*grayscale[i])/lightY;
@@ -1740,9 +1930,11 @@ public class ShapeFromShading implements Algorithm {
                 y = -y;
                 z = -z;
             }
-            n[3*i] = x;
-            n[3*i+1] = y;
-            n[3*i+2] = z;
+            l = Math.sqrt(x*x + y*y + z*z);
+
+            n[3*i] = x/l;
+            n[3*i+1] = y/l;
+            n[3*i+2] = z/l;
         }
         /*if(n != null)
         return n;*/
