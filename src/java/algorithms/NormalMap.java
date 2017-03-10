@@ -165,6 +165,49 @@ public class NormalMap implements Algorithm {
             }
             readen_lines++;
         }
+
+        // kopirovani hodnot do kraju
+        out[off] = out[off + 3*(1+collumns)];
+        out[off + 1] = out[off + 3*(1+collumns)+1];
+        out[off + 2] = out[off + 3*(1+collumns)+2];
+
+        // horni radka
+        for(i = off + 3; i < off + 3*(collumns - 1); i++){
+            out[i] = out[i + 3*collumns];
+        }
+
+        int size = collumns * rows;
+
+        out[off + 3*(collumns-1)] = out[off + 3*(collumns-1) + 3*(collumns-1)];
+        out[off + 1 + 3*(collumns-1)] = out[off + 3*(collumns-1) + 3*(collumns-1) + 1];
+        out[off + 2 + 3*(collumns-1)] = out[off + 3*(collumns-1) + 3*(collumns-1) + 2];
+
+        for(i = off + 3*(collumns); i < off + 3*(size - collumns); i += 3*collumns){
+            // levy prvek
+            out[i] = out[i+3];
+            out[i+1] = out[i+4];
+            out[i+2] = out[i+5];
+            // pravy prvek
+            out[i + 3*(collumns-1)] = out[i + 3*(collumns-1) -3];
+            out[i + 3*(collumns-1)+1] = out[i + 3*(collumns-1) -2];
+            out[i + 3*(collumns-1)+2] = out[i + 3*(collumns-1) -1];
+        }
+
+        out[off + 3*(size - collumns)] = out[off + 3*(size - collumns) - 3*(collumns-1)];
+        out[off + 3*(size - collumns)+1] = out[off + 3*(size - collumns) - 3*(collumns-1)+1];
+        out[off + 3*(size - collumns)+2] = out[off + 3*(size - collumns) - 3*(collumns-1)+2];
+
+        // spodni radka
+        for(i = off + 3*(size - collumns+1); i < off + 3*(size - 1); i++){
+            out[i] = out[i - 3*collumns];
+        }
+
+        out[off + 3*(size - 1)] = out[off + 3*(size - 2)];
+        out[off + 3*(size - 1)+1] = out[off + 3*(size - 2)+1];
+        out[off + 3*(size - 1)+2] = out[off + 3*(size - 2)+2];
+
+
+
         return out;
     }
 

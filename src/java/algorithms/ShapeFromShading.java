@@ -282,7 +282,7 @@ public class ShapeFromShading implements Algorithm {
             h1 = h[1] + q[0];
             h2 = h[collumns] + q[1];
 
-            height = (h1+h2)/2;
+            height = (h1+h2)/4;
             //h[0] = height;
 
             buffer[mod] = height;
@@ -299,7 +299,7 @@ public class ShapeFromShading implements Algorithm {
                 h2 = h[i+collumns] + q[2*i+1];
                 h3 = h[i-1] - q[2*(i-1)];
 
-                height = (h1 + h2 + h3)/3;
+                height = (h1 + h2 + h3)/4;
                 //h[i] = height;
 
 
@@ -314,7 +314,7 @@ public class ShapeFromShading implements Algorithm {
             h2 = h[collumns-1+collumns] + q[2*(collumns-1)+1];
             h3 = h[collumns-1-1] - q[2*(collumns-1-1)];
 
-            height = (h2 + h3)/2;
+            height = (h2 + h3)/4;
             //h[collumns-1] = height;
 
 
@@ -330,7 +330,7 @@ public class ShapeFromShading implements Algorithm {
                 h1 = h[j + 1] + q[2*j];
                 h2 = h[j + collumns] + q[2*j + 1];
                 h4 = h[j - collumns] - q[2*(j-collumns)+1];
-                height = (h1 + h2 + h4)/3;
+                height = (h1 + h2 + h4)/4;
                 //h[j] = height;
 
 
@@ -365,7 +365,7 @@ public class ShapeFromShading implements Algorithm {
                 h2 = h[(j + collumns-1) + collumns] + q[2*(j + collumns-1) + 1];
                 h3 = h[(j + collumns-1)-1] - q[2*((j + collumns-1)-1)];
                 h4 = h[(j + collumns-1) - collumns] - q[2*((j + collumns-1)-collumns)+1];
-                height = (h2 + h3 + h4)/3;
+                height = (h2 + h3 + h4)/4;
                 //h[(j + collumns-1)] = height;
 
 
@@ -386,7 +386,7 @@ public class ShapeFromShading implements Algorithm {
             h1 = h[(size - collumns)+1] + q[2*(size - collumns)];
             h4 = h[(size - collumns) - collumns] - q[2*((size - collumns)-collumns)+1];
 
-            height = (h1 + h4)/2;
+            height = (h1 + h4)/4;
             //h[(size - collumns)] = height;
 
 
@@ -404,7 +404,7 @@ public class ShapeFromShading implements Algorithm {
                 h3 = h[i-1] - q[2*(i-1)];
                 h4 = h[i - collumns] - q[2*(i-collumns)+1];
 
-                height = (h1 + h3 + h4)/3;
+                height = (h1 + h3 + h4)/4;
                 //h[i] = height;
 
 
@@ -423,7 +423,7 @@ public class ShapeFromShading implements Algorithm {
             h3 = h[(size-1)-1] - q[2*((size-1)-1)];
             h4 = h[(size-1) - collumns] - q[2*((size-1)-collumns)+1];
 
-            height = (h3 + h4)/2;
+            height = (h3 + h4)/4;
             //h[size-1] = height;
 
 
@@ -647,12 +647,39 @@ public class ShapeFromShading implements Algorithm {
         byte value;
         for(int i = 0; i < size; i++){
             value = (byte)(((h[i]+min)/range)*255);
+            value = (byte)(255 - (value & 0xFF)); // invert
             //System.out.println(value);
             fr[3*i + bodyStart] = value;
             fr[3*i + bodyStart + 1] = value;
             fr[3*i + bodyStart + 2] = value;
         }
 
+    }
+
+    private byte [] invert(byte [] fr){
+        int off = 3; // offset in array
+
+        while(fr[off] != 10) off++;
+        int i = 3;
+        while(true){
+            if(fr[i] == '#'){
+                i++;
+                while(fr[i] != '\n') i++;
+                while(fr[i] == '\n') i++;
+            } else break;
+
+        }
+        off = i;
+        while(fr[off] != 10 && fr[off] != ' ') off++;
+
+        off++;
+        while(fr[off] != 10 && fr[off] != ' ') off++;
+        off += 5;
+
+        for(i = off; i < fr.length; i++){
+            fr[i] = (byte)(255 - (fr[i] & 0xFF));
+        }
+        return fr;
     }
 
     private void absoluteHeightsOld(double [] q){
