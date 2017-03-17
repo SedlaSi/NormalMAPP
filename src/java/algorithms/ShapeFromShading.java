@@ -12,6 +12,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -71,17 +74,22 @@ public class ShapeFromShading implements Algorithm {
         getGrayscale(); // 2. step
         getLightSource(); // 3. step
 
+        /*System.out.println("LightX = "+lightX);
+        System.out.println("LightY = "+lightY);
+        System.out.println("LightZ = "+lightZ);*/
 
         //normalField = getHeightMap();
-        normalField = getDepthMap2();
+        //normalField = getDepthMap2();
+        //normalField = getDepthMap3();
+        normalField = getDepthMap4();
         grayscale = null;
 
         // VYPISOVANI RELATIVNICH VYSEK
         /*double [] rel = relativeHeights();
         for(int i = bodyStart; i< rel.length-1 ; i+=2){
-            fr[(i/2)*3] = (byte)((rel[i+1])*255);
-            fr[(i/2)*3+1] = (byte)((rel[i+1])*255);
-            fr[(i/2)*3+2] = (byte)((rel[i+1])*255);
+            fr[(i/2)*3] = (byte)((rel[i+1])*255.0);
+            fr[(i/2)*3+1] = (byte)((rel[i+1])*255.0);
+            fr[(i/2)*3+2] = (byte)((rel[i+1])*255.0);
         }*/
 
         /*for(int i = bodyStart; i < normalField.length ; i+=3){
@@ -93,10 +101,10 @@ public class ShapeFromShading implements Algorithm {
 
 
         // VYPISOVANI PLOCHYCH NORMAL
-        /*for(int i = bodyStart; i < normalField.length ; i++){
+        for(int i = bodyStart; i < normalField.length+bodyStart ; i++){
             //fr[i] = (byte)((normalField[i]+1)*127.5);
-            fr[i] = (byte)((normalField[i])*255);
-        }*/
+            fr[i] = (byte)((normalField[i-bodyStart])*255.0);
+        }
 
         // VYPISOVANI VYSKOVE MAPY
         //finishDepths(relativeHeights());
@@ -104,7 +112,8 @@ public class ShapeFromShading implements Algorithm {
         // SKUTECNY KONEC
         //absoluteHeightsOld(relativeHeights());
         //absoluteHeights(relativeHeights());
-        absoluteHeightsNEW(relativeHeights()); // opravuje extremy v okrajich
+        //absoluteHeightsNEW(relativeHeights()); // opravuje extremy v okrajich
+        //absoluteHeightsSW(relativeHeights()); // opravuje extremy v okrajich
         /*if(playGong){
             gong();
         }*/
@@ -272,183 +281,89 @@ public class ShapeFromShading implements Algorithm {
         double [] h = new double[size];
         double h1,h2,h3,h4;
         double height;
-
-        int mod = 0;
-        double [] buffer = new double [2*collumns];
-        for(int gauss = steps; gauss >= 0; gauss--){ // LOOP GAUSS-SEIDEL
-            // HORNI RADKA
-            //System.out.println("1");
-            //levy horni roh
-            h1 = h[1] + q[0];
-            h2 = h[collumns] + q[1];
-
-            height = (h1+h2)/4;
-            //h[0] = height;
-
-            buffer[mod] = height;
-            mod++;
-            /*if(mod == 2*collumns){
-                mod = 0;
-            }*/
+        boolean eq = true;
+        steps = 1000;
+    /*  h1 = h[(j + i) + 1] + (q[2*(j + i)]); //+
+        h2 = h[(j + i) + collumns] + (q[2*(j + i) + 1]); //+
+        h3 = h[(j + i) - 1] - q[2*((j + i) - 1)]; //-
+        h4 = h[(j + i) - collumns] - q[2*((j + i)-collumns)+1]; //-
+     */
 
 
-
-            //horni radka
-            for(int i = 1; i < collumns-1; i++){
-                h1 = h[i+1] + q[2*i];
-                h2 = h[i+collumns] + q[2*i+1];
-                h3 = h[i-1] - q[2*(i-1)];
-
-                height = (h1 + h2 + h3)/4;
-                //h[i] = height;
+        for(int gauss = steps; gauss > 0; gauss--){
 
 
+            // projizdeni horizontalne
 
-                buffer[mod] = height;
-                mod++;
-                /*if(mod == 2*collumns){
-                    mod = 0;
-                }*/
+            //prvek vlevo nahore
+            h[0] = (h[1] + q[0] + h[collumns] + q[1])/2.0;
+            //HORNI RADKA
+            for(int i  = 1; i < collumns; i++){
+                h[i] = (h[i-1] - q[2*(i-1)] + h[i + collumns] + (q[2*(i) + 1]))/2.0;
             }
-            // pravy horni roh
-            h2 = h[collumns-1+collumns] + q[2*(collumns-1)+1];
-            h3 = h[collumns-1-1] - q[2*(collumns-1-1)];
 
-            height = (h2 + h3)/4;
-            //h[collumns-1] = height;
-
-
-            buffer[mod] = height;
-            mod++;
-            /*if(mod == 2*collumns){
-                mod = 0;
-            }*/
-
-            //TELO
-            for(int j = collumns; j <= (rows-2)*collumns; j+=collumns){ // projizdime radky
-                //levy prvek
-                h1 = h[j + 1] + q[2*j];
-                h2 = h[j + collumns] + q[2*j + 1];
-                h4 = h[j - collumns] - q[2*(j-collumns)+1];
-                height = (h1 + h2 + h4)/4;
-                //h[j] = height;
-
-
-                if((j - 2*collumns) >= 0){ // pokud jsme v poli
-                    h[(j - 2*collumns)] = buffer[mod];
-                }
-                buffer[mod] = height;
-                mod++;
-                /*if(mod == 2*collumns){
-                    mod = 0;
-                }*/
-                for(int i = 1; i < collumns-1; i++){ // projizdime bunky v radcich
-                    h1 = h[(j + i) + 1] + q[2*(j + i)];
-                    h2 = h[(j + i) + collumns] + q[2*(j + i) + 1];
-                    h3 = h[(j + i)-1] - q[2*((j + i)-1)];
-                    h4 = h[(j + i) - collumns] - q[2*((j + i)-collumns)+1];
-
-                    height = (h1 + h2 + h3 + h4)/4;
-                    //h[(j + i)] = height;
-
-
-                    if((j+i - 2*collumns) >= 0){ // pokud jsme v poli
-                        h[(j+i - 2*collumns)] = buffer[mod];
+            // TELO
+            for(int j = collumns; j < size; j+= collumns){
+                if(eq){ // projizdime zprava doleva <-----
+                    //okrajovy prvek vpravo
+                    h[j + collumns - 1] = (h[(j + collumns - 1) - collumns] - q[2*((j + collumns - 1)-collumns)+1] + h[(j + collumns - 1) - 1] - q[2*((j + collumns - 1) - 1)])/2.0;
+                    for(int i = collumns-2; i >= 0; i--){
+                        h[j+i] = (h[(j + i) + 1] + (q[2*(j + i)]) + h[(j + i) - collumns] - q[2*((j + i)-collumns)+1])/2.0;
+                        //h[j+i] = (h[(j + i) + 1] + (q[2*(j + i)])+h[(j + i) + collumns] + (q[2*(j + i) + 1])+h[(j + i) - 1] - q[2*((j + i) - 1)]+h[(j + i) - collumns] - q[2*((j + i)-collumns)+1])/2.0;
                     }
-                    buffer[mod] = height;
-                    mod++;
-                    /*if(mod == 2*collumns){
-                        mod = 0;
-                    }*/
+                } else { // zleva doprava ------>
+                    h[j] = (h[(j) + 1] + (q[2*(j)]) + h[(j) - collumns] - q[2*((j)-collumns)+1])/2.0;
+                    for(int i = 1; i < collumns; i++){
+                        h[j+i] = (h[(j + i) - 1] - q[2*((j + i) - 1)] + h[(j + i) - collumns] - q[2*((j + i)-collumns)+1])/2.0;
+                        //h[j+i] = (h[(j + i) + 1] + (q[2*(j + i)])+h[(j + i) + collumns] + (q[2*(j + i) + 1])+h[(j + i) - 1] - q[2*((j + i) - 1)]+h[(j + i) - collumns] - q[2*((j + i)-collumns)+1])/2.0;
+                    }
                 }
-                //pravy prvek
-                h2 = h[(j + collumns-1) + collumns] + q[2*(j + collumns-1) + 1];
-                h3 = h[(j + collumns-1)-1] - q[2*((j + collumns-1)-1)];
-                h4 = h[(j + collumns-1) - collumns] - q[2*((j + collumns-1)-collumns)+1];
-                height = (h2 + h3 + h4)/4;
-                //h[(j + collumns-1)] = height;
+                eq = !eq;
+            }
+            eq = true;
 
+            // projizdeni vertikalne
 
-                if((j + collumns-1 - 2*collumns) >= 0){ // pokud jsme v poli
-                    h[(j + collumns-1 - 2*collumns)] = buffer[mod];
-                }
-                buffer[mod] = height;
-                mod++;
-                if(mod == 2*collumns){
-                    mod = 0;
-                }
+    /*  h1 = h[(j + i) + 1] + (q[2*(j + i)]); //+
+        h2 = h[(j + i) + collumns] + (q[2*(j + i) + 1]); //+
+        h3 = h[(j + i) - 1] - q[2*((j + i) - 1)]; //-
+        h4 = h[(j + i) - collumns] - q[2*((j + i)-collumns)+1]; //-
+     */
 
-
+            //prvek vlevo nahore
+            /*h[0] = (h[1] + q[0] + h[collumns] + q[1])/2.0;
+            //LEVY SLOUPEC
+            for(int i  = collumns; i < size; i+=collumns){
+                h[i] = (h[(i) + 1] + (q[2*(i)]) + h[(i) - collumns] - q[2*((i)-collumns)+1])/2.0;
             }
 
-            // SPODNI RADKA
-            //levy spodni roh
-            h1 = h[(size - collumns)+1] + q[2*(size - collumns)];
-            h4 = h[(size - collumns) - collumns] - q[2*((size - collumns)-collumns)+1];
+            // TELO
+            for(int j = 1; j < collumns; j++){ // strida sloupce
+                if(eq){ // projizdime zprava doleva <-----
+                    //okrajovy prvek dole
+                    h[j + size - collumns] = (h[(j + size - collumns) - 1] - q[2*((j + size - collumns) - 1)] + h[(j + size - collumns) - collumns] - q[2*((j + size - collumns)-collumns)+1])/2.0;
 
-            height = (h1 + h4)/4;
-            //h[(size - collumns)] = height;
-
-
-            if((size - collumns - 2*collumns) >= 0){ // pokud jsme v poli
-                h[(size - collumns - 2*collumns)] = buffer[mod];
-            }
-            buffer[mod] = height;
-            mod++;
-            /*if(mod == 2*collumns){
-                mod = 0;
+                    for(int i = size - 2*collumns; i >= 0; i-=collumns){ // projizdi sloupec zezdola nahoru
+                        h[j+i] = (h[(j + i) + collumns] + (q[2*(j + i) + 1]) + h[(j + i) - 1] - q[2*((j + i) - 1)])/2.0;
+                    }
+                } else { // zleva doprava ------>
+                    h[j] = (h[(j) + collumns] + (q[2*(j) + 1]) + h[(j) - 1] - q[2*((j) - 1)])/2.0;
+                    for(int i = collumns; i < size; i+=collumns){ // projizdi sloupec zezhora dolu
+                        h[j+i] = (h[(j + i) - 1] - q[2*((j + i) - 1)] + h[(j + i) - collumns] - q[2*((j + i)-collumns)+1])/2.0;
+                    }
+                }
+                eq = !eq;
             }*/
-            //spodni radek
-            for(int i = size-collumns+1; i < size-1; i++){
-                h1 = h[i+1] + q[2*i];
-                h3 = h[i-1] - q[2*(i-1)];
-                h4 = h[i - collumns] - q[2*(i-collumns)+1];
-
-                height = (h1 + h3 + h4)/4;
-                //h[i] = height;
 
 
-                if((i - 2*collumns) >= 0){ // pokud jsme v poli
-                    h[(i - 2*collumns)] = buffer[mod];
-                }
-                buffer[mod] = height;
-                mod++;
-                /*if(mod == 2*collumns){
-                    mod = 0;
-                }*/
-            }
-            //System.out.println("6");
 
-            //pravy spodni roh
-            h3 = h[(size-1)-1] - q[2*((size-1)-1)];
-            h4 = h[(size-1) - collumns] - q[2*((size-1)-collumns)+1];
-
-            height = (h3 + h4)/4;
-            //h[size-1] = height;
+            eq = true;
 
 
-            if((size-1 - 2*collumns) >= 0){ // pokud jsme v poli
-                h[(size-1 - 2*collumns)] = buffer[mod];
-            }
-
-            buffer[mod] = height;
-            mod++;
-            if(mod == 2*collumns){
-                mod = 0;
-            }
-
-            for(int i = (size - 2*collumns); i < size; i++){
-                h[i] = buffer[mod];
-                mod++;
-                if(mod == 2*collumns){
-                    mod = 0;
-                }
-            }
-            //System.out.println("l");
-            mod = 0;
-            //System.out.println(gauss);
         }
-        double max = Double.MIN_VALUE;
+
+
+        double max = -Double.MAX_VALUE;
         double min = Double.MAX_VALUE;
         double range;
         for(int i = 0; i < size; i++){
@@ -460,18 +375,202 @@ public class ShapeFromShading implements Algorithm {
                 min = h[i];
             }
         }
-        min = Math.abs(min);
-        range = min + Math.abs(max);
+
+        if(min < 0){
+            if(max < 0){
+                range = Math.abs(min) + max;
+            } else {
+                range = max - min;
+            }
+        } else {
+            range = max - min;
+        }
+        /*System.out.println(formatter.format(min));
+        System.out.println(formatter.format(max));
+        System.out.println(formatter.format(range));
+        System.out.println();
+        System.out.println("round COLOR");
+        for(int i = 0; i < rows; i++){
+            System.out.print("|| ");
+            for(int j = 0; j < collumns; j++){
+                System.out.print((int)(((h[collumns*i+j]-min)/range)*255.0)+" ");
+            }
+            System.out.println(" ||");
+        }*/
 
         byte value;
         for(int i = 0; i < size; i++){
-            value = (byte)(((h[i]+min)/range)*255);
+            value = (byte)((int)(((h[i]-min)/range)*255.0));
+            //value = (byte)((int)(h[i])*255);
+            //value = (byte)(255 - (value & 0xFF)); // invert
             //System.out.println(value);
             fr[3*i + bodyStart] = value;
             fr[3*i + bodyStart + 1] = value;
             fr[3*i + bodyStart + 2] = value;
         }
+        NormalMap normalMap = new NormalMap();
+        this.write(normalMap.normalMap(fr,180.0,0.05),"/home/sedlasi1/Desktop/testovaci_obrazky/F.ppm");
+    }
 
+    private void absoluteHeightsQUAD(double [] q){
+        int size = collumns*rows;
+        double [] h = new double[size];
+        double h1,h2,h3,h4;
+        double height;
+        boolean eq = true;
+        steps = 5000;
+    /*  h1 = h[(j + i) + 1] + (q[2*(j + i)]); //+
+        h2 = h[(j + i) + collumns] + (q[2*(j + i) + 1]); //+
+        h3 = h[(j + i) - 1] - q[2*((j + i) - 1)]; //-
+        h4 = h[(j + i) - collumns] - q[2*((j + i)-collumns)+1]; //-
+     */
+
+        // ESTIMACE NA ZACATKU
+
+        //prvek vlevo nahore
+        h[0] = (h[1] + q[0] + h[collumns] + q[1])/2.0;
+        //HORNI RADKA
+        for(int i  = 1; i < collumns; i++){
+            h[i] = (h[i-1] - q[2*(i-1)] + h[i + collumns] + (q[2*(i) + 1]))/2.0;
+        }
+
+        // TELO
+        for(int j = collumns; j < size; j+= collumns){
+            if(eq){ // projizdime zprava doleva <-----
+                //okrajovy prvek vpravo
+                h[j + collumns - 1] = (h[(j + collumns - 1) - collumns] - q[2*((j + collumns - 1)-collumns)+1] + h[(j + collumns - 1) - 1] - q[2*((j + collumns - 1) - 1)])/2.0;
+                for(int i = collumns-2; i >= 0; i--){
+                    h[j+i] = (h[(j + i) + 1] + (q[2*(j + i)]) + h[(j + i) - collumns] - q[2*((j + i)-collumns)+1])/2.0;
+                    //h[j+i] = (h[(j + i) + 1] + (q[2*(j + i)])+h[(j + i) + collumns] + (q[2*(j + i) + 1])+h[(j + i) - 1] - q[2*((j + i) - 1)]+h[(j + i) - collumns] - q[2*((j + i)-collumns)+1])/2.0;
+                }
+            } else { // zleva doprava ------>
+                h[j] = (h[(j) + 1] + (q[2*(j)]) + h[(j) - collumns] - q[2*((j)-collumns)+1])/2.0;
+                for(int i = 1; i < collumns; i++){
+                    h[j+i] = (h[(j + i) - 1] - q[2*((j + i) - 1)] + h[(j + i) - collumns] - q[2*((j + i)-collumns)+1])/2.0;
+                    //h[j+i] = (h[(j + i) + 1] + (q[2*(j + i)])+h[(j + i) + collumns] + (q[2*(j + i) + 1])+h[(j + i) - 1] - q[2*((j + i) - 1)]+h[(j + i) - collumns] - q[2*((j + i)-collumns)+1])/2.0;
+                }
+            }
+            eq = !eq;
+        }
+        eq = true;
+
+
+
+        for(int gauss = steps; gauss > 0; gauss--){
+
+
+            // projizdeni horizontalne
+
+            //prvek vlevo nahore
+            h[0] = (h[1] + q[0] + h[collumns] + q[1])/2.0;
+            //HORNI RADKA
+            for(int i  = 1; i < collumns-1; i++){
+                h[i] = (h[i-1] - q[2*(i-1)] + h[i + collumns] + (q[2*(i) + 1]) + h[(i) + 1] + (q[2*(i)]))/3.0;
+            }
+            //prvek vpravo nahore
+            h[collumns-1] = (h[collumns-1-1] - q[2*(collumns-1-1)] + h[collumns-1 + collumns] + (q[2*(collumns-1) + 1]))/2.0;
+
+            // TELO
+            for(int j = collumns; j < size-collumns; j+= collumns){
+                if(eq){ // projizdime zprava doleva <-----
+                    //okrajovy prvek vpravo
+                    h[j + collumns - 1] = (h[(j + collumns - 1) - collumns] - q[2*((j + collumns - 1)-collumns)+1] + h[(j + collumns - 1) - 1] - q[2*((j + collumns - 1) - 1)] + h[(j + collumns - 1) + collumns] + (q[2*(j + collumns - 1) + 1]))/3.0;
+                    for(int i = collumns-2; i > 0; i--){
+                        //h[j+i] = (h[(j + i) + 1] + (q[2*(j + i)]) + h[(j + i) - collumns] - q[2*((j + i)-collumns)+1])/2.0;
+                        h[j+i] = (h[(j + i) + 1] + (q[2*(j + i)])+h[(j + i) + collumns] + (q[2*(j + i) + 1])+h[(j + i) - 1] - q[2*((j + i) - 1)]+h[(j + i) - collumns] - q[2*((j + i)-collumns)+1])/4.0;
+                    }
+                    //okrajovy prvek vlevo
+                    h[j] = (h[(j) + 1] + (q[2*(j)]) + h[(j) - collumns] - q[2*((j)-collumns)+1] + h[(j) + collumns] + (q[2*(j) + 1]))/3.0;
+                } else { // zleva doprava ------>
+                    h[j] = (h[(j) + 1] + (q[2*(j)]) + h[(j) - collumns] - q[2*((j)-collumns)+1] + h[(j) + collumns] + (q[2*(j) + 1]))/3.0;
+                    for(int i = 1; i < collumns-1; i++){
+                        //h[j+i] = (h[(j + i) - 1] - q[2*((j + i) - 1)] + h[(j + i) - collumns] - q[2*((j + i)-collumns)+1])/2.0;
+                        h[j+i] = (h[(j + i) + 1] + (q[2*(j + i)])+h[(j + i) + collumns] + (q[2*(j + i) + 1])+h[(j + i) - 1] - q[2*((j + i) - 1)]+h[(j + i) - collumns] - q[2*((j + i)-collumns)+1])/4.0;
+                    }
+                    h[j + collumns - 1] = (h[(j + collumns - 1) - collumns] - q[2*((j + collumns - 1)-collumns)+1] + h[(j + collumns - 1) - 1] - q[2*((j + collumns - 1) - 1)] + h[(j + collumns - 1) + collumns] + (q[2*(j + collumns - 1) + 1]))/3.0;
+                }
+                eq = !eq;
+            }
+
+    /*  h1 = h[(j + i) + 1] + (q[2*(j + i)]); //+
+        h2 = h[(j + i) + collumns] + (q[2*(j + i) + 1]); //+
+        h3 = h[(j + i) - 1] - q[2*((j + i) - 1)]; //-
+        h4 = h[(j + i) - collumns] - q[2*((j + i)-collumns)+1]; //-
+     */
+
+            if(eq){ // projizdime doleva <-----
+                //prvek vpravo dole
+                h[size-1] = (h[(size-1) - 1] - q[2*((size-1) - 1)] + h[(size-1) - collumns] - q[2*((size-1)-collumns)+1])/2.0;
+                //SPODNI RADKA
+                for(int i  = size-2; i > size-collumns; i--){
+                    h[i] = (h[(i) + 1] + (q[2*(i)]) + h[(i) - 1] - q[2*((i) - 1)] + h[(i) - collumns] - q[2*((i)-collumns)+1])/3.0;
+                }
+                //prvek vlevo dole
+                h[size-collumns] = (h[(size-collumns) + 1] + (q[2*(size-collumns)]) + h[(size-collumns) - collumns] - q[2*((size-collumns)-collumns)+1])/2.0;
+
+
+            } else { // projizdime doprava ----->
+                //prvek vlevo dole
+                h[size-collumns] = (h[(size-collumns) + 1] + (q[2*(size-collumns)]) + h[(size-collumns) - collumns] - q[2*((size-collumns)-collumns)+1])/2.0;
+                //SPODNI RADKA
+                for(int i  = size-collumns+1; i < size-1; i++){
+                    h[i] = (h[(i) + 1] + (q[2*(i)]) + h[(i) - 1] - q[2*((i) - 1)] + h[(i) - collumns] - q[2*((i)-collumns)+1])/3.0;
+                }
+                //prvek vpravo dole
+                h[size-1] = (h[(size-1) - 1] - q[2*((size-1) - 1)] + h[(size-1) - collumns] - q[2*((size-1)-collumns)+1])/2.0;
+            }
+
+            eq = true;
+        }
+
+
+        double max = -Double.MAX_VALUE;
+        double min = Double.MAX_VALUE;
+        double range;
+        for(int i = 0; i < size; i++){
+
+            if(h[i] > max){
+                max = h[i];
+            }
+            if(h[i] < min){
+                min = h[i];
+            }
+        }
+
+        if(min < 0){
+            if(max < 0){
+                range = Math.abs(min) + max;
+            } else {
+                range = max - min;
+            }
+        } else {
+            range = max - min;
+        }
+        /*System.out.println(formatter.format(min));
+        System.out.println(formatter.format(max));
+        System.out.println(formatter.format(range));
+        System.out.println();
+        System.out.println("round COLOR");
+        for(int i = 0; i < rows; i++){
+            System.out.print("|| ");
+            for(int j = 0; j < collumns; j++){
+                System.out.print((int)(((h[collumns*i+j]-min)/range)*255.0)+" ");
+            }
+            System.out.println(" ||");
+        }*/
+
+        byte value;
+        for(int i = 0; i < size; i++){
+            value = (byte)((int)(((h[i]-min)/range)*255.0));
+            //value = (byte)((int)(h[i])*255);
+            //value = (byte)(255 - (value & 0xFF)); // invert
+            //System.out.println(value);
+            fr[3*i + bodyStart] = value;
+            fr[3*i + bodyStart + 1] = value;
+            fr[3*i + bodyStart + 2] = value;
+        }
+        NormalMap normalMap = new NormalMap();
+        this.write(normalMap.normalMap(fr,180.0,0.1),"/home/sedlasi1/Desktop/testovaci_obrazky/F.ppm");
     }
 
     private void absoluteHeightsNEW(double [] q){
@@ -479,6 +578,20 @@ public class ShapeFromShading implements Algorithm {
         double [] h = new double[size];
         double h1,h2,h3,h4;
         double height;
+        /*for(int i = 0; i < h.length; i++){
+            h[i] = 0.5;
+        }*/
+
+        /*System.out.println();
+        NumberFormat formatter = new DecimalFormat("#0.0000");
+        System.out.println("RELATIVE HEIGHTS:");
+        for(int i = 0; i < rows; i++){
+            System.out.print("|| ");
+            for(int j = 0; j < collumns; j++){
+                System.out.print(formatter.format(q[2*(collumns*i+j)])+" ; "+formatter.format(q[2*(collumns*i+j)+1])+"|");
+            }
+            System.out.println(" ||");
+        }*/
 
         int mod = 0;
         double [] buffer = new double [2*collumns];
@@ -522,7 +635,7 @@ public class ShapeFromShading implements Algorithm {
             }*/
 
             //TELO
-            for(int j = collumns; j <= (rows-2)*collumns; j+=collumns){ // projizdime radky
+            for(int j = collumns; j < size - collumns; j+=collumns){ // projizdime radky
                 //levy prvek
                 //h[j] = height;
 
@@ -536,14 +649,58 @@ public class ShapeFromShading implements Algorithm {
                 /*if(mod == 2*collumns){
                     mod = 0;
                 }*/
-                for(int i = 1; i < collumns-1; i++){ // projizdime bunky v radcich
-                    h1 = h[(j + i) + 1] + q[2*(j + i)];
-                    h2 = h[(j + i) + collumns] + q[2*(j + i) + 1];
-                    h3 = h[(j + i)-1] - q[2*((j + i)-1)];
-                    h4 = h[(j + i) - collumns] - q[2*((j + i)-collumns)+1];
+                int nei;
+                double EDGE_SHARPNESS = 0.1;
+                double MAX_HEIGHT = 0.5;
 
-                    height = (h1 + h2 + h3 + h4)/4;
-                    //h[(j + i)] = height;
+                for(int i = 1; i < collumns-1; i++){ // projizdime bunky v radcich
+                    // novy
+                    /*height = 0;
+                    nei = 0;
+                    if(q[2*(j + i)] > EDGE_SHARPNESS && q[2*(j + i)] < (1-EDGE_SHARPNESS)){
+                        nei++;
+                        height += h[(j + i) + 1] + q[2*(j + i)];
+                        /*mod++;
+                        continue;*/
+                    //}
+                    /*if(q[2*(j + i) + 1] > EDGE_SHARPNESS && q[2*(j + i) + 1] < (1-EDGE_SHARPNESS)){
+                        nei++;
+                        height += h[(j + i) + collumns] + q[2*(j + i) + 1];
+                        /*mod++;
+                        continue;*/
+                    //}
+                    /*if(q[2*((j + i)-1)] > EDGE_SHARPNESS && q[2*((j + i)-1)] < (1-EDGE_SHARPNESS)){
+                        nei++;
+                        height += h[(j + i)-1] - q[2*((j + i)-1)];
+                        /*mod++;
+                        continue;*/
+                    /*}
+                    if(q[2*((j + i)-collumns)+1] > EDGE_SHARPNESS && q[2*((j + i)-collumns)+1] < (1-EDGE_SHARPNESS)){
+                        nei++;
+                        height += h[(j + i) - collumns] - q[2*((j + i)-collumns)+1];
+                        /*mod++;
+                        continue;*/
+                    /*}
+                    if(nei > 0){
+                        height = height/nei;
+                    } else {
+                        //height = h[(j + i) + 1];
+                    }*/
+                    //puvodni
+                    h1 = h[(j + i) + 1] + (q[2*(j + i)]); //+
+                    h2 = h[(j + i) + collumns] + (q[2*(j + i) + 1]); //+
+                    h3 = h[(j + i) - 1] - q[2*((j + i) - 1)]; //-
+                    h4 = h[(j + i) - collumns] - q[2*((j + i)-collumns)+1]; //-
+                    //height = (h1+h2+h3+h4)/4.0;
+                    height = (h3+h4)/2.0;
+                    //height = (h2+h4)/2.0;
+                    // + 2.0
+                    /*if(height > MAX_HEIGHT){
+                        height = MAX_HEIGHT;
+                    } else if(height < -MAX_HEIGHT){
+                        height = -MAX_HEIGHT;
+                    }*/
+                    h[(j + i)] = height;
 
 
                     if((j+i - 2*collumns) >= 0){ // pokud jsme v poli
@@ -581,7 +738,7 @@ public class ShapeFromShading implements Algorithm {
                 h[(size - collumns - 2*collumns)] = buffer[mod];
             }
             //buffer[mod] = height;
-            buffer[mod] = h[(size - collumns - 2*collumns)+1-collumns];
+            buffer[mod] = h[(size - 2*collumns+1)];
             mod++;
             /*if(mod == 2*collumns){
                 mod = 0;
@@ -617,7 +774,6 @@ public class ShapeFromShading implements Algorithm {
             if(mod == 2*collumns){
                 mod = 0;
             }
-
             for(int i = (size - 2*collumns); i < size; i++){
                 h[i] = buffer[mod];
                 mod++;
@@ -625,11 +781,58 @@ public class ShapeFromShading implements Algorithm {
                     mod = 0;
                 }
             }
+
+            /**
+             *
+             */
+            // HORNI RADKA
+            //levy horni roh
+            h[0] = h[1+collumns];
+            //horni radka
+            for(int i = 1; i < collumns-1; i++){
+               h[i] = h[i+collumns];
+            }
+            // pravy horni roh
+            h[collumns-1] = h[collumns-2+collumns];
+            // SPODNI RADKA
+            //levy spodni roh
+            h[(size - collumns)] = h[(size - 2*collumns+1)];
+            //spodni radek
+            for(int i = size-collumns+1; i < size-1; i++){
+                h[i] = h[i-collumns];
+            }
+            //pravy spodni roh
+            h[size-1] = h[(size-2)-collumns];
+
+            //boky
+            //TELO
+            for(int j = collumns; j < size - collumns; j+=collumns){ // projizdime radky
+                //levy prvek
+                h[j] = h[j+1];
+                //pravy prvek
+                h[(j + collumns-1)] = h[(j + collumns-2)];
+            }
+
+
+
             //System.out.println("l");
             mod = 0;
             //System.out.println(gauss);
+            //TISK POLE
+            /*System.out.println();
+            System.out.println("round "+(steps-gauss));
+            for(int i = 0; i < rows; i++){
+                System.out.print("|| ");
+                for(int j = 0; j < collumns; j++){
+                    System.out.print(formatter.format(h[collumns*i+j])+" ");
+                }
+                System.out.println(" ||");
+            }*/
+
+
         }
-        double max = Double.MIN_VALUE;
+
+        double max = -Double.MAX_VALUE;
         double min = Double.MAX_VALUE;
         double range;
         for(int i = 0; i < size; i++){
@@ -641,18 +844,875 @@ public class ShapeFromShading implements Algorithm {
                 min = h[i];
             }
         }
-        min = Math.abs(min);
-        range = min + Math.abs(max);
+
+        if(min < 0){
+            if(max < 0){
+                range = Math.abs(min) + max;
+            } else {
+                range = max - min;
+            }
+        } else {
+            range = max - min;
+        }
+        /*System.out.println(formatter.format(min));
+        System.out.println(formatter.format(max));
+        System.out.println(formatter.format(range));
+        System.out.println();
+        System.out.println("round COLOR");
+        for(int i = 0; i < rows; i++){
+            System.out.print("|| ");
+            for(int j = 0; j < collumns; j++){
+                System.out.print((int)(((h[collumns*i+j]-min)/range)*255.0)+" ");
+            }
+            System.out.println(" ||");
+        }*/
 
         byte value;
         for(int i = 0; i < size; i++){
-            value = (byte)(((h[i]+min)/range)*255);
-            value = (byte)(255 - (value & 0xFF)); // invert
+            value = (byte)((int)(((h[i]-min)/range)*255.0));
+            //value = (byte)((int)(h[i])*255);
+            //value = (byte)(255 - (value & 0xFF)); // invert
             //System.out.println(value);
             fr[3*i + bodyStart] = value;
             fr[3*i + bodyStart + 1] = value;
             fr[3*i + bodyStart + 2] = value;
         }
+
+    }
+
+    private void absoluteHeightsAF(double [] q){
+        int size = collumns*rows;
+        double [] h = new double[size];
+        double [] hA = new double[size];
+        double [] hB = new double[size];
+        double [] hC = new double[size];
+        double [] hD = new double[size];
+        double h1,h2,h3,h4;
+        double height;
+        steps = 500;
+        boolean pff = false;
+
+        /*//TELO -> prvky vlevo
+        for(int j = collumns; j < size - collumns; j+=collumns){ // projizdime radky
+            for(int i = 1; i < collumns-1; i++){ // projizdime bunky v radcich
+                //puvodni
+                h1 = h[(j + i) + 1] + (q[2*(j + i)]); //+
+                h2 = h[(j + i) + collumns] + (q[2*(j + i) + 1]); //+
+                h3 = h[(j + i) - 1] - q[2*((j + i) - 1)]; //-
+                h4 = h[(j + i) - collumns] - q[2*((j + i)-collumns)+1]; //-
+                //height = (h1+h2+h3+h4)/4.0;
+                height = (h3+h4)/2.0;
+                h[(j + i)] = h4;
+
+            }
+
+        }*/
+
+        for(int gauss = steps; gauss >= 0; gauss--){ // LOOP GAUSS-SEIDEL
+            //TELO -> prvky vlevo
+            for(int j = collumns; j < size - 2*collumns; j+=collumns){ // projizdime radky
+                //prvek vlevo -> koukam dolu
+                h[j+1] = h[(j + 1) + collumns] + (q[2*(j + 1) + 1]); //+
+
+                //zbytek radku -> koukam doleva
+                for(int i = 2; i < collumns-1; i++){ // projizdime bunky v radcich
+                    //puvodni
+                    h1 = h[(j + i) + 1] + (q[2*(j + i)]); //+
+                    h2 = h[(j + i) + collumns] + (q[2*(j + i) + 1]); //+
+                    h3 = h[(j + i) - 1] - q[2*((j + i) - 1)]; //-
+                    h4 = h[(j + i) - collumns] - q[2*((j + i)-collumns)+1]; //-
+                    //height = (h1+h2+h3+h4)/4.0;
+                    height = (h3+h4)/2.0;
+                    h[(j + i)] = h3;
+
+                }
+
+            }
+
+            //posledni prvel vlevo -> koukam nahoru
+            h[size-2*collumns+1] = h[(size-2*collumns+1) - collumns] - q[2*((size-2*collumns+1)-collumns)+1]; //-
+
+
+            //zbytek radku -> koukam doleva
+            for(int i = size-2*collumns+1; i < size-collumns-1; i++){ // projizdime bunky v radcich
+                //puvodni
+                h1 = h[(i) + 1] + (q[2*(i)]); //+
+                h2 = h[(i) + collumns] + (q[2*(i) + 1]); //+
+                h3 = h[(i) - 1] - q[2*((i) - 1)]; //-
+                h4 = h[(i) - collumns] - q[2*((i)-collumns)+1]; //-
+                //height = (h1+h2+h3+h4)/4.0;
+                height = (h3+h4)/2.0;
+                h[(i)] = h3;
+
+            }
+
+
+
+
+            //TELO -> prvky nahore
+
+            //prvni radek -> koukam doprava
+            for(int i = 1; i < collumns-2; i++){ // projizdime bunky v radcich
+                //puvodni
+                h1 = h[(collumns + i) + 1] + (q[2*(collumns + i)]); //+
+                h2 = h[(collumns + i) + collumns] + (q[2*(collumns + i) + 1]); //+
+                h3 = h[(collumns + i) - 1] - q[2*((collumns + i) - 1)]; //-
+                h4 = h[(collumns + i) - collumns] - q[2*((collumns + i)-collumns)+1]; //-
+                //height = (h1+h2+h3+h4)/4.0;
+                height = (h3+h4)/2.0;
+                h[(collumns + i)] = h1;
+
+            }
+            //posledni prvek -> koukam doleva
+            h[collumns-2] = h[(collumns + collumns-2) - 1] - q[2*((collumns + collumns-2) - 1)]; //-
+            //h[collumns-2] = h[(collumns-2) + collumns] + (q[2*(collumns-2) + 1]); //+
+
+            //zbytek koukam nahoru
+            for(int j = 2*collumns; j < size - collumns; j+=collumns){ // projizdime radky
+                for(int i = 1; i < collumns-1; i++){ // projizdime bunky v radcich
+                    //puvodni
+                    h1 = h[(j + i) + 1] + (q[2*(j + i)]); //+
+                    h2 = h[(j + i) + collumns] + (q[2*(j + i) + 1]); //+
+                    h3 = h[(j + i) - 1] - q[2*((j + i) - 1)]; //-
+                    h4 = h[(j + i) - collumns] - q[2*((j + i)-collumns)+1]; //-
+                    //height = (h1+h2+h3+h4)/4.0;
+                    height = (h3+h4)/2.0;
+                    h[(j + i)] = h4;
+
+                }
+
+            }
+
+
+        }
+
+        /**
+         * DOPISOVANI OKRAJU
+         */
+        // HORNI RADKA
+        //levy horni roh
+        h[0] = h[1+collumns];
+        //horni radka
+        for(int i = 1; i < collumns-1; i++){
+            h[i] = h[i+collumns];
+        }
+        // pravy horni roh
+        h[collumns-1] = h[collumns-2+collumns];
+        // SPODNI RADKA
+        //levy spodni roh
+        h[(size - collumns)] = h[(size - 2*collumns+1)];
+        //spodni radek
+        for(int i = size-collumns+1; i < size-1; i++){
+            h[i] = h[i-collumns];
+        }
+        //pravy spodni roh
+        h[size-1] = h[(size-2)-collumns];
+
+        //boky
+        //TELO
+        for(int j = collumns; j < size - collumns; j+=collumns){ // projizdime radky
+            //levy prvek
+            h[j] = h[j+1];
+            //pravy prvek
+            h[(j + collumns-1)] = h[(j + collumns-2)];
+        }
+
+        double max = -Double.MAX_VALUE;
+        double min = Double.MAX_VALUE;
+        double range;
+        for(int i = 0; i < size; i++){
+
+            if(h[i] > max){
+                max = h[i];
+            }
+            if(h[i] < min){
+                min = h[i];
+            }
+        }
+
+        if(min < 0){
+            if(max < 0){
+                range = Math.abs(min) + max;
+            } else {
+                range = max - min;
+            }
+        } else {
+            range = max - min;
+        }
+
+        byte value;
+        for(int i = 0; i < size; i++){
+            value = (byte)((int)(((h[i]-min)/range)*255.0));
+            //value = (byte)((int)(h[i])*255);
+            //value = (byte)(255 - (value & 0xFF)); // invert
+            //System.out.println(value);
+            fr[3*i + bodyStart] = value;
+            fr[3*i + bodyStart + 1] = value;
+            fr[3*i + bodyStart + 2] = value;
+        }
+
+        NormalMap normalMap = new NormalMap();
+        this.write(normalMap.normalMap(fr,180.0,0.05),"/home/sedlasi1/Desktop/testovaci_obrazky/F.ppm");
+
+    }
+
+    private void absoluteHeightsSW(double [] q){
+        int size = collumns*rows;
+        double [] hA = new double[size];
+        double [] hB = new double[size];
+        double [] hC = new double[size];
+        double [] hD = new double[size];
+        double h1,h2,h3,h4;
+        double height;
+
+
+        // vse bez okraju, okraje nakonec
+        // hA levy horni roh
+        for(int j = collumns+1; j < size-collumns; j+=collumns){
+            for(int i = 0; i < collumns-2; i++){
+                h3 = hA[(j + i) - 1] - q[2*((j + i) - 1)]; //-
+                h4 = hA[(j + i) - collumns] - q[2*((j + i)-collumns)+1]; //-
+                height = (h3+h4)/2.0;
+                hA[(j + i)] = height;
+            }
+        }
+
+        // hB pravy horni roh
+        for(int j = collumns+1; j < size-collumns; j+=collumns){
+            for(int i = collumns-3; i > -1; i--){
+                h1 = hB[(j + i) + 1] + (q[2*(j + i)]); //+
+                h4 = hB[(j + i) - collumns] - q[2*((j + i)-collumns)+1]; //-
+                height = (h1+h4)/2.0;
+                hB[(j + i)] = height;
+            }
+        }
+
+        // hC levy spodni roh
+        for(int j = size-2*collumns+1; j > 1; j-=collumns){
+            for(int i = 0; i < collumns-2; i++){
+                h3 = hC[(j + i) - 1] - q[2*((j + i) - 1)]; //-
+                h2 = hC[(j + i) + collumns] + (q[2*(j + i) + 1]); //-
+                height = (h3+h2)/2.0;
+                hC[(j + i)] = height;
+            }
+        }
+
+        // hD pravy spodni roh
+        for(int j = size-2*collumns+1; j > 1; j-=collumns){
+            for(int i = collumns-3; i > -1; i--){
+                h1 = hD[(j + i) + 1] + (q[2*(j + i)]); //-
+                h2 = hD[(j + i) + collumns] + (q[2*(j + i) + 1]); //-
+                height = (h1+h2)/2.0;
+                hD[(j + i)] = height;
+            }
+        }
+
+        //prumerovani
+        for(int j = collumns+1; j < size-collumns; j+=collumns){
+            for(int i = 0; i < collumns-2; i++){
+                //height = (hA[i+j]+hB[i+j]+hC[i+j]+hD[i+j])/4.0;
+                //height = (hA[i+j]+hD[i+j])/2.0;
+                /*hA[(j + i)] = height;
+                hB[(j + i)] = height;
+                hC[(j + i)] = height;
+                hD[(j + i)] = height;*/
+
+            }
+        }
+        // dopisovani okraju
+        hA[0] = hA[collumns+1];
+        hB[0] = hA[collumns+1];
+        hC[0] = hA[collumns+1];
+        hD[0] = hA[collumns+1];
+
+        // horni radka
+        for(int i = 1; i < collumns-1; i++){
+            hA[i] = hA[i+collumns];
+            hB[i] = hA[i+collumns];
+            hC[i] = hA[i+collumns];
+            hD[i] = hA[i+collumns];
+        }
+
+        hA[collumns-1] = hA[collumns-1 -1 + collumns];
+        hB[collumns-1] = hA[collumns-1 -1 + collumns];
+        hC[collumns-1] = hA[collumns-1 -1 + collumns];
+        hD[collumns-1] = hA[collumns-1 -1 + collumns];
+
+        //boky
+        for(int j = collumns; j > size - collumns; j+=collumns){
+            hA[j] = hA[j+1];
+            hB[j] = hA[j+1];
+            hC[j] = hA[j+1];
+            hD[j] = hA[j+1];
+
+            hA[j+collumns-1] = hA[j+collumns-2];
+            hB[j+collumns-1] = hA[j+collumns-2];
+            hC[j+collumns-1] = hA[j+collumns-2];
+            hD[j+collumns-1] = hA[j+collumns-2];
+        }
+
+        hA[size - collumns] = hA[size-2*collumns];
+        hB[size - collumns] = hA[size-2*collumns];
+        hC[size - collumns] = hA[size-2*collumns];
+        hD[size - collumns] = hA[size-2*collumns];
+
+        //spodni radka
+        for(int i = size - collumns+1; i < size-1; i++){
+            hA[i] = hA[i-collumns];
+            hB[i] = hA[i-collumns];
+            hC[i] = hA[i-collumns];
+            hD[i] = hA[i-collumns];
+        }
+
+        hA[size-1] = hA[size-2];
+        hB[size-1] = hA[size-2];
+        hC[size-1] = hA[size-2];
+        hD[size-1] = hA[size-2];
+
+        double [] buffer = new double [2*(collumns-2)];
+        int mod = 0;
+        for(int gauss = steps; gauss > 0; gauss--){
+            //TELO
+            if(steps > -1 )break; // BREAK
+            for(int j = collumns+1; j < size - collumns+1; j+=collumns){ // projizdime radky
+
+                for(int i = 0; i < collumns-2; i++){ // projizdime bunky v radcich
+                    //puvodni
+                    h1 = hA[(j + i) + 1] + (q[2*(j + i)]); //+
+                    h2 = hA[(j + i) + collumns] + (q[2*(j + i) + 1]); //+
+                    h3 = hA[(j + i) - 1] - q[2*((j + i) - 1)]; //-
+                    h4 = hA[(j + i) - collumns] - q[2*((j + i)-collumns)+1]; //-
+                    height = (h1+h2+h3+h4)/4.0;
+                    //height = (h1+h4)/2.0;
+                    //height = (h2+h4)/2.0;
+                    if((j+i)-2*collumns > 1){ // jsme v poli
+                        hA[j+i-2*collumns] = buffer[mod];
+                    }
+                    //hA[(j + i)] = height;
+                    buffer[mod] = height;
+                    mod++;
+                    if(mod == buffer.length){
+                        mod = 0;
+                    }
+                }
+
+
+            }
+            //vyprazdneni bufferu
+            for(int i = size-3*collumns+1; i < size-collumns-1; i++){
+                hA[i] = buffer[mod];
+                mod++;
+                if(mod == buffer.length){
+                    mod = 0;
+                }
+            }
+
+            // dopisovani okraju
+            hA[0] = hA[collumns+1];
+
+            // horni radka
+            for(int i = 1; i < collumns-1; i++){
+                hA[i] = hA[i+collumns];
+            }
+
+            hA[collumns-1] = hA[collumns-1 -1 + collumns];
+
+            //boky
+            for(int j = collumns; j > size - collumns; j+=collumns){
+                hA[j] = hA[j+1];
+
+                hA[j+collumns-1] = hA[j+collumns-2];
+            }
+
+            hA[size - collumns] = hA[size-2*collumns];
+
+            //spodni radka
+            for(int i = size - collumns+1; i < size-1; i++){
+                hA[i] = hA[i-collumns];
+            }
+
+            hA[size-1] = hA[size-2];
+        }
+
+
+        double maxA = -Double.MAX_VALUE;
+        double maxB = -Double.MAX_VALUE;
+        double maxC = -Double.MAX_VALUE;
+        double maxD = -Double.MAX_VALUE;
+        double minA = Double.MAX_VALUE;
+        double minB = Double.MAX_VALUE;
+        double minC = Double.MAX_VALUE;
+        double minD = Double.MAX_VALUE;
+        double rangeA;
+        double rangeB;
+        double rangeC;
+        double rangeD;
+        for(int i = 0; i < size; i++){
+
+            if(hA[i] > maxA){
+                maxA = hA[i];
+            }
+            if(hA[i] < minA){
+                minA = hA[i];
+            }
+            /*if(hB[i] > maxB){
+                maxB = hB[i];
+            }
+            if(hB[i] < minB){
+                minB = hB[i];
+            }
+            if(hC[i] > maxC){
+                maxC = hC[i];
+            }
+            if(hC[i] < minC){
+                minC = hC[i];
+            }
+            if(hD[i] > maxD){
+                maxD = hD[i];
+            }
+            if(hD[i] < minD){
+                minD = hD[i];
+            }*/
+        }
+
+        if(minA < 0){
+            if(maxA < 0){
+                rangeA = Math.abs(minA) + maxA;
+            } else {
+                rangeA = maxA - minA;
+            }
+        } else {
+            rangeA = maxA - minA;
+        }
+
+        /*if(minB < 0){
+            if(maxB < 0){
+                rangeB = Math.abs(minB) + maxB;
+            } else {
+                rangeB = maxB - minB;
+            }
+        } else {
+            rangeB = maxB - minB;
+        }
+
+        if(minC < 0){
+            if(maxC < 0){
+                rangeC = Math.abs(minC) + maxC;
+            } else {
+                rangeC = maxC - minC;
+            }
+        } else {
+            rangeC = maxC - minC;
+        }
+
+        if(minD < 0){
+            if(maxD < 0){
+                rangeD = Math.abs(minD) + maxD;
+            } else {
+                rangeD = maxD - minD;
+            }
+        } else {
+            rangeD = maxD - minD;
+        }*/
+
+
+        /*System.out.println(formatter.format(min));
+        System.out.println(formatter.format(max));
+        System.out.println(formatter.format(range));
+        System.out.println();
+        System.out.println("round COLOR");
+        for(int i = 0; i < rows; i++){
+            System.out.print("|| ");
+            for(int j = 0; j < collumns; j++){
+                System.out.print((int)(((h[collumns*i+j]-min)/range)*255.0)+" ");
+            }
+            System.out.println(" ||");
+        }*/
+
+        NormalMap normalMap = new NormalMap();
+        byte value;
+        for(int i = 0; i < size; i++){
+            value = (byte)((int)(((hA[i]-minA)/rangeA)*255.0));
+            //value = (byte)((int)(h[i])*255);
+            //value = (byte)(255 - (value & 0xFF)); // invert
+            //System.out.println(value);
+            fr[3*i + bodyStart] = value;
+            fr[3*i + bodyStart + 1] = value;
+            fr[3*i + bodyStart + 2] = value;
+        }
+        this.write(normalMap.normalMap(fr,0.0,0.05),"/home/sedlasi1/Desktop/testovaci_obrazky/F.ppm");
+
+        /*for(int i = 0; i < size; i++){
+            value = (byte)((int)(((hB[i]-minB)/rangeB)*255.0));
+            //value = (byte)((int)(h[i])*255);
+            //value = (byte)(255 - (value & 0xFF)); // invert
+            //System.out.println(value);
+            fr[3*i + bodyStart] = value;
+            fr[3*i + bodyStart + 1] = value;
+            fr[3*i + bodyStart + 2] = value;
+        }
+
+        this.write(normalMap.normalMap(fr,0.0,0.05),"/home/sedlasi1/Desktop/testovaci_obrazky/B.ppm");
+
+        for(int i = 0; i < size; i++){
+            value = (byte)((int)(((hC[i]-minC)/rangeC)*255.0));
+            //value = (byte)((int)(h[i])*255);
+            //value = (byte)(255 - (value & 0xFF)); // invert
+            //System.out.println(value);
+            fr[3*i + bodyStart] = value;
+            fr[3*i + bodyStart + 1] = value;
+            fr[3*i + bodyStart + 2] = value;
+        }
+
+        this.write(normalMap.normalMap(fr,0.0,0.05),"/home/sedlasi1/Desktop/testovaci_obrazky/C.ppm");
+
+        for(int i = 0; i < size; i++){
+            value = (byte)((int)(((hD[i]-minD)/rangeD)*255.0));
+            //value = (byte)((int)(h[i])*255);
+            //value = (byte)(255 - (value & 0xFF)); // invert
+            //System.out.println(value);
+            fr[3*i + bodyStart] = value;
+            fr[3*i + bodyStart + 1] = value;
+            fr[3*i + bodyStart + 2] = value;
+        }
+
+        this.write(normalMap.normalMap(fr,0.0,0.05),"/home/sedlasi1/Desktop/testovaci_obrazky/D.ppm");
+*/
+    }
+
+    private void absoluteHeightsSC(double [] q){
+        int size = collumns*rows;
+        double [] hA = new double[size];
+        double [] hB = new double[size];
+        double [] hC = new double[size];
+        double [] hD = new double[size];
+        double h1,h2,h3,h4;
+        double height;
+
+
+        // vse bez okraju, okraje nakonec
+        // hA levy horni roh
+        for(int j = collumns+1; j < size-collumns; j+=collumns){
+            for(int i = 0; i < collumns-2; i++){
+                h3 = hA[(j + i) - 1] - q[2*((j + i) - 1)]; //-
+                h4 = hA[(j + i) - collumns] - q[2*((j + i)-collumns)+1]; //-
+                height = (h3+h4)/2.0;
+                hA[(j + i)] = height;
+                //hA[(j + i)] = h3;
+            }
+        }
+
+        // hB pravy horni roh
+        for(int j = collumns+1; j < size-collumns; j+=collumns){
+            for(int i = 0; i < collumns-2; i++){
+                h3 = hB[(j + i) - 1] - q[2*((j + i) - 1)]; //-
+                h4 = hB[(j + i) - collumns] - q[2*((j + i)-collumns)+1]; //-
+                //height = (h3+h4)/2.0;
+                //hB[(j + i)] = height;
+                hB[(j + i)] = h4;
+            }
+        }
+
+        // hC levy spodni roh
+        for(int j = size-2*collumns+1; j > 1; j-=collumns){
+            for(int i = collumns-3; i > -1; i--){
+                h1 = hC[(j + i) + 1] + (q[2*(j + i)]); //-
+                h2 = hC[(j + i) + collumns] + (q[2*(j + i) + 1]); //-
+                height = (h1+h2)/2.0;
+                //hC[(j + i)] = height;
+                hC[(j + i)] = h1;
+            }
+        }
+
+        // hD pravy spodni roh
+        for(int j = size-2*collumns+1; j > 1; j-=collumns){
+            for(int i = collumns-3; i > -1; i--){
+                h1 = hD[(j + i) + 1] + (q[2*(j + i)]); //-
+                h2 = hD[(j + i) + collumns] + (q[2*(j + i) + 1]); //-
+                height = (h1+h2)/2.0;
+                //hD[(j + i)] = height;
+                hD[(j + i)] = h2;
+            }
+        }
+
+        //prumerovani
+        for(int j = collumns+1; j < size-collumns; j+=collumns){
+            for(int i = 0; i < collumns-2; i++){
+                //height = (hA[i+j]+hB[i+j]+hC[i+j]+hD[i+j])/4.0;
+                height = (hA[i+j]+hD[i+j])/2.0;
+                hA[(j + i)] = height;
+                hB[(j + i)] = height;
+                hC[(j + i)] = height;
+                hD[(j + i)] = height;
+
+            }
+        }
+
+
+
+        // dopisovani okraju
+        hA[0] = hA[collumns+1];
+        hB[0] = hA[collumns+1];
+        hC[0] = hA[collumns+1];
+        hD[0] = hA[collumns+1];
+
+        // horni radka
+        for(int i = 1; i < collumns-1; i++){
+            hA[i] = hA[i+collumns];
+            hB[i] = hA[i+collumns];
+            hC[i] = hA[i+collumns];
+            hD[i] = hA[i+collumns];
+        }
+
+        hA[collumns-1] = hA[collumns-1 -1 + collumns];
+        hB[collumns-1] = hA[collumns-1 -1 + collumns];
+        hC[collumns-1] = hA[collumns-1 -1 + collumns];
+        hD[collumns-1] = hA[collumns-1 -1 + collumns];
+
+        //boky
+        for(int j = collumns; j > size - collumns; j+=collumns){
+            hA[j] = hA[j+1];
+            hB[j] = hA[j+1];
+            hC[j] = hA[j+1];
+            hD[j] = hA[j+1];
+
+            hA[j+collumns-1] = hA[j+collumns-2];
+            hB[j+collumns-1] = hA[j+collumns-2];
+            hC[j+collumns-1] = hA[j+collumns-2];
+            hD[j+collumns-1] = hA[j+collumns-2];
+        }
+
+        hA[size - collumns] = hA[size-2*collumns];
+        hB[size - collumns] = hA[size-2*collumns];
+        hC[size - collumns] = hA[size-2*collumns];
+        hD[size - collumns] = hA[size-2*collumns];
+
+        //spodni radka
+        for(int i = size - collumns+1; i < size-1; i++){
+            hA[i] = hA[i-collumns];
+            hB[i] = hA[i-collumns];
+            hC[i] = hA[i-collumns];
+            hD[i] = hA[i-collumns];
+        }
+
+        hA[size-1] = hA[size-2];
+        hB[size-1] = hA[size-2];
+        hC[size-1] = hA[size-2];
+        hD[size-1] = hA[size-2];
+
+        /*for(int i = 0 ; i < size; i++){
+            hA[i] = Math.abs(q[2*i]) + Math.abs(q[2*i+1]);
+        }*/
+
+
+        double [] buffer = new double [2*(collumns-2)];
+        int mod = 0;
+        for(int gauss = steps; gauss > 0; gauss--){
+            //TELO
+            //if(steps > -1 )break; // BREAK
+            for(int j = collumns+1; j < size - collumns+1; j+=collumns){ // projizdime radky
+
+                for(int i = 0; i < collumns-2; i++){ // projizdime bunky v radcich
+                    //puvodni
+                    h1 = hA[(j + i) + 1] + (q[2*(j + i)]); //+
+                    h2 = hA[(j + i) + collumns] + (q[2*(j + i) + 1]); //+
+                    h3 = hA[(j + i) - 1] - q[2*((j + i) - 1)]; //-
+                    h4 = hA[(j + i) - collumns] - q[2*((j + i)-collumns)+1]; //-
+                    height = (h1+h2+h3+h4)/4.0;
+                    //height = (h1+h4)/2.0;
+                    //height = (h2+h4)/2.0;
+                    if((j+i)-2*collumns > 1){ // jsme v poli
+                        hA[j+i-2*collumns] = buffer[mod];
+                    }
+                    //hA[(j + i)] = height;
+                    buffer[mod] = height;
+                    mod++;
+                    if(mod == buffer.length){
+                        mod = 0;
+                    }
+                }
+
+
+            }
+            //vyprazdneni bufferu
+            for(int i = size-3*collumns+1; i < size-collumns-1; i++){
+                hA[i] = buffer[mod];
+                mod++;
+                if(mod == buffer.length){
+                    mod = 0;
+                }
+            }
+
+            // dopisovani okraju
+            hA[0] = hA[collumns+1];
+
+            // horni radka
+            for(int i = 1; i < collumns-1; i++){
+                hA[i] = hA[i+collumns];
+            }
+
+            hA[collumns-1] = hA[collumns-1 -1 + collumns];
+
+            //boky
+            for(int j = collumns; j > size - collumns; j+=collumns){
+                hA[j] = hA[j+1];
+
+                hA[j+collumns-1] = hA[j+collumns-2];
+            }
+
+            hA[size - collumns] = hA[size-2*collumns];
+
+            //spodni radka
+            for(int i = size - collumns+1; i < size-1; i++){
+                hA[i] = hA[i-collumns];
+            }
+
+            hA[size-1] = hA[size-2];
+        }
+
+
+        double maxA = -Double.MAX_VALUE;
+        double maxB = -Double.MAX_VALUE;
+        double maxC = -Double.MAX_VALUE;
+        double maxD = -Double.MAX_VALUE;
+        double minA = Double.MAX_VALUE;
+        double minB = Double.MAX_VALUE;
+        double minC = Double.MAX_VALUE;
+        double minD = Double.MAX_VALUE;
+        double rangeA;
+        double rangeB;
+        double rangeC;
+        double rangeD;
+        for(int i = 0; i < size; i++){
+
+            if(hA[i] > maxA){
+                maxA = hA[i];
+            }
+            if(hA[i] < minA){
+                minA = hA[i];
+            }
+            if(hB[i] > maxB){
+                maxB = hB[i];
+            }
+            if(hB[i] < minB){
+                minB = hB[i];
+            }
+            if(hC[i] > maxC){
+                maxC = hC[i];
+            }
+            if(hC[i] < minC){
+                minC = hC[i];
+            }
+            if(hD[i] > maxD){
+                maxD = hD[i];
+            }
+            if(hD[i] < minD){
+                minD = hD[i];
+            }
+        }
+
+        if(minA < 0){
+            if(maxA < 0){
+                rangeA = Math.abs(minA) + maxA;
+            } else {
+                rangeA = maxA - minA;
+            }
+        } else {
+            rangeA = maxA - minA;
+        }
+
+        if(minB < 0){
+            if(maxB < 0){
+                rangeB = Math.abs(minB) + maxB;
+            } else {
+                rangeB = maxB - minB;
+            }
+        } else {
+            rangeB = maxB - minB;
+        }
+
+        if(minC < 0){
+            if(maxC < 0){
+                rangeC = Math.abs(minC) + maxC;
+            } else {
+                rangeC = maxC - minC;
+            }
+        } else {
+            rangeC = maxC - minC;
+        }
+
+        if(minD < 0){
+            if(maxD < 0){
+                rangeD = Math.abs(minD) + maxD;
+            } else {
+                rangeD = maxD - minD;
+            }
+        } else {
+            rangeD = maxD - minD;
+        }
+
+
+        /*System.out.println(formatter.format(min));
+        System.out.println(formatter.format(max));
+        System.out.println(formatter.format(range));
+        System.out.println();
+        System.out.println("round COLOR");
+        for(int i = 0; i < rows; i++){
+            System.out.print("|| ");
+            for(int j = 0; j < collumns; j++){
+                System.out.print((int)(((h[collumns*i+j]-min)/range)*255.0)+" ");
+            }
+            System.out.println(" ||");
+        }*/
+
+        NormalMap normalMap = new NormalMap();
+        byte value;
+        for(int i = 0; i < size; i++){
+            value = (byte)((int)(((hA[i]-minA)/rangeA)*255.0));
+            //value = (byte)((int)(h[i])*255);
+            //value = (byte)(255 - (value & 0xFF)); // invert
+            //System.out.println(value);
+            fr[3*i + bodyStart] = value;
+            fr[3*i + bodyStart + 1] = value;
+            fr[3*i + bodyStart + 2] = value;
+        }
+        this.write(normalMap.normalMap(fr,0.0,0.05),"/home/sedlasi1/Desktop/testovaci_obrazky/F.ppm");
+
+       /* for(int i = 0; i < size; i++){
+            value = (byte)((int)(((hB[i]-minB)/rangeB)*255.0));
+            //value = (byte)((int)(h[i])*255);
+            //value = (byte)(255 - (value & 0xFF)); // invert
+            //System.out.println(value);
+            fr[3*i + bodyStart] = value;
+            fr[3*i + bodyStart + 1] = value;
+            fr[3*i + bodyStart + 2] = value;
+        }
+
+        this.write(normalMap.normalMap(fr,0.0,0.05),"/home/sedlasi1/Desktop/testovaci_obrazky/B.ppm");
+
+        for(int i = 0; i < size; i++){
+            value = (byte)((int)(((hC[i]-minC)/rangeC)*255.0));
+            //value = (byte)((int)(h[i])*255);
+            //value = (byte)(255 - (value & 0xFF)); // invert
+            //System.out.println(value);
+            fr[3*i + bodyStart] = value;
+            fr[3*i + bodyStart + 1] = value;
+            fr[3*i + bodyStart + 2] = value;
+        }
+
+        this.write(normalMap.normalMap(fr,0.0,0.05),"/home/sedlasi1/Desktop/testovaci_obrazky/C.ppm");
+
+        for(int i = 0; i < size; i++){
+            value = (byte)((int)(((hD[i]-minD)/rangeD)*255.0));
+            //value = (byte)((int)(h[i])*255);
+            //value = (byte)(255 - (value & 0xFF)); // invert
+            //System.out.println(value);
+            fr[3*i + bodyStart] = value;
+            fr[3*i + bodyStart + 1] = value;
+            fr[3*i + bodyStart + 2] = value;
+        }
+
+        this.write(normalMap.normalMap(fr,0.0,0.05),"/home/sedlasi1/Desktop/testovaci_obrazky/D.ppm");*/
 
     }
 
@@ -1175,6 +2235,8 @@ public class ShapeFromShading implements Algorithm {
         }
         normalField = null;
 
+
+
         // normalizace
         double range;
         double min = Double.MAX_VALUE;
@@ -1187,11 +2249,30 @@ public class ShapeFromShading implements Algorithm {
                 max = relativeHeights[i];
             }
         }
-        min = Math.abs(min);
-        range = min + Math.abs(max);
-        for(int i = 0; i < relativeHeights.length; i++ ){
-            relativeHeights[i] = ((relativeHeights[i]+min)/range);
+        /*if(min < 0){
+            range = Math.abs(min) + Math.abs(max);
+        } else {
+            range = Math.abs(max) - min;
+        }*/
+        if(min < 0){
+            if(max < 0){
+                range = Math.abs(min) + max;
+            } else {
+                range = max - min;
+            }
+        } else {
+            range = max - min;
         }
+
+        for(int i = 0; i < relativeHeights.length; i++ ){
+            relativeHeights[i] = ((relativeHeights[i]-min)/range)-0.5;
+        }
+
+        //otoceni do spravnehos smeru
+        for(int i = 0; i < size; i++){
+            relativeHeights[2*i+1] = -relativeHeights[2*i+1];
+        }
+
 
         return relativeHeights;
     }
@@ -1211,153 +2292,137 @@ public class ShapeFromShading implements Algorithm {
 
     }
 
-    public static void main(String [] args){
-        double x_1,x_2,z_1,z_2,y_1,y_2;
-        double a,b,c,d;
-        double qij;
-        double A,B,h_1,h_2,beta,alpha;
-        double aEq,bEq,cEq;
-        double [] i = new double[]{0.5,0.0,0.5};
-        double [] j = new double[]{-0.5,0.0,0.5};
-
-
-        x_1 = i[0];
-        x_2 = j[0];
-        z_1 = i[2];
-        z_2 = j[2];
-        // Rovnice pro (x_1,z_1)  a (x_2,z_2)
-        a = x_1;
-        b = z_1;
-        c = x_2;
-        d = z_2;
-
-        if(a == 0){
-            a += Double.MIN_VALUE;
+    public byte [] read(String path){
+        try {
+            return Files.readAllBytes(Paths.get(path));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
         }
-        if(c == 0){
-            c += Double.MIN_VALUE;
-        }
-        // uhly vektoru
-        alpha = Math.atan(b/a);
-        alpha = Math.toDegrees(alpha);
-        if(a < 0.0){
-            alpha += 180d;
-        }
-        beta = Math.atan(d/c);
-        beta = Math.toDegrees(beta);
-        if(c < 0){
-            beta += 180d;
-        }
-        if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
-            if((180d-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
-                qij = MAX_RELATIVE_HEIGHT;
-            } else { // prolozime primku
-                //qij = -(b/a);
-                qij = -(a/b);
-            }
-        } else { // mame rozdilne uhly -> kruznice
-            cEq = (b/a)*c + d;
-
-            if(cEq != 0){ // kvadraticka rovnice
-                A = (b/a)*c + d;
-                B = c - (b/a)*d;
-
-                h_1 = B/(-A) + Math.sqrt(B*B + A*A)/(-A);
-                h_2 = B/(-A) - Math.sqrt(B*B + A*A)/(-A);
-            } else { // rovnice ma tvar h*() = 0 takze h = 0
-                h_1 = 0;
-                h_2 = 0;
-            }
-
-            beta = (h_1 - (b/a)) / ((b/a)*c - d);
-            alpha = (beta*c + 1) / a;
-
-            if(beta*alpha > 0){
-                qij = h_1;
-            } else {
-                qij = h_2;
-            }
-
-        }
-        // ========
-        if(qij < -1*MAX_RELATIVE_HEIGHT){
-            qij = -1*MAX_RELATIVE_HEIGHT;
-        } else if(qij > MAX_RELATIVE_HEIGHT){
-            qij = MAX_RELATIVE_HEIGHT;
-        }
-        //relativeHeights[2*i] = qij;
-        System.out.println(qij);
-        System.out.println("MAX_HEIGHT: "+MAX_RELATIVE_HEIGHT);
-
-
-        /*z_2 = normalField[3*i + 3*collumns + 2];
-        y_1 = normalField[3*i + 1];
-        y_2 = normalField[3*i + 3*collumns + 1];
-
-        // Rovnice pro (y_1,z_1)  a (y_2,z_2)
-        a = y_1;
-        b = z_1;
-        c = y_2;
-        d = z_2;
-
-        if(a == 0){
-            a += Double.MIN_VALUE;
-        }
-        if(c == 0){
-            c += Double.MIN_VALUE;
-        }
-        // uhly vektoru
-        alpha = Math.atan(b/a);
-        alpha = Math.toDegrees(alpha);
-        if(a < 0.0){
-            alpha += 180d;
-        }
-        beta = Math.atan(d/c);
-        beta = Math.toDegrees(beta);
-        if(c < 0){
-            beta += 180d;
-        }
-        if(beta > (alpha - ROUND_ANGLE) && beta < (alpha + ROUND_ANGLE)){ // mame podobne uhly
-            if((180-alpha) < FLAT_ANGLE || alpha < FLAT_ANGLE){ // skoro kolmice
-                qij = MAX_RELATIVE_HEIGHT;
-            } else { // prolozime primku
-                //qij = -(b/a);
-                qij = -(a/b);
-            }
-        } else { // mame rozdilne uhly -> kruznice
-            cEq = (b/a)*c + d;
-
-            if(cEq != 0){ // kvadraticka rovnice
-                A = (b/a)*c + d;
-                B = c - (b/a)*d;
-
-                h_1 = B/(-A) + Math.sqrt(B*B + A*A)/(-A);
-                h_2 = B/(-A) - Math.sqrt(B*B + A*A)/(-A);
-            } else { // rovnice ma tvar h*() = 0 takze h = 0
-                h_1 = 0;
-                h_2 = 0;
-            }
-
-            beta = (h_1 - (b/a)) / ((b/a)*c - d);
-            alpha = (beta*c + 1) / a;
-
-            if(beta*alpha > 0){
-                qij = h_1;
-            } else {
-                qij = h_2;
-            }
-
-        }
-        // =========
-        if(qij < -1*MAX_RELATIVE_HEIGHT){
-            qij = -1*MAX_RELATIVE_HEIGHT;
-        } else if(qij > MAX_RELATIVE_HEIGHT){
-            qij = MAX_RELATIVE_HEIGHT;
-        }
-        relativeHeights[2*i + 1] = qij;*/
     }
 
-    private void getDepthMap(){
+    public static void main(String [] args){
+        ShapeFromShading sfs=  new ShapeFromShading();
+        //sfs.fr = sfs.read("/home/sedlasi1/Desktop/cl_koule.ppm");
+        sfs.fr = sfs.read("/home/sedlasi1/Desktop/testovaci_obrazky/COIN_RUN.ppm");
+        //sfs.fr = sfs.read("/home/sedlasi1/Desktop/testovaci_obrazky/7364-normal.ppm");
+        //sfs.fr = sfs.read("/home/sedlasi1/Desktop/testovaci_obrazky/psfixnormal.ppm");
+        //sfs.fr = sfs.read("/home/sedlasi1/Desktop/B_2.ppm");
+        //sfs.fr = sfs.read("/home/sedlasi1/Desktop/testovaci_obrazky/center.ppm");
+        //sfs.fr = sfs.read("/home/sedlasi1/Desktop/testovaci_obrazky/7259d9158be0b7e8c62c887fac57ed81.ppm");
+        //sfs.fr = sfs.read("/home/sedlasi1/Desktop/testovaci_obrazky/7063-normal.ppm");
+        sfs.lightX = -0.6907345851123583;
+        sfs.lightY = 0.7215316076253877;
+        sfs.lightZ = -0.0477270586479161;
+        sfs.q = 1.0;
+        sfs.lm = 0.25;
+        sfs.steps = 25;
+        sfs.getGrayscale();
+        //sfs.normalField = sfs.getDepthMap3();
+        sfs.normalField = sfs.getDepthMap3();
+        //sfs.normalField = sfs.getHeightMap();
+        // VYPISOVANI PLOCHYCH NORMAL
+        /*for(int i = sfs.bodyStart; i < sfs.normalField.length+sfs.bodyStart ; i++){
+            //fr[i] = (byte)((normalField[i]+1)*127.5);
+            sfs.fr[i] = (byte)((sfs.normalField[i-sfs.bodyStart])*255.0);
+        }*/
+        double x,y,z;
+        int start = sfs.bodyStart;
+        byte [] fr = sfs.fr;
+
+        for(int i = 0; i < sfs.collumns* sfs.rows; i++){
+            x  = (double)(fr[start + 3*i] & 0xFF)/255.0*2.0-1.0;
+            y  = (double)(fr[start + 3*i+1] & 0xFF)/255.0*2.0-1.0;
+            z  = (double)(fr[start + 3*i+2] & 0xFF)/255.0*2.0-1.0;
+            sfs.normalField[3*i] = x;
+            sfs.normalField[3*i+1] = y;
+            sfs.normalField[3*i+2] = z;
+        }
+        /*double [] rel = sfs.relativeHeights();
+        for(int i = 0; i < rel.length-1 ; i+=2){
+            fr[3*(i/2) + start] = (byte)(int)((rel[i+1])*255.0);
+            fr[3*(i/2) + start+1] = (byte)(int)((rel[i+1])*255.0);
+            fr[3*(i/2) + start+2] = (byte)(int)((rel[i+1])*255.0);
+        }*/
+        sfs.fr = fr;
+        //sfs.absoluteHeights(sfs.relativeHeights());
+        sfs.absoluteHeightsQUAD(sfs.relativeHeights());
+       //sfs.absoluteHeightsNEW(sfs.relativeHeights());
+        //sfs.absoluteHeightsSW(sfs.relativeHeights());
+        //sfs.absoluteHeightsSC(sfs.relativeHeights());
+        //sfs.absoluteHeightsAF(sfs.relativeHeights());
+        /*double [] rel = new double[]{
+                5.0,5.0 , 5.0,2.0 , -5.0,0.0 , -5.0,-2.0 , 0.0,-5.0 ,
+                2.0,5.0 , -2.0,-2.0 , 0.0,-5.0 , 2.0,-2.0 , 0.0,-2.0 ,
+                2.0,5.0 , -2.0,-2.0 , 0.0,-5.0 , 2.0,-2.0 , 0.0,-2.0 ,
+                2.0,5.0 , -2.0,-2.0 , 0.0,-5.0 , 2.0,-2.0 , 0.0,-2.0 ,
+                -5.0,0.0 , -5.0,0.0 , 0.0,0.0 ,  5.0,0.0,  0.0,0.0
+        };*/
+        /*double [] rel = new double[]{
+                5.0,5.0 , 5.0,2.0 , -5.0,0.0 , 0.0,-5.0 ,
+                2.0,5.0 , -2.0,-2.0 , 0.0,-5.0 ,  0.0,-2.0 ,
+                2.0,5.0 , -2.0,-2.0 , 0.0,-5.0 ,  0.0,-2.0 ,
+                -5.0,0.0 , -5.0,0.0 , 0.0,0.0 ,    0.0,0.0
+        };*/
+        /*double [] rel = new double[]{
+                -2.0,-2.0 , 2.0,-5.0 ,  0.0,-2.0 ,
+                -5.0,2.0 , 5.0,5.0 ,   0.0,2.0 ,
+                -2.0,0.0 , 2.0,0.0 ,    0.0,0.0
+        };
+            */
+        sfs.collumns = 3;
+        sfs.rows = 3;
+        sfs.steps = 25;
+        //sfs.absoluteHeights(rel);
+        //sfs.absoluteHeightsSW(rel);
+        //sfs.absoluteHeightsSW(sfs.relativeHeights());
+        sfs.write(sfs.fr,"/home/sedlasi1/Desktop/testovaci_obrazky/uu.ppm");
+        //test();
+    }
+
+    private static void test(){
+        int col = 2;
+        int row = 2;
+        double [] h = new double[col*row];
+        double [] q = new double[]{5.0,3.0,-1.0,-2.0};
+        //double [] q = new double[]{5.0,5.0,-2.0,-2.0};
+
+        for(int i = 0; i < 5; i++){
+            h[0] = (h[1] + q[0] + h[2] + q[1])/2.0;
+            h[1] = (h[0] - q[0] + h[3] + q[2])/2.0;
+            h[3] = (h[1] - q[2] + h[2] - q[3])/2.0;
+            h[2] = (h[0] - q[1] + h[3] + q[3])/2.0;
+
+            System.out.println();
+            System.out.println("iteration: "+i);
+            for(int j = 0; j < col*row; j+=col){
+                System.out.print("||");
+                for(int k = 0; k < col; k++){
+                    System.out.print(h[j+k]+" ");
+                }
+                System.out.println("||");
+            }
+        }
+
+        for(int i = 0; i < 200; i++){
+            h[0] = (h[1] + q[0] + h[2] + q[1])/2.0;
+            h[1] = (h[0] - q[0] + h[3] + q[2])/2.0;
+            h[3] = (h[1] - q[2] + h[2] - q[3])/2.0;
+            h[2] = (h[0] - q[1] + h[3] + q[3])/2.0;
+        }
+        System.out.println();
+        System.out.println("iteration: 200");
+        for(int j = 0; j < col*row; j+=col){
+            System.out.print("||");
+            for(int k = 0; k < col; k++){
+                System.out.print(h[j+k]+" ");
+            }
+            System.out.println("||");
+        }
+
+    }
+
+    private void getDepthMapOld(){
         collumns = 2;
         rows = 2;
         lightX = 0.5;
@@ -1940,7 +3005,7 @@ public class ShapeFromShading implements Algorithm {
     }
 
 
-    // 27.2.2017 METODA!!!!!! -- moje vypocty
+    // 27.2.2017 -- moje vypocty
     private double [] getDepthMap2(){
         // 4. step
 
@@ -2140,6 +3205,1084 @@ public class ShapeFromShading implements Algorithm {
         //normalizace
         /*double len;
         for(int i = 0; i< size; i++){
+            len = Math.sqrt(n[3*i]*n[3*i]+n[3*i+1]*n[3*i+1]+n[3*i+2]*n[3*i+2]);
+            n[3*i] = n[3*i]/len;
+            n[3*i+1] = n[3*i+1]/len;
+            n[3*i+2] = n[3*i+2]/len;
+        }*/
+        //
+        return n;
+    }
+
+    // 12.3.2017 METODA!!!!!! -- moje vypocty
+    private double [] getDepthMap3(){
+        // 4. step
+
+        //uvodni estimate bez regularizace
+        int size = collumns*rows;
+        double [] n = new double[3*size];
+        double x,y,z,l;
+        for(int i = 0; i < size; i++){
+            x = (q*grayscale[i])/lightX;
+            y = (q*grayscale[i])/lightY;
+            z = (q*grayscale[i])/lightZ;
+            if(z < 0) {
+                x = -x;
+                y = -y;
+                z = -z;
+            }
+            l = Math.sqrt(x*x + y*y + z*z);
+
+            n[3*i] = x/l;
+            n[3*i+1] = y/l;
+            n[3*i+2] = z/l;
+        }
+
+        /*if(n != null)
+        return n;*/
+        // buffer field
+        double mod = 2*3*collumns;
+        double [] buffer = new double [(int)mod];
+
+        // matice s neighbours = nei
+
+        int neighbourSize;
+
+        double len;
+
+        double newValue_x;
+        double newValue_y;
+        double newValue_z;
+
+        double sumX = 0;
+        double sumY = 0;
+        double sumZ = 0;
+        //double [] s = new double[size];
+        for(int g = 0; g < steps; g++){ // hlavni loop = pocet kroku gauss-siedela
+
+            // pixel vlevo nahore
+
+            neighbourSize = 2; // ma dva sousedy
+            // soucet n_x sousedu
+            sumX = n[3] + n[3*collumns];
+            sumY = n[4] + n[3*collumns+1];
+            sumZ = n[5] + n[3*collumns+2];
+            // pocitani zvlast
+            newValue_x = (lightX*((1/q)*grayscale[0] - n[1]*lightY - n[2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+            newValue_y = (lightY*((1/q)*grayscale[0] - n[0]*lightX - n[2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+            newValue_z = (lightZ*((1/q)*grayscale[0] - n[0]*lightX - n[1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+            if(newValue_z < 0){
+                newValue_z = -newValue_z;
+                newValue_x = -newValue_x;
+                newValue_y = -newValue_y;
+            }
+            len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+            buffer[0] = newValue_x/len;
+            buffer[1] = newValue_y/len;
+            buffer[2] = newValue_z/len;
+
+            //horni radka
+            neighbourSize = 3;
+            for(int i = 1; i < collumns-1;i++){ // bereme x,y,z najednou
+                // soucet n_x sousedu
+                sumX = n[3*i - 3] + n[3*i + 3*collumns] + n[3*i + 3];
+                sumY = n[3*i - 2] + n[3*i + 3*collumns + 1] + n[3*i + 4];
+                sumZ = n[3*i - 1] + n[3*i + 3*collumns + 2] + n[3*i + 5];
+                // pocitani zvlast
+                newValue_x = (lightX*((1/q)*grayscale[i] - n[3*i + 1]*lightY - n[3*i + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+                newValue_y = (lightY*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+                newValue_z = (lightZ*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+                if(newValue_z < 0){
+                    newValue_z = -newValue_z;
+                    newValue_x = -newValue_x;
+                    newValue_y = -newValue_y;
+                }
+                len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+                buffer[3*i] = newValue_x/len;
+                buffer[3*i + 1] = newValue_y/len;
+                buffer[3*i + 2] = newValue_z/len;
+            }
+
+            // pixel vpravo nahore
+
+            neighbourSize = 2; // ma dva sousedy
+            // soucet n_x sousedu
+            sumX = n[3*(collumns-1) - 3] + n[3*(collumns-1) + 3*collumns];
+            sumY = n[3*(collumns-1) - 2] + n[3*(collumns-1) + 3*collumns+1];
+            sumZ = n[3*(collumns-1) - 1] + n[3*(collumns-1) + 3*collumns+2];
+            // pocitani zvlast
+            newValue_x = (lightX*((1/q)*grayscale[(collumns-1)] - n[3*(collumns-1) + 1]*lightY - n[3*(collumns-1) + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+            newValue_y = (lightY*((1/q)*grayscale[(collumns-1)] - n[3*(collumns-1)]*lightX - n[3*(collumns-1) + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+            newValue_z = (lightZ*((1/q)*grayscale[(collumns-1)] - n[3*(collumns-1)]*lightX - n[3*(collumns-1) + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+            if(newValue_z < 0){
+                newValue_z = -newValue_z;
+                newValue_x = -newValue_x;
+                newValue_y = -newValue_y;
+            }
+            len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+            buffer[3*(collumns-1)] = newValue_x/len;
+            buffer[3*(collumns-1) + 1] = newValue_y/len;
+            buffer[3*(collumns-1) + 2] = newValue_z/len;
+
+            neighbourSize = 3;
+            // po radcich telo
+            for(int i = collumns; i < size - collumns; i += collumns){
+                //prvek vlevo
+                // soucet n_x sousedu
+                sumX = n[3*i - 3*collumns] + n[3*i + 3*collumns] + n[3*i + 3];
+                sumY = n[3*i - 3*collumns + 1] + n[3*i + 3*collumns + 1] + n[3*i + 4];
+                sumZ = n[3*i - 3*collumns + 2] + n[3*i + 3*collumns + 2] + n[3*i + 5];
+                // pocitani zvlast
+                newValue_x = (lightX*((1/q)*grayscale[i] - n[3*i + 1]*lightY - n[3*i + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+                newValue_y = (lightY*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+                newValue_z = (lightZ*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+                if(newValue_z < 0){
+                    newValue_z = -newValue_z;
+                    newValue_x = -newValue_x;
+                    newValue_y = -newValue_y;
+                }
+
+                if((i - 2*collumns) >= 0){ // pokud jsme v poli
+                    n[3*(i - 2*collumns)] = buffer[(int)((3*(i - 2*collumns)) % mod)];
+                    n[3*(i - 2*collumns)+1] = buffer[(int)((3*(i - 2*collumns)+1) % mod)];
+                    n[3*(i - 2*collumns)+2] = buffer[(int)((3*(i - 2*collumns)+2) % mod)];
+                }
+
+                len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+                buffer[(int)((3*i) % mod)] = newValue_x/len;
+                buffer[(int)((3*i + 1) % mod)] = newValue_y/len;
+                buffer[(int)((3*i + 2) % mod)] = newValue_z/len;
+
+                //prostredek
+                neighbourSize = 4;
+                for(int j = 1; j < collumns-1; j++){ // vnitrek radku
+                    // soucet n_x sousedu
+                    sumX = n[3*(i+j) - 3*collumns] + n[3*(i+j) + 3*collumns] + n[3*(i+j) + 3] + n[3*(i+j) - 3];
+                    sumY = n[3*(i+j) - 3*collumns + 1] + n[3*(i+j) + 3*collumns + 1] + n[3*(i+j) + 4] + n[3*(i+j) - 2];
+                    sumZ = n[3*(i+j) - 3*collumns + 2] + n[3*(i+j) + 3*collumns + 2] + n[3*(i+j) + 5] + n[3*(i+j) - 1];
+                    // pocitani zvlast
+                    newValue_x = (lightX*((1/q)*grayscale[(i+j)] - n[3*(i+j) + 1]*lightY - n[3*(i+j) + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+                    newValue_y = (lightY*((1/q)*grayscale[(i+j)] - n[3*(i+j)]*lightX - n[3*(i+j) + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+                    newValue_z = (lightZ*((1/q)*grayscale[(i+j)] - n[3*(i+j)]*lightX - n[3*(i+j) + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+                    if(newValue_z < 0){
+                        newValue_z = -newValue_z;
+                        newValue_x = -newValue_x;
+                        newValue_y = -newValue_y;
+                    }
+
+                    if(((i+j) - 2*collumns) >= 0){ // pokud jsme v poli
+                        n[3*((i+j) - 2*collumns)] = buffer[(int)((3*((i+j) - 2*collumns)) % mod)];
+                        n[3*((i+j) - 2*collumns)+1] = buffer[(int)((3*((i+j) - 2*collumns)+1) % mod)];
+                        n[3*((i+j) - 2*collumns)+2] = buffer[(int)((3*((i+j) - 2*collumns)+2) % mod)];
+                    }
+
+                    len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+                    buffer[(int)((3*(i+j)) % mod)] = newValue_x/len;
+                    buffer[(int)((3*(i+j) + 1) % mod)] = newValue_y/len;
+                    buffer[(int)((3*(i+j) + 2) % mod)] = newValue_z/len;
+                }
+
+                //prvek vpravo
+                neighbourSize = 3;
+                // soucet n_x sousedu
+                sumX = n[3*(i+collumns-1) - 3*collumns] + n[3*(i+collumns-1) + 3*collumns] + n[3*(i+collumns-1) - 3];
+                sumY = n[3*(i+collumns-1) - 3*collumns + 1] + n[3*(i+collumns-1) + 3*collumns + 1] + n[3*(i+collumns-1) - 2];
+                sumZ = n[3*(i+collumns-1) - 3*collumns + 2] + n[3*(i+collumns-1) + 3*collumns + 2] + n[3*(i+collumns-1) - 1];
+                // pocitani zvlast
+                newValue_x = (lightX*((1/q)*grayscale[(i+collumns-1)] - n[3*(i+collumns-1) + 1]*lightY - n[3*(i+collumns-1) + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+                newValue_y = (lightY*((1/q)*grayscale[(i+collumns-1)] - n[3*(i+collumns-1)]*lightX - n[3*(i+collumns-1) + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+                newValue_z = (lightZ*((1/q)*grayscale[(i+collumns-1)] - n[3*(i+collumns-1)]*lightX - n[3*(i+collumns-1) + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+                if(newValue_z < 0){
+                    newValue_z = -newValue_z;
+                    newValue_x = -newValue_x;
+                    newValue_y = -newValue_y;
+                }
+
+                if(((i+collumns-1) - 2*collumns) >= 0){ // pokud jsme v poli
+                    n[3*((i+collumns-1) - 2*collumns)] = buffer[(int)((3*((i+collumns-1) - 2*collumns)) % mod)];
+                    n[3*((i+collumns-1) - 2*collumns)+1] = buffer[(int)((3*((i+collumns-1) - 2*collumns)+1) % mod)];
+                    n[3*((i+collumns-1) - 2*collumns)+2] = buffer[(int)((3*((i+collumns-1) - 2*collumns)+2) % mod)];
+                }
+
+                len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+                buffer[(int)((3*(i+collumns-1)) % mod)] = newValue_x/len;
+                buffer[(int)((3*(i+collumns-1) + 1) % mod)] = newValue_y/len;
+                buffer[(int)((3*(i+collumns-1) + 2) % mod)] = newValue_z/len;
+
+            }
+
+            // pixel vlevo dole
+
+            neighbourSize = 2; // ma dva sousedy
+            // soucet n_x sousedu
+            sumX = n[3*(size - collumns) + 3] + n[3*(size - collumns) - 3*collumns];
+            sumY = n[3*(size - collumns) + 4] + n[3*(size - collumns) - 3*collumns+1];
+            sumZ = n[3*(size - collumns) + 5] + n[3*(size - collumns) - 3*collumns+2];
+            // pocitani zvlast
+            newValue_x = (lightX*((1/q)*grayscale[(size - collumns)] - n[3*(size - collumns) + 1]*lightY - n[3*(size - collumns) + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+            newValue_y = (lightY*((1/q)*grayscale[(size - collumns)] - n[3*(size - collumns)]*lightX - n[3*(size - collumns) + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+            newValue_z = (lightZ*((1/q)*grayscale[(size - collumns)] - n[3*(size - collumns)]*lightX - n[3*(size - collumns) +1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+            if(newValue_z < 0){
+                newValue_z = -newValue_z;
+                newValue_x = -newValue_x;
+                newValue_y = -newValue_y;
+            }
+            len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+            buffer[(int)((3*(size - collumns)) % mod)] = newValue_x/len;
+            buffer[(int)((3*(size - collumns)+1) % mod)] = newValue_y/len;
+            buffer[(int)((3*(size - collumns)+2) % mod)] = newValue_z/len;
+
+            //spodni radka
+            neighbourSize = 3;
+            for(int i = size - collumns + 1; i < size-1;i++){ // bereme x,y,z najednou
+                // soucet n_x sousedu
+                sumX = n[3*i - 3] + n[3*i - 3*collumns] + n[3*i + 3];
+                sumY = n[3*i - 2] + n[3*i - 3*collumns + 1] + n[3*i + 4];
+                sumZ = n[3*i - 1] + n[3*i - 3*collumns + 2] + n[3*i + 5];
+                // pocitani zvlast
+                newValue_x = (lightX*((1/q)*grayscale[i] - n[3*i + 1]*lightY - n[3*i + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+                newValue_y = (lightY*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+                newValue_z = (lightZ*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+                if(newValue_z < 0){
+                    newValue_z = -newValue_z;
+                    newValue_x = -newValue_x;
+                    newValue_y = -newValue_y;
+                }
+                len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+                buffer[(int)((3*i) % mod)] = newValue_x/len;
+                buffer[(int)((3*i+1) % mod)] = newValue_y/len;
+                buffer[(int)((3*i+2) % mod)] = newValue_z/len;
+            }
+
+            // pixel vpravo dole
+
+            neighbourSize = 2; // ma dva sousedy
+            // soucet n_x sousedu
+            sumX = n[3*(size-1) - 3] + n[3*(size-1) - 3*collumns];
+            sumY = n[3*(size-1) - 2] + n[3*(size-1) - 3*collumns+1];
+            sumZ = n[3*(size-1) - 1] + n[3*(size-1) - 3*collumns+2];
+            // pocitani zvlast
+            newValue_x = (lightX*((1/q)*grayscale[(size-1)] - n[3*(size-1) + 1]*lightY - n[3*(size-1) + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+            newValue_y = (lightY*((1/q)*grayscale[(size-1)] - n[3*(size-1)]*lightX - n[3*(size-1) + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+            newValue_z = (lightZ*((1/q)*grayscale[(size-1)] - n[3*(size-1)]*lightX - n[3*(size-1) + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+            if(newValue_z < 0){
+                newValue_z = -newValue_z;
+                newValue_x = -newValue_x;
+                newValue_y = -newValue_y;
+            }
+            len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+            buffer[(int)((3*(size-1)) % mod)] = newValue_x/len;
+            buffer[(int)((3*(size-1)+1) % mod)] = newValue_y/len;
+            buffer[(int)((3*(size-1)+2) % mod)] = newValue_z/len;
+
+
+            for(int i = 3*(size - 2*collumns); i < 3*size; i++){
+                n[i] = buffer[(int)(i % mod)];
+            }
+        }
+
+        //normalizace
+        /*double len;
+        for(int i = 0; i< size; i++){
+            len = Math.sqrt(n[3*i]*n[3*i]+n[3*i+1]*n[3*i+1]+n[3*i+2]*n[3*i+2]);
+            n[3*i] = n[3*i]/len;
+            n[3*i+1] = n[3*i+1]/len;
+            n[3*i+2] = n[3*i+2]/len;
+        }*/
+        //
+        return n;
+    }
+
+    // 12.3.2017 METODA!!!!!! -- moje vypocty NEW
+    private double [] getDepthMap4(){
+        // 4. step
+
+        //uvodni estimate bez regularizace
+        int size = collumns*rows;
+        double [] n = new double[3*size];
+        double x,y,z,l;
+
+        // seradime markery podle barvy ktere odpovidaji
+        double [] gr = new double[markers.size()];
+
+        markers.sort((m1, m2) -> {
+            int posm1,posm2;
+            posm1 = (int)(m1.getPosY()*rows*collumns + m1.getPosX()*collumns);
+            posm2 = (int)(m2.getPosY()*rows*collumns + m2.getPosX()*collumns);
+            double g1 = grayscale[posm1];
+            double g2 = grayscale[posm2];
+            return Double.compare(g1,g2);
+        });
+        for(int i = 0; i < gr.length; i++){
+            Marker m = markers.get(i);
+            int posm = (int)(m.getPosY()*rows*collumns + m.getPosX()*collumns);
+            double gm = grayscale[posm];
+            gr[i] = gm;
+        }
+        double gm;
+        int m;
+        double nx,ny,nz;
+        double intv,val,pos;
+
+        for(int i = 0; i < size; i++){
+            gm = grayscale[i];
+            m = 0;
+            while(m < gr.length && gm > gr[m]) m++;
+            if(m == 0){ // 0 - m1
+                intv = gr[m];
+                val = gm;
+                pos = val/intv;
+                nx = markers.get(m).getX()*pos;
+                ny = markers.get(m).getY()*pos;
+                nz = markers.get(m).getZ()*pos;
+            } else if(m == gr.length){ // mn - 1
+                intv = 1 - gr[m-1];
+                val = gm - gr[m-1];
+                pos = val/intv;
+                nx = markers.get(m-1).getX()*(1-pos);
+                ny = markers.get(m-1).getY()*(1-pos);
+                nz = markers.get(m-1).getZ()*(1-pos);
+            } else { // mi - mj
+                intv = gr[m] - gr[m-1];
+                val = gm - gr[m-1];
+                pos = val/intv;
+                nx = markers.get(m-1).getX()*(1-pos) + markers.get(m).getX()*(pos);
+                ny = markers.get(m-1).getY()*(1-pos) + markers.get(m).getY()*(pos);
+                nz = markers.get(m-1).getZ()*(1-pos) + markers.get(m).getZ()*(pos);
+            }
+            if(nz < 127.5) {
+                nz = 127.5;
+                /*nx = -nx;
+                ny = -ny;
+                nz = -nz;*/
+            }
+            l = Math.sqrt(nx*nx + ny*ny + nz*nz);
+            n[3*i] = nx/l;
+            n[3*i+1] = ny/l;
+            n[3*i+2] = nz/l;
+
+        }
+
+        /*for(int i = 0; i < size; i++){
+            x = ((q)*grayscale[i])/lightX;
+            y = ((q)*grayscale[i])/lightY;
+            z = ((q)*grayscale[i])/lightZ;
+            if(z < 0) {
+                //z = 0;
+                x = -x;
+                y = -y;
+                z = -z;
+            }
+            l = Math.sqrt(x*x + y*y + z*z);
+
+            n[3*i] = x/l;
+            n[3*i+1] = y/l;
+            n[3*i+2] = z/l;
+        }*/
+        /*if(n != null)
+        return n;*/
+        // buffer field
+        int mod = 0;
+        double [] buffer = new double [2*3*collumns];
+
+        // matice s neighbours = nei
+
+        int neighbourSize;
+
+        double len;
+
+        double newValue_x;
+        double newValue_y;
+        double newValue_z;
+
+        double sumX = 0;
+        double sumY = 0;
+        double sumZ = 0;
+        //double [] s = new double[size];
+        for(int g = 0; g < steps; g++){ // hlavni loop = pocet kroku gauss-siedela
+
+            // pixel vlevo nahore
+
+            neighbourSize = 2; // ma dva sousedy
+            // soucet n_x sousedu
+            sumX = n[3] + n[3*collumns];
+            sumY = n[4] + n[3*collumns+1];
+            sumZ = n[5] + n[3*collumns+2];
+            // pocitani zvlast
+            newValue_x = (lightX*((1/q)*grayscale[0] - n[1]*lightY - n[2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+            newValue_y = (lightY*((1/q)*grayscale[0] - n[0]*lightX - n[2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+            newValue_z = (lightZ*((1/q)*grayscale[0] - n[0]*lightX - n[1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+            if(newValue_z < 0){
+                newValue_z = 0;
+                newValue_z = -newValue_z;
+                newValue_x = -newValue_x;
+                newValue_y = -newValue_y;
+            }
+            len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+            buffer[mod] = newValue_x/len;
+            buffer[mod+1] = newValue_y/len;
+            buffer[mod+2] = newValue_z/len;
+            mod+=3;
+
+            //horni radka
+            neighbourSize = 3;
+            for(int i = 1; i < collumns-1;i++){ // bereme x,y,z najednou
+                // soucet n_x sousedu
+                sumX = n[3*i - 3] + n[3*i + 3*collumns] + n[3*i + 3];
+                sumY = n[3*i - 2] + n[3*i + 3*collumns + 1] + n[3*i + 4];
+                sumZ = n[3*i - 1] + n[3*i + 3*collumns + 2] + n[3*i + 5];
+                // pocitani zvlast
+                newValue_x = (lightX*((1/q)*grayscale[i] - n[3*i + 1]*lightY - n[3*i + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+                newValue_y = (lightY*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+                newValue_z = (lightZ*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+                if(newValue_z < 0){
+                    newValue_z = 0;
+                newValue_z = -newValue_z;
+                newValue_x = -newValue_x;
+                newValue_y = -newValue_y;
+                }
+                len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+                buffer[mod] = newValue_x/len;
+                buffer[mod + 1] = newValue_y/len;
+                buffer[mod + 2] = newValue_z/len;
+                mod+=3;
+            }
+
+            // pixel vpravo nahore
+
+            neighbourSize = 2; // ma dva sousedy
+            // soucet n_x sousedu
+            sumX = n[3*(collumns-1) - 3] + n[3*(collumns-1) + 3*collumns];
+            sumY = n[3*(collumns-1) - 2] + n[3*(collumns-1) + 3*collumns+1];
+            sumZ = n[3*(collumns-1) - 1] + n[3*(collumns-1) + 3*collumns+2];
+            // pocitani zvlast
+            newValue_x = (lightX*((1/q)*grayscale[(collumns-1)] - n[3*(collumns-1) + 1]*lightY - n[3*(collumns-1) + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+            newValue_y = (lightY*((1/q)*grayscale[(collumns-1)] - n[3*(collumns-1)]*lightX - n[3*(collumns-1) + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+            newValue_z = (lightZ*((1/q)*grayscale[(collumns-1)] - n[3*(collumns-1)]*lightX - n[3*(collumns-1) + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+            if(newValue_z < 0){
+                //newValue_z = 0;
+                newValue_z = -newValue_z;
+                newValue_x = -newValue_x;
+                newValue_y = -newValue_y;
+            }
+            len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+            buffer[mod] = newValue_x/len;
+            buffer[mod + 1] = newValue_y/len;
+            buffer[mod + 2] = newValue_z/len;
+            mod+=3;
+
+            neighbourSize = 3;
+            // po radcich telo
+            for(int i = collumns; i < size - collumns; i += collumns){
+                //prvek vlevo
+                // soucet n_x sousedu
+                sumX = n[3*i - 3*collumns] + n[3*i + 3*collumns] + n[3*i + 3];
+                sumY = n[3*i - 3*collumns + 1] + n[3*i + 3*collumns + 1] + n[3*i + 4];
+                sumZ = n[3*i - 3*collumns + 2] + n[3*i + 3*collumns + 2] + n[3*i + 5];
+                // pocitani zvlast
+                newValue_x = (lightX*((1/q)*grayscale[i] - n[3*i + 1]*lightY - n[3*i + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+                newValue_y = (lightY*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+                newValue_z = (lightZ*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+                if(newValue_z < 0){
+                    //newValue_z = 0;
+                newValue_z = -newValue_z;
+                newValue_x = -newValue_x;
+                newValue_y = -newValue_y;
+                }
+
+                if((i - 2*collumns) >= 0){ // pokud jsme v poli
+                    n[3*(i - 2*collumns)] = buffer[mod];
+                    n[3*(i - 2*collumns)+1] = buffer[mod+1];
+                    n[3*(i - 2*collumns)+2] = buffer[mod+2];
+                }
+
+                len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+                buffer[mod] = newValue_x/len;
+                buffer[mod+1] = newValue_y/len;
+                buffer[mod+2] = newValue_z/len;
+                mod+=3;
+
+                //prostredek
+                neighbourSize = 4;
+                for(int j = 1; j < collumns-1; j++){ // vnitrek radku
+                    // soucet n_x sousedu
+                    sumX = n[3*(i+j) - 3*collumns] + n[3*(i+j) + 3*collumns] + n[3*(i+j) + 3] + n[3*(i+j) - 3];
+                    sumY = n[3*(i+j) - 3*collumns + 1] + n[3*(i+j) + 3*collumns + 1] + n[3*(i+j) + 4] + n[3*(i+j) - 2];
+                    sumZ = n[3*(i+j) - 3*collumns + 2] + n[3*(i+j) + 3*collumns + 2] + n[3*(i+j) + 5] + n[3*(i+j) - 1];
+                    // pocitani zvlast
+                    newValue_x = (lightX*((1/q)*grayscale[(i+j)] - n[3*(i+j) + 1]*lightY - n[3*(i+j) + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*((double)neighbourSize));
+                    newValue_y = (lightY*((1/q)*grayscale[(i+j)] - n[3*(i+j)]*lightX - n[3*(i+j) + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*((double)neighbourSize));
+                    newValue_z = (lightZ*((1/q)*grayscale[(i+j)] - n[3*(i+j)]*lightX - n[3*(i+j) + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*((double)neighbourSize));
+
+                    if(newValue_z < 0){
+                        //newValue_z = 0;
+                        newValue_z = -newValue_z;
+                        newValue_x = -newValue_x;
+                        newValue_y = -newValue_y;
+                    }
+
+                    if(((i+j) - 2*collumns) >= 0){ // pokud jsme v poli
+                        n[3*((i+j) - 2*collumns)] = buffer[mod];
+                        n[3*((i+j) - 2*collumns)+1] = buffer[mod+1];
+                        n[3*((i+j) - 2*collumns)+2] = buffer[mod+2];
+                    }
+
+                    len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+                    buffer[mod] = newValue_x/len;
+                    buffer[mod+1] = newValue_y/len;
+                    buffer[mod+2] = newValue_z/len;
+                    mod+=3;
+                }
+
+                //prvek vpravo
+                neighbourSize = 3;
+                // soucet n_x sousedu
+                sumX = n[3*(i+collumns-1) - 3*collumns] + n[3*(i+collumns-1) + 3*collumns] + n[3*(i+collumns-1) - 3];
+                sumY = n[3*(i+collumns-1) - 3*collumns + 1] + n[3*(i+collumns-1) + 3*collumns + 1] + n[3*(i+collumns-1) - 2];
+                sumZ = n[3*(i+collumns-1) - 3*collumns + 2] + n[3*(i+collumns-1) + 3*collumns + 2] + n[3*(i+collumns-1) - 1];
+                // pocitani zvlast
+                newValue_x = (lightX*((1/q)*grayscale[(i+collumns-1)] - n[3*(i+collumns-1) + 1]*lightY - n[3*(i+collumns-1) + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+                newValue_y = (lightY*((1/q)*grayscale[(i+collumns-1)] - n[3*(i+collumns-1)]*lightX - n[3*(i+collumns-1) + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+                newValue_z = (lightZ*((1/q)*grayscale[(i+collumns-1)] - n[3*(i+collumns-1)]*lightX - n[3*(i+collumns-1) + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+                if(newValue_z < 0){
+                    //newValue_z = 0;
+                newValue_z = -newValue_z;
+                newValue_x = -newValue_x;
+                newValue_y = -newValue_y;
+                }
+
+                if(((i+collumns-1) - 2*collumns) >= 0){ // pokud jsme v poli
+                    n[3*((i+collumns-1) - 2*collumns)] = buffer[mod];
+                    n[3*((i+collumns-1) - 2*collumns)+1] = buffer[mod+1];
+                    n[3*((i+collumns-1) - 2*collumns)+2] = buffer[mod+2];
+                }
+
+                len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+                buffer[mod] = newValue_x/len;
+                buffer[mod+1] = newValue_y/len;
+                buffer[mod+2] = newValue_z/len;
+                mod+=3;
+                if(mod == 2*3*collumns){
+                    mod = 0;
+                }
+
+            }
+
+            // pixel vlevo dole
+
+            neighbourSize = 2; // ma dva sousedy
+            // soucet n_x sousedu
+            sumX = n[3*(size - collumns) + 3] + n[3*(size - collumns) - 3*collumns];
+            sumY = n[3*(size - collumns) + 4] + n[3*(size - collumns) - 3*collumns+1];
+            sumZ = n[3*(size - collumns) + 5] + n[3*(size - collumns) - 3*collumns+2];
+            // pocitani zvlast
+            newValue_x = (lightX*((1/q)*grayscale[(size - collumns)] - n[3*(size - collumns) + 1]*lightY - n[3*(size - collumns) + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+            newValue_y = (lightY*((1/q)*grayscale[(size - collumns)] - n[3*(size - collumns)]*lightX - n[3*(size - collumns) + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+            newValue_z = (lightZ*((1/q)*grayscale[(size - collumns)] - n[3*(size - collumns)]*lightX - n[3*(size - collumns) +1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+            if(newValue_z < 0){
+                //newValue_z = 0;
+                newValue_z = -newValue_z;
+                newValue_x = -newValue_x;
+                newValue_y = -newValue_y;
+            }
+            if(((size - collumns) - 2*collumns) >= 0){ // pokud jsme v poli
+                n[3*((size - collumns) - 2*collumns)] = buffer[mod];
+                n[3*((size - collumns) - 2*collumns)+1] = buffer[mod+1];
+                n[3*((size - collumns) - 2*collumns)+2] = buffer[mod+2];
+            }
+            len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+            buffer[mod] = newValue_x/len;
+            buffer[mod+1] = newValue_y/len;
+            buffer[mod+2] = newValue_z/len;
+            mod+=3;
+
+            //spodni radka
+            neighbourSize = 3;
+            for(int i = size - collumns + 1; i < size-1;i++){ // bereme x,y,z najednou
+                // soucet n_x sousedu
+                sumX = n[3*i - 3] + n[3*i - 3*collumns] + n[3*i + 3];
+                sumY = n[3*i - 2] + n[3*i - 3*collumns + 1] + n[3*i + 4];
+                sumZ = n[3*i - 1] + n[3*i - 3*collumns + 2] + n[3*i + 5];
+                // pocitani zvlast
+                newValue_x = (lightX*((1/q)*grayscale[i] - n[3*i + 1]*lightY - n[3*i + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+                newValue_y = (lightY*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+                newValue_z = (lightZ*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+                if(newValue_z < 0){
+                    //newValue_z = 0;
+                newValue_z = -newValue_z;
+                newValue_x = -newValue_x;
+                newValue_y = -newValue_y;
+                }
+                if((i - 2*collumns) >= 0){ // pokud jsme v poli
+                    n[3*(i - 2*collumns)] = buffer[mod];
+                    n[3*(i - 2*collumns)+1] = buffer[mod+1];
+                    n[3*(i - 2*collumns)+2] = buffer[mod+2];
+                }
+                len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+                buffer[mod] = newValue_x/len;
+                buffer[mod+1] = newValue_y/len;
+                buffer[mod+2] = newValue_z/len;
+                mod+=3;
+            }
+
+            // pixel vpravo dole
+
+            neighbourSize = 2; // ma dva sousedy
+            // soucet n_x sousedu
+            sumX = n[3*(size-1) - 3] + n[3*(size-1) - 3*collumns];
+            sumY = n[3*(size-1) - 2] + n[3*(size-1) - 3*collumns+1];
+            sumZ = n[3*(size-1) - 1] + n[3*(size-1) - 3*collumns+2];
+            // pocitani zvlast
+            newValue_x = (lightX*((1/q)*grayscale[(size-1)] - n[3*(size-1) + 1]*lightY - n[3*(size-1) + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+            newValue_y = (lightY*((1/q)*grayscale[(size-1)] - n[3*(size-1)]*lightX - n[3*(size-1) + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+            newValue_z = (lightZ*((1/q)*grayscale[(size-1)] - n[3*(size-1)]*lightX - n[3*(size-1) + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+            if(newValue_z < 0){
+                //newValue_z = 0;
+                newValue_z = -newValue_z;
+                newValue_x = -newValue_x;
+                newValue_y = -newValue_y;
+            }
+            if(((size-1) - 2*collumns) >= 0){ // pokud jsme v poli
+                n[3*((size-1) - 2*collumns)] = buffer[mod];
+                n[3*((size-1) - 2*collumns)+1] = buffer[mod+1];
+                n[3*((size-1) - 2*collumns)+2] = buffer[mod+2];
+            }
+            len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+            buffer[mod] = newValue_x/len;
+            buffer[mod+1] = newValue_y/len;
+            buffer[mod+2] = newValue_z/len;
+            mod+=3;
+            if(mod == 2*3*collumns){
+                mod = 0;
+            }
+            for(int i = (size - 2*collumns); i < size; i++){
+                n[3*i] = buffer[mod];
+                n[3*i+1] = buffer[mod+1];
+                n[3*i+2] = buffer[mod+2];
+                mod+=3;
+                if(mod == 2*3*collumns){
+                    mod = 0;
+                }
+            }
+            //System.out.println("l");
+            mod = 0;
+        }
+
+        //normalizace
+
+        /*for(int i = 0; i< size; i++){
+            len = Math.sqrt(n[3*i]*n[3*i]+n[3*i+1]*n[3*i+1]+n[3*i+2]*n[3*i+2]);
+            n[3*i] = n[3*i]/len;
+            n[3*i+1] = n[3*i+1]/len;
+            n[3*i+2] = n[3*i+2]/len;
+        }*/
+        //
+        return n;
+    }
+
+    private double [] getDepthMap(){
+        // 4. step
+
+        /*//uvodni estimate bez regularizace
+        int size = collumns*rows;
+        double [] n = new double[3*size];
+        double x,y,z,l;
+
+        // seradime markery podle barvy ktere odpovidaji
+        double [] gr = new double[markers.size()];
+
+        markers.sort((m1, m2) -> {
+            int posm1,posm2;
+            posm1 = (int)(m1.getPosY()*rows*collumns + m1.getPosX()*collumns);
+            posm2 = (int)(m2.getPosY()*rows*collumns + m2.getPosX()*collumns);
+            double g1 = grayscale[posm1];
+            double g2 = grayscale[posm2];
+            return Double.compare(g1,g2);
+        });
+        for(int i = 0; i < gr.length; i++){
+            Marker m = markers.get(i);
+            int posm = (int)(m.getPosY()*rows*collumns + m.getPosX()*collumns);
+            double gm = grayscale[posm];
+            gr[i] = gm;
+        }
+        double gm;
+        int m;
+        double nx,ny,nz;
+        double intv,val,pos;
+
+        for(int i = 0; i < size; i++){
+            gm = grayscale[i];
+            m = 0;
+            while(m < gr.length && gm > gr[m]) m++;
+            if(m == 0){ // 0 - m1
+                intv = gr[m];
+                val = gm;
+                pos = val/intv;
+                nx = markers.get(m).getX()*pos;
+                ny = markers.get(m).getY()*pos;
+                nz = markers.get(m).getZ()*pos;
+            } else if(m == gr.length){ // mn - 1
+                intv = 1 - gr[m-1];
+                val = gm - gr[m-1];
+                pos = val/intv;
+                nx = markers.get(m-1).getX()*(1-pos);
+                ny = markers.get(m-1).getY()*(1-pos);
+                nz = markers.get(m-1).getZ()*(1-pos);
+            } else { // mi - mj
+                intv = gr[m] - gr[m-1];
+                val = gm - gr[m-1];
+                pos = val/intv;
+                nx = markers.get(m-1).getX()*(1-pos) + markers.get(m).getX()*(pos);
+                ny = markers.get(m-1).getY()*(1-pos) + markers.get(m).getY()*(pos);
+                nz = markers.get(m-1).getZ()*(1-pos) + markers.get(m).getZ()*(pos);
+            }
+            if(nz < 127.5) {
+                nz = 127.5;
+                /*nx = -nx;
+                ny = -ny;
+                nz = -nz;*/
+           /* }
+            l = Math.sqrt(nx*nx + ny*ny + nz*nz);
+            n[3*i] = nx/l;
+            n[3*i+1] = ny/l;
+            n[3*i+2] = nz/l;
+
+        }*/
+
+        /*for(int i = 0; i < size; i++){
+            x = ((q)*grayscale[i])/lightX;
+            y = ((q)*grayscale[i])/lightY;
+            z = ((q)*grayscale[i])/lightZ;
+            if(z < 0) {
+                //z = 0;
+                x = -x;
+                y = -y;
+                z = -z;
+            }
+            l = Math.sqrt(x*x + y*y + z*z);
+
+            n[3*i] = x/l;
+            n[3*i+1] = y/l;
+            n[3*i+2] = z/l;
+        }*/
+        /*if(n != null)
+        return n;*/
+
+        // buffer field
+        int mod = 0;
+        double [] buffer = new double [2*3*collumns];
+
+        // matice s neighbours = nei
+
+        int neighbourSize;
+
+        double len;
+
+        double newValue_x;
+        double newValue_y;
+        double newValue_z;
+
+        double sumX = 0;
+        double sumY = 0;
+        double sumZ = 0;
+        //double [] s = new double[size];
+        for(int g = 0; g < steps; g++){ // hlavni loop = pocet kroku gauss-siedela
+
+            // pixel vlevo nahore
+
+            neighbourSize = 2; // ma dva sousedy
+            // soucet n_x sousedu
+            sumX = n[3] + n[3*collumns];
+            sumY = n[4] + n[3*collumns+1];
+            sumZ = n[5] + n[3*collumns+2];
+            // pocitani zvlast
+            newValue_x = (lightX*((1/q)*grayscale[0] - n[1]*lightY - n[2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+            newValue_y = (lightY*((1/q)*grayscale[0] - n[0]*lightX - n[2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+            newValue_z = (lightZ*((1/q)*grayscale[0] - n[0]*lightX - n[1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+            if(newValue_z < 0){
+                newValue_z = 0;
+                newValue_z = -newValue_z;
+                newValue_x = -newValue_x;
+                newValue_y = -newValue_y;
+            }
+            len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+            buffer[mod] = newValue_x/len;
+            buffer[mod+1] = newValue_y/len;
+            buffer[mod+2] = newValue_z/len;
+            mod+=3;
+
+            //horni radka
+            neighbourSize = 3;
+            for(int i = 1; i < collumns-1;i++){ // bereme x,y,z najednou
+                // soucet n_x sousedu
+                sumX = n[3*i - 3] + n[3*i + 3*collumns] + n[3*i + 3];
+                sumY = n[3*i - 2] + n[3*i + 3*collumns + 1] + n[3*i + 4];
+                sumZ = n[3*i - 1] + n[3*i + 3*collumns + 2] + n[3*i + 5];
+                // pocitani zvlast
+                newValue_x = (lightX*((1/q)*grayscale[i] - n[3*i + 1]*lightY - n[3*i + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+                newValue_y = (lightY*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+                newValue_z = (lightZ*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+                if(newValue_z < 0){
+                    newValue_z = 0;
+                    newValue_z = -newValue_z;
+                    newValue_x = -newValue_x;
+                    newValue_y = -newValue_y;
+                }
+                len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+                buffer[mod] = newValue_x/len;
+                buffer[mod + 1] = newValue_y/len;
+                buffer[mod + 2] = newValue_z/len;
+                mod+=3;
+            }
+
+            // pixel vpravo nahore
+
+            neighbourSize = 2; // ma dva sousedy
+            // soucet n_x sousedu
+            sumX = n[3*(collumns-1) - 3] + n[3*(collumns-1) + 3*collumns];
+            sumY = n[3*(collumns-1) - 2] + n[3*(collumns-1) + 3*collumns+1];
+            sumZ = n[3*(collumns-1) - 1] + n[3*(collumns-1) + 3*collumns+2];
+            // pocitani zvlast
+            newValue_x = (lightX*((1/q)*grayscale[(collumns-1)] - n[3*(collumns-1) + 1]*lightY - n[3*(collumns-1) + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+            newValue_y = (lightY*((1/q)*grayscale[(collumns-1)] - n[3*(collumns-1)]*lightX - n[3*(collumns-1) + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+            newValue_z = (lightZ*((1/q)*grayscale[(collumns-1)] - n[3*(collumns-1)]*lightX - n[3*(collumns-1) + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+            if(newValue_z < 0){
+                //newValue_z = 0;
+                newValue_z = -newValue_z;
+                newValue_x = -newValue_x;
+                newValue_y = -newValue_y;
+            }
+            len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+            buffer[mod] = newValue_x/len;
+            buffer[mod + 1] = newValue_y/len;
+            buffer[mod + 2] = newValue_z/len;
+            mod+=3;
+
+            neighbourSize = 3;
+            // po radcich telo
+            for(int i = collumns; i < size - collumns; i += collumns){
+                //prvek vlevo
+                // soucet n_x sousedu
+                sumX = n[3*i - 3*collumns] + n[3*i + 3*collumns] + n[3*i + 3];
+                sumY = n[3*i - 3*collumns + 1] + n[3*i + 3*collumns + 1] + n[3*i + 4];
+                sumZ = n[3*i - 3*collumns + 2] + n[3*i + 3*collumns + 2] + n[3*i + 5];
+                // pocitani zvlast
+                newValue_x = (lightX*((1/q)*grayscale[i] - n[3*i + 1]*lightY - n[3*i + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+                newValue_y = (lightY*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+                newValue_z = (lightZ*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+                if(newValue_z < 0){
+                    //newValue_z = 0;
+                    newValue_z = -newValue_z;
+                    newValue_x = -newValue_x;
+                    newValue_y = -newValue_y;
+                }
+
+                if((i - 2*collumns) >= 0){ // pokud jsme v poli
+                    n[3*(i - 2*collumns)] = buffer[mod];
+                    n[3*(i - 2*collumns)+1] = buffer[mod+1];
+                    n[3*(i - 2*collumns)+2] = buffer[mod+2];
+                }
+
+                len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+                buffer[mod] = newValue_x/len;
+                buffer[mod+1] = newValue_y/len;
+                buffer[mod+2] = newValue_z/len;
+                mod+=3;
+
+                //prostredek
+                neighbourSize = 4;
+                for(int j = 1; j < collumns-1; j++){ // vnitrek radku
+                    // soucet n_x sousedu
+                    sumX = n[3*(i+j) - 3*collumns] + n[3*(i+j) + 3*collumns] + n[3*(i+j) + 3] + n[3*(i+j) - 3];
+                    sumY = n[3*(i+j) - 3*collumns + 1] + n[3*(i+j) + 3*collumns + 1] + n[3*(i+j) + 4] + n[3*(i+j) - 2];
+                    sumZ = n[3*(i+j) - 3*collumns + 2] + n[3*(i+j) + 3*collumns + 2] + n[3*(i+j) + 5] + n[3*(i+j) - 1];
+                    // pocitani zvlast
+                    newValue_x = (lightX*((1/q)*grayscale[(i+j)] - n[3*(i+j) + 1]*lightY - n[3*(i+j) + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*((double)neighbourSize));
+                    newValue_y = (lightY*((1/q)*grayscale[(i+j)] - n[3*(i+j)]*lightX - n[3*(i+j) + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*((double)neighbourSize));
+                    newValue_z = (lightZ*((1/q)*grayscale[(i+j)] - n[3*(i+j)]*lightX - n[3*(i+j) + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*((double)neighbourSize));
+
+                    if(newValue_z < 0){
+                        //newValue_z = 0;
+                        newValue_z = -newValue_z;
+                        newValue_x = -newValue_x;
+                        newValue_y = -newValue_y;
+                    }
+
+                    if(((i+j) - 2*collumns) >= 0){ // pokud jsme v poli
+                        n[3*((i+j) - 2*collumns)] = buffer[mod];
+                        n[3*((i+j) - 2*collumns)+1] = buffer[mod+1];
+                        n[3*((i+j) - 2*collumns)+2] = buffer[mod+2];
+                    }
+
+                    len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+                    buffer[mod] = newValue_x/len;
+                    buffer[mod+1] = newValue_y/len;
+                    buffer[mod+2] = newValue_z/len;
+                    mod+=3;
+                }
+
+                //prvek vpravo
+                neighbourSize = 3;
+                // soucet n_x sousedu
+                sumX = n[3*(i+collumns-1) - 3*collumns] + n[3*(i+collumns-1) + 3*collumns] + n[3*(i+collumns-1) - 3];
+                sumY = n[3*(i+collumns-1) - 3*collumns + 1] + n[3*(i+collumns-1) + 3*collumns + 1] + n[3*(i+collumns-1) - 2];
+                sumZ = n[3*(i+collumns-1) - 3*collumns + 2] + n[3*(i+collumns-1) + 3*collumns + 2] + n[3*(i+collumns-1) - 1];
+                // pocitani zvlast
+                newValue_x = (lightX*((1/q)*grayscale[(i+collumns-1)] - n[3*(i+collumns-1) + 1]*lightY - n[3*(i+collumns-1) + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+                newValue_y = (lightY*((1/q)*grayscale[(i+collumns-1)] - n[3*(i+collumns-1)]*lightX - n[3*(i+collumns-1) + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+                newValue_z = (lightZ*((1/q)*grayscale[(i+collumns-1)] - n[3*(i+collumns-1)]*lightX - n[3*(i+collumns-1) + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+                if(newValue_z < 0){
+                    //newValue_z = 0;
+                    newValue_z = -newValue_z;
+                    newValue_x = -newValue_x;
+                    newValue_y = -newValue_y;
+                }
+
+                if(((i+collumns-1) - 2*collumns) >= 0){ // pokud jsme v poli
+                    n[3*((i+collumns-1) - 2*collumns)] = buffer[mod];
+                    n[3*((i+collumns-1) - 2*collumns)+1] = buffer[mod+1];
+                    n[3*((i+collumns-1) - 2*collumns)+2] = buffer[mod+2];
+                }
+
+                len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+                buffer[mod] = newValue_x/len;
+                buffer[mod+1] = newValue_y/len;
+                buffer[mod+2] = newValue_z/len;
+                mod+=3;
+                if(mod == 2*3*collumns){
+                    mod = 0;
+                }
+
+            }
+
+            // pixel vlevo dole
+
+            neighbourSize = 2; // ma dva sousedy
+            // soucet n_x sousedu
+            sumX = n[3*(size - collumns) + 3] + n[3*(size - collumns) - 3*collumns];
+            sumY = n[3*(size - collumns) + 4] + n[3*(size - collumns) - 3*collumns+1];
+            sumZ = n[3*(size - collumns) + 5] + n[3*(size - collumns) - 3*collumns+2];
+            // pocitani zvlast
+            newValue_x = (lightX*((1/q)*grayscale[(size - collumns)] - n[3*(size - collumns) + 1]*lightY - n[3*(size - collumns) + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+            newValue_y = (lightY*((1/q)*grayscale[(size - collumns)] - n[3*(size - collumns)]*lightX - n[3*(size - collumns) + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+            newValue_z = (lightZ*((1/q)*grayscale[(size - collumns)] - n[3*(size - collumns)]*lightX - n[3*(size - collumns) +1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+            if(newValue_z < 0){
+                //newValue_z = 0;
+                newValue_z = -newValue_z;
+                newValue_x = -newValue_x;
+                newValue_y = -newValue_y;
+            }
+            if(((size - collumns) - 2*collumns) >= 0){ // pokud jsme v poli
+                n[3*((size - collumns) - 2*collumns)] = buffer[mod];
+                n[3*((size - collumns) - 2*collumns)+1] = buffer[mod+1];
+                n[3*((size - collumns) - 2*collumns)+2] = buffer[mod+2];
+            }
+            len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+            buffer[mod] = newValue_x/len;
+            buffer[mod+1] = newValue_y/len;
+            buffer[mod+2] = newValue_z/len;
+            mod+=3;
+
+            //spodni radka
+            neighbourSize = 3;
+            for(int i = size - collumns + 1; i < size-1;i++){ // bereme x,y,z najednou
+                // soucet n_x sousedu
+                sumX = n[3*i - 3] + n[3*i - 3*collumns] + n[3*i + 3];
+                sumY = n[3*i - 2] + n[3*i - 3*collumns + 1] + n[3*i + 4];
+                sumZ = n[3*i - 1] + n[3*i - 3*collumns + 2] + n[3*i + 5];
+                // pocitani zvlast
+                newValue_x = (lightX*((1/q)*grayscale[i] - n[3*i + 1]*lightY - n[3*i + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+                newValue_y = (lightY*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+                newValue_z = (lightZ*((1/q)*grayscale[i] - n[3*i]*lightX - n[3*i + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+                if(newValue_z < 0){
+                    //newValue_z = 0;
+                    newValue_z = -newValue_z;
+                    newValue_x = -newValue_x;
+                    newValue_y = -newValue_y;
+                }
+                if((i - 2*collumns) >= 0){ // pokud jsme v poli
+                    n[3*(i - 2*collumns)] = buffer[mod];
+                    n[3*(i - 2*collumns)+1] = buffer[mod+1];
+                    n[3*(i - 2*collumns)+2] = buffer[mod+2];
+                }
+                len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+                buffer[mod] = newValue_x/len;
+                buffer[mod+1] = newValue_y/len;
+                buffer[mod+2] = newValue_z/len;
+                mod+=3;
+            }
+
+            // pixel vpravo dole
+
+            neighbourSize = 2; // ma dva sousedy
+            // soucet n_x sousedu
+            sumX = n[3*(size-1) - 3] + n[3*(size-1) - 3*collumns];
+            sumY = n[3*(size-1) - 2] + n[3*(size-1) - 3*collumns+1];
+            sumZ = n[3*(size-1) - 1] + n[3*(size-1) - 3*collumns+2];
+            // pocitani zvlast
+            newValue_x = (lightX*((1/q)*grayscale[(size-1)] - n[3*(size-1) + 1]*lightY - n[3*(size-1) + 2]*lightZ) + lm*sumX)/(lightX*lightX + lm*(neighbourSize));
+            newValue_y = (lightY*((1/q)*grayscale[(size-1)] - n[3*(size-1)]*lightX - n[3*(size-1) + 2]*lightZ) + lm*sumY)/(lightY*lightY + lm*(neighbourSize));
+            newValue_z = (lightZ*((1/q)*grayscale[(size-1)] - n[3*(size-1)]*lightX - n[3*(size-1) + 1]*lightY) + lm*sumZ)/(lightZ*lightZ + lm*(neighbourSize));
+
+            if(newValue_z < 0){
+                //newValue_z = 0;
+                newValue_z = -newValue_z;
+                newValue_x = -newValue_x;
+                newValue_y = -newValue_y;
+            }
+            if(((size-1) - 2*collumns) >= 0){ // pokud jsme v poli
+                n[3*((size-1) - 2*collumns)] = buffer[mod];
+                n[3*((size-1) - 2*collumns)+1] = buffer[mod+1];
+                n[3*((size-1) - 2*collumns)+2] = buffer[mod+2];
+            }
+            len = Math.sqrt(newValue_x*newValue_x + newValue_y*newValue_y + newValue_z*newValue_z); // length
+            buffer[mod] = newValue_x/len;
+            buffer[mod+1] = newValue_y/len;
+            buffer[mod+2] = newValue_z/len;
+            mod+=3;
+            if(mod == 2*3*collumns){
+                mod = 0;
+            }
+            for(int i = (size - 2*collumns); i < size; i++){
+                n[3*i] = buffer[mod];
+                n[3*i+1] = buffer[mod+1];
+                n[3*i+2] = buffer[mod+2];
+                mod+=3;
+                if(mod == 2*3*collumns){
+                    mod = 0;
+                }
+            }
+            //System.out.println("l");
+            mod = 0;
+        }
+
+        //normalizace
+
+        /*for(int i = 0; i< size; i++){
             len = Math.sqrt(n[3*i]*n[3*i]+n[3*i+1]*n[3*i+1]+n[3*i+2]*n[3*i+2]);
             n[3*i] = n[3*i]/len;
             n[3*i+1] = n[3*i+1]/len;
