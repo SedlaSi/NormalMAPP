@@ -530,9 +530,9 @@ public class MainScreen extends JFrame {
         Rectangle r1 = new Rectangle(352,335,20,20);
         Rectangle r2 = new Rectangle(767,344,20,20);
         Rectangle r3 = new Rectangle(577,187,20,20);
-        Marker m1 = new Marker("15# Marker",127, 194, 235, 0.12037037037037036, 0.48333333333333334);
-        Marker m2 = new Marker("16# Marker",73, 87, 235, 0.8351851851851851, 0.5);
-        Marker m3 = new Marker("18# Marker",185, 161, 235, 0.48333333333333334, 0.20925925925925926);
+        Marker m1 = new Marker("15# Marker",37, 130, 217, 0.12037037037037036, 0.48333333333333334);
+        Marker m2 = new Marker("16# Marker",216, 127, 219, 0.8351851851851851, 0.5);
+        Marker m3 = new Marker("18# Marker",129, 219, 217, 0.48333333333333334, 0.20925925925925926);
         m1.setSquare(r1);
         m2.setSquare(r2);
         m3.setSquare(r3);
