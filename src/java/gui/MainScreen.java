@@ -1,5 +1,6 @@
 package gui;
 
+import algorithms.ShapeFromShading;
 import gui.sfs.AlgorithmSettingsDialog;
 import gui.sfs.EditMarkerScreen;
 import gui.sfs.Marker;
@@ -13,12 +14,12 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.DataLine;
 import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -37,6 +38,7 @@ public class MainScreen extends JFrame {
     Session session;
     Tutorial tutorialDialog;
     EditMarkerScreen editMarkerScreen;
+    JLabel statusLabel;
     private static final int IMPATIENT_CUSTOMER_TIME = 30;
 
     private final boolean updateAllImages = true;
@@ -216,14 +218,25 @@ public class MainScreen extends JFrame {
                 if(originalMapSettingsBox.activeButton == originalMapSettingsBox.addMarkerButton){
                     originalMapImagePanel.addSquare(mouseEvent.getX(), mouseEvent.getY());
                     originalMapSettingsBox.updateList();
+                    if(markerList.size() == 3){ // pridali sme marker a jsou zrovna 3
+                        statusLabel.setText(ShapeFromShading.getLightDirection(markerList,image.getOriginalMap().getWidth(),image.getOriginalMap().getHeight()));
+                    }
                     originalMapImagePanel.revalidate();
                     originalMapImagePanel.repaint();
                 } else if(originalMapSettingsBox.activeButton == originalMapSettingsBox.editMarkerButton){
                     originalMapImagePanel.editSquare(mouseEvent.getX(),mouseEvent.getY());
+                    if(originalMapImagePanel.editedSquare() < 3){
+                        statusLabel.setText(ShapeFromShading.getLightDirection(markerList,image.getOriginalMap().getWidth(),image.getOriginalMap().getHeight()));
+                    }
                     originalMapImagePanel.revalidate();
                     originalMapImagePanel.repaint();
                 } else if(originalMapSettingsBox.activeButton == originalMapSettingsBox.removeMarkerButton){
                     originalMapImagePanel.removeSquare(mouseEvent.getX(), mouseEvent.getY());
+                    if(markerList.size() < 3){
+                        statusLabel.setText("Light vector = UNKNOWN");
+                    } else if(originalMapImagePanel.editedSquare() < 3){
+                        statusLabel.setText(ShapeFromShading.getLightDirection(markerList,image.getOriginalMap().getWidth(),image.getOriginalMap().getHeight()));
+                    }
                     originalMapSettingsBox.updateList();
                     originalMapImagePanel.revalidate();
                     originalMapImagePanel.repaint();
@@ -431,7 +444,23 @@ public class MainScreen extends JFrame {
 
         mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.add(tabbedPanel, BorderLayout.CENTER);
+       // mainPanel.add(tabbedPanel, BorderLayout.CENTER);
+
+        JPanel fillerImagePanel = new JPanel(new BorderLayout());
+        fillerImagePanel.add(tabbedPanel,BorderLayout.CENTER);
+        JPanel statusPanel = new JPanel();
+        statusPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
+        //mainPanel.add(statusPanel, BorderLayout.SOUTH);
+        statusPanel.setPreferredSize(new Dimension(mainPanel.getWidth(), 20));
+        statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.Y_AXIS));
+        //statusPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+        statusLabel = new JLabel("Light vector = UNKNOWN");
+        //statusLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        statusLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        statusPanel.add(statusLabel);
+
+        fillerImagePanel.add(statusPanel,BorderLayout.SOUTH);
+        mainPanel.add(fillerImagePanel,BorderLayout.CENTER);
 
         originalMapSettingsBox = new OriginalMapSettingsBox();
         originalMapSettingsBox.setMarkerList(markerList);
@@ -803,6 +832,7 @@ public class MainScreen extends JFrame {
 
                 for(Marker m : markerList){
                     if(m.getPosX() >= xMin && m.getPosX() <= xMax && m.getPosY() >= yMin && m.getPosY() <= yMax){
+                        eddited = markerList.indexOf(m);
                         /*System.out.println("mouse: \n"+xMin+" - "+xMax+"\n"+yMin+" - "+yMax);
                         System.out.println("square: \n"+m.getPosX()+" \n "+m.getPosY());*/
                         markerList.remove(m);
@@ -824,6 +854,12 @@ public class MainScreen extends JFrame {
         public void setSquareSize(int size){
             squareSize = size;
             square = new Rectangle(squareSize,squareSize);
+        }
+
+        private int eddited = 0;
+
+        public int editedSquare(){
+            return eddited;
         }
 
         public void editSquare(int x, int y) {
@@ -863,7 +899,7 @@ public class MainScreen extends JFrame {
                         /*System.out.println("mouse: \n"+xMin+" - "+xMax+"\n"+yMin+" - "+yMax);
                         System.out.println("square: \n"+m.getPosX()+" \n "+m.getPosY());*/
                         //markerList.remove(m);
-
+                        eddited = markerList.indexOf(m);
                         /**
                          * ZDE SE POTOM SPUSTI OBRAZOVKA NA UPRAVU UDAJU x, y A name
                          */
@@ -1114,7 +1150,7 @@ public class MainScreen extends JFrame {
         JList<Marker> displayMarkerList;
         ButtonGroup buttonGroup;
         AlgorithmSettingsDialog algorithmSettingsDialog;
-        JSlider regularSlider,albedoSlider,stepsSlider;
+        JSlider regularSlider, deltaESlider,stepsSlider;
         JLabel warning;
         int algorithmSteps = 20;
         double algorithmAlbedo = 1;
@@ -1214,20 +1250,22 @@ public class MainScreen extends JFrame {
 
                 settingsPanel = new JPanel();
                 settingsPanel.setLayout(new BorderLayout());
-                JPanel up = new JPanel(new GridLayout(1,2));
+                //JPanel up = new JPanel(new GridLayout(1,2));
+                JPanel up = new JPanel(new BorderLayout());
                 JPanel upLeft = new JPanel(new BorderLayout());
-                upLeft.add(new JLabel("            Albedo:"),BorderLayout.NORTH);
-                albedoSlider = new JSlider(JSlider.VERTICAL,0,100,100);
-                albedoSlider.setMajorTickSpacing(25);
-                albedoSlider.setMinorTickSpacing(10);
-                albedoSlider.setPaintTicks(true);
-                albedoSlider.setPaintLabels(true);
-                albedoSlider.setBorder(BorderFactory.createEmptyBorder(10,0,0,0));
-                upLeft.add(albedoSlider,BorderLayout.CENTER);
+                //upLeft.add(new JLabel("            Albedo:"),BorderLayout.NORTH);
+                upLeft.add(new JLabel("    Marker direct surface hint:"),BorderLayout.NORTH);
+                deltaESlider = new JSlider(JSlider.VERTICAL,0,100,0);
+                deltaESlider.setMajorTickSpacing(25);
+                deltaESlider.setMinorTickSpacing(10);
+                deltaESlider.setPaintTicks(true);
+                deltaESlider.setPaintLabels(true);
+                deltaESlider.setBorder(BorderFactory.createEmptyBorder(10,0,0,0));
+                upLeft.add(deltaESlider,BorderLayout.CENTER);
 
                 JPanel upRight = new JPanel(new BorderLayout());
                 upRight.add(new JLabel("    Smoothness:"),BorderLayout.NORTH);
-                regularSlider = new JSlider(JSlider.VERTICAL,0,100,10);
+                regularSlider = new JSlider(JSlider.VERTICAL,0,100,50);
                 regularSlider.setMajorTickSpacing(25);
                 regularSlider.setMinorTickSpacing(10);
                 regularSlider.setPaintTicks(true);
@@ -1235,8 +1273,8 @@ public class MainScreen extends JFrame {
                 regularSlider.setBorder(BorderFactory.createEmptyBorder(10,0,0,0));
                 upRight.add(regularSlider,BorderLayout.CENTER);
 
-                up.add(upLeft);
-                up.add(upRight);
+                up.add(upLeft,BorderLayout.WEST);
+                up.add(upRight,BorderLayout.EAST);
 
 
                 JPanel down = new JPanel(new BorderLayout());
@@ -1328,7 +1366,8 @@ public class MainScreen extends JFrame {
                         @Override
                         protected Void doInBackground() throws Exception {
                             //float tic = System.nanoTime();
-                            imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), ((double)(albedoSlider.getValue()))/100.0, ((double)(regularSlider.getValue()))/100.0);
+                            imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), 1.0 , ((double)(regularSlider.getValue()))/100.0, ((double)(deltaESlider.getValue()))/100.0);
+                            statusLabel.setText(imageLoader.getLightVector());
                             updateHeight(image.getHeightMap());
                             if(doGong){
                                 gong();

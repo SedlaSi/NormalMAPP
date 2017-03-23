@@ -258,20 +258,26 @@ public class ImageLoader extends JFrame{
         }
     }
 
-    public void calculateHeightMap(java.util.List<Marker> markerList, int steps, double q, double lm){
+    public void calculateHeightMap(java.util.List<Marker> markerList, int steps, double q, double lm, double e){
             shapeFromShading.setSteps(steps);
             shapeFromShading.setAlbedo(q);
             shapeFromShading.setRegularization(lm);
+            shapeFromShading.setDeltaE(e);
             shapeFromShading.setMarkers(markerList);
             shapeFromShading.setImage(sessionFolder + Session.SLASH + ORIGINAL_NAME);
             shapeFromShading.write(shapeFromShading.shapeFromShading(),sessionFolder + Session.SLASH + HEIGHT_NAME);
         try {
             image.setHeightMap(ImageIO.read(new File(sessionFolder + Session.SLASH + HEIGHT_NAME)));
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
 
     }
+
+    public String getLightVector(){
+        return shapeFromShading.getLightMessage();
+    }
+
     public void saveHeightMap(){
         fileChooser.setSelectedFile(new File("heightmap.png"));
         int ret = fileChooser.showSaveDialog(ImageLoader.this);

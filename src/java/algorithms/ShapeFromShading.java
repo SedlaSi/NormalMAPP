@@ -29,6 +29,7 @@ public class ShapeFromShading implements Algorithm {
     private final static double FLAT_ANGLE = 5.0; // 5.0
     //private final static double FLAT_ANGLE = 0;
     private final static double MAX_RELATIVE_HEIGHT = 2.0; // 2.0
+    private final static double INTERPOLATION_LENGTH = 0.005; //0.005
     //private final static double MAX_RELATIVE_HEIGHT = Double.MAX_VALUE;
     private int collumns;
     private int rows;
@@ -42,6 +43,7 @@ public class ShapeFromShading implements Algorithm {
     private int steps=20;
     private double q = 1;
     private double lm = 0.1;
+    private double deltaE = 0.1;
     int bodyStart;
     private double [] normalField;
 
@@ -97,8 +99,8 @@ public class ShapeFromShading implements Algorithm {
         //steps = 5000;
         //lightX = - lightX;
         //normalField = getDepthMap4(); //
-        //normalField = getDepthMapVEC(); // now
-        normalField = interpolatedNormalEstimation(); // now
+        normalField = getDepthMapVEC(); // now
+        //normalField = interpolatedNormalEstimation(); // now
         //normalField = getDepthMap(); // now , pomale
         grayscale = null;
 
@@ -179,6 +181,7 @@ public class ShapeFromShading implements Algorithm {
         double [] markerLen = new double[markers.size()];
         double xM [] = new double[markers.size()];
         double yM [] = new double[markers.size()];
+        int [] idxMarkers = new int[markers.size()];
         Marker m;
         for(int i = 0; i < markers.size(); i++){ // pozice markeru v x a y
             m = markers.get(i);
@@ -187,9 +190,11 @@ public class ShapeFromShading implements Algorithm {
         }
         double len;
         double x,y,z;
+        int g;
+        int tmp;
         for(double j = 0; j < rows; j++){
             pointLabel:
-            for(double i = 0; i < collumns; i++){
+            for(double i = 0; i < collumns; i++){ // jednotlive body na adrese (j*collumns + i)
                 len = 0.0d;
                 x = 0.0d;
                 y = 0.0d;
@@ -197,7 +202,7 @@ public class ShapeFromShading implements Algorithm {
                 for(int k = 0; k < markers.size(); k++){ // vzdalenost markeru k od bodu (i,j)
                     m = markers.get(k);
                     markerLen[k] = Math.sqrt((i-xM[k])*(i-xM[k]) + (j-yM[k])*(j-yM[k]));
-                    if(markerLen[k] == 0.0){ // pokud jsme na bode
+                    /*if(markerLen[k] == 0.0){ // pokud jsme na bode
                         x += (double)m.getX()-127.5;
                         y += (double)m.getY()-127.5;
                         z += (double)m.getZ()-127.5;
@@ -210,45 +215,48 @@ public class ShapeFromShading implements Algorithm {
                         n[3*(int)(j*collumns+i)+1] = y;
                         n[3*(int)(j*collumns+i)+2] = z;
                         continue pointLabel;
-                    } else {
+                    } else {*/
                         markerLen[k] = 1 / markerLen[k];
+                    //}
+                    idxMarkers[k] = k;
+                }
+                // ted seradime idxMarkers podle pole markerLen
+                // serazeno od nejmensi vzdalenosti po nejvetsi -> na nule mame nasi main barvu
+                for (int u = 0; u < idxMarkers.length - 1; u++) {
+                    g = u + 1;
+                    tmp = idxMarkers[g];
+                    while (g > 0 && markerLen[tmp] > markerLen[idxMarkers[g-1]]) {
+                        idxMarkers[g] = idxMarkers[g-1];
+                        g--;
+                    }
+                    idxMarkers[g] = tmp;
+                }
+                // do g ted ukladame kolik clenu zleva doprava z idxMarkers mame pouzit
+                g = 1;
+
+                while(g < markerLen.length && (markerLen[idxMarkers[0]] - markerLen[idxMarkers[g]]) <= INTERPOLATION_LENGTH) g++;
+
+                // zacneme pocitat silu jednotlivych markeru krome 0 ktere prosli hornim testem
+                for(int k = 1; k < g; k++){
+                    if(markerLen[idxMarkers[k]] > INTERPOLATION_LENGTH){
+                        // ulozime si rozdil
+                        x = markerLen[idxMarkers[0]] - markerLen[idxMarkers[k]];
+                        // sila markeru
+                        y = markerLen[idxMarkers[0]] - (x/INTERPOLATION_LENGTH)*markerLen[idxMarkers[0]];
+                        markerLen[idxMarkers[k]] = y;
                     }
                 }
-                // duraz na nejblizsi bod
-                /*y = Double.MAX_VALUE; // nejmensi vzdalenost
-                z = Double.MAX_VALUE; // druha nejmensi vzdalenost
-                // x je index pro y
-                // len je index pro z
-
-                for(int k = 0; k < markers.size();k++){
-                    if(markerLen[k] < y){
-                        x = k;
-                        y = markerLen[k];
-                    }
-
+                x = 0.0;
+                y = 0.0;
+                for(int k = 0; k < g; k++){ // vypocet delky len
+                    len += markerLen[idxMarkers[k]];
                 }
-                for(int k = 0; k < markers.size(); k++){
-                    if(markerLen[k] < z && markerLen[k] != y){
-                        len = k;
-                        z = markerLen[k];
-                    }
-                }
-                //v x mame index nejblizsiho bodu;
-                //markerLen[(int)x] *= 2;
-                //markerLen[(int)len] *= 2;
-                len = 0;
-                x = 0;
-                y = 0;
-                z = 0;*/
 
-                for(int k = 0; k < markers.size(); k++){ // vypocet delky len
-                    len += markerLen[k];
-                }
-                for(int k = 0; k < markers.size(); k++){ // vypocet interpolace
-                    m = markers.get(k);
-                    x += (double)(m.getX()-127.5) * (markerLen[k]/len);
-                    y += (double)(m.getY()-127.5) * (markerLen[k]/len);
-                    z += (double)(m.getZ()-127.5) * (markerLen[k]/len);
+                for(int k = 0; k < g; k++){ // vypocet interpolace
+                    m = markers.get(idxMarkers[k]);
+                    x += (m.getX()-127.5) * (markerLen[idxMarkers[k]]/len);
+                    y += (m.getY()-127.5) * (markerLen[idxMarkers[k]]/len);
+                    z += (m.getZ()-127.5) * (markerLen[idxMarkers[k]]/len);
                 }
                 // normalizace
                 len = Math.sqrt(x*x + y*y + z*z);
@@ -4137,7 +4145,7 @@ public class ShapeFromShading implements Algorithm {
         System.arraycopy(e,0,n,0,e.length);
         double x,y,z,l;
 
-        Marker m;
+        /*Marker m;
         int p;
         int [] fixes = new int [markers.size()];
         double [] fx = new double[markers.size()];
@@ -4176,7 +4184,7 @@ public class ShapeFromShading implements Algorithm {
             }
 
         }
-
+*/
 
         //uvodni estimate bez regularizace
         // seradime markery podle barvy ktere odpovidaji
@@ -4242,9 +4250,9 @@ public class ShapeFromShading implements Algorithm {
             n[3*i+2] = nz/l;
 
         }*/
-        /*boolean skip = false;
+        boolean skip = false;
         for(int i = 0; i < size; i++){
-            x = ((q)*grayscale[i])/lightX;
+           /* x = ((q)*grayscale[i])/lightX;
             y = ((q)*grayscale[i])/lightY;
             z = ((q)*grayscale[i])/lightZ;
             if(z < 0) {
@@ -4253,7 +4261,7 @@ public class ShapeFromShading implements Algorithm {
                 y = -y;
                 z = -z;
             }
-            l = Math.sqrt(x*x + y*y + z*z);
+            l = Math.sqrt(x*x + y*y + z*z);*/
 
             //n[3*i] = x/l;
             //n[3*i+1] = y/l;
@@ -4263,14 +4271,14 @@ public class ShapeFromShading implements Algorithm {
                     skip = true;
                     break;
                 }
-            }
+            }*/
             if(!skip){
                 n[3*i] = 0;
                 n[3*i+1] = 0;
                 n[3*i+2] = 1;
             }
             skip = false;
-        }*/
+        }
 
         /*if(n != null)
         return n;*/
@@ -4337,7 +4345,7 @@ public class ShapeFromShading implements Algorithm {
                 mod+=3;
 
                 //prostredek
-                neighbourSize = 5;
+                neighbourSize = 4;
 
                 colskip:
                 for(int j = 1; j < collumns-1; j++){ // vnitrek radku
@@ -4359,24 +4367,24 @@ public class ShapeFromShading implements Algorithm {
                         }
                     }*/
 
-                    sumX = n[3*(i+j) - 3*collumns] + n[3*(i+j) + 3*collumns] + n[3*(i+j) + 3] + n[3*(i+j) - 3] + e[3*(i+j)];
-                    sumY = n[3*(i+j) - 3*collumns + 1] + n[3*(i+j) + 3*collumns + 1] + n[3*(i+j) + 4] + n[3*(i+j) - 2] + e[3*(i+j)+1];
-                    sumZ = n[3*(i+j) - 3*collumns + 2] + n[3*(i+j) + 3*collumns + 2] + n[3*(i+j) + 5] + n[3*(i+j) - 1] + e[3*(i+j)+2];
+                    sumX = n[3*(i+j) - 3*collumns] + n[3*(i+j) + 3*collumns] + n[3*(i+j) + 3] + n[3*(i+j) - 3] /*+ e[3*(i+j)]*/;
+                    sumY = n[3*(i+j) - 3*collumns + 1] + n[3*(i+j) + 3*collumns + 1] + n[3*(i+j) + 4] + n[3*(i+j) - 2] /*+ e[3*(i+j)+1]*/;
+                    sumZ = n[3*(i+j) - 3*collumns + 2] + n[3*(i+j) + 3*collumns + 2] + n[3*(i+j) + 5] + n[3*(i+j) - 1] /*+ e[3*(i+j)+2]*/;
 
                     newValue_z =
-                            ((1/q)*grayscale[(i+j)]*(lightZ - lightX*ga4 + lightY*ga4*al4 - lightY*be4 - lightX*de4*ga4*al4 + lightX*de4*be4) + lm*(sumX*de4*be4 - sumY*be4 - sumX*ga4 + sumY*ga4*al4 - sumX*de4*ga4*al4 + sumZ))
+                            ((1/q)*grayscale[(i+j)]*(lightZ - lightX*ga4 + lightY*ga4*al4 - lightY*be4 - lightX*de4*ga4*al4 + lightX*de4*be4) + lm*(sumX*de4*be4 - sumY*be4 - sumX*ga4 + sumY*ga4*al4 - sumX*de4*ga4*al4 + sumZ) + deltaE*(e[3*(i+j)]*de4*be4 - e[3*(i+j)+1]*be4 - e[3*(i+j)]*ga4 + e[3*(i+j)+1]*ga4*al4 - e[3*(i+j)]*de4*ga4*al4 + e[3*(i+j)+2]))
                             /
-                            (lightZ*lightZ + lm*neighbourSize - lightZ*lightY*be4 + lightZ*lightX*de4*be4 - lightZ*lightX*ga4 + lightZ*lightY*al4*ga4 - lightZ*lightX*al4*de4*ga4);
+                            (lightZ*lightZ + lm*neighbourSize + deltaE - lightZ*lightY*be4 + lightZ*lightX*de4*be4 - lightZ*lightX*ga4 + lightZ*lightY*al4*ga4 - lightZ*lightX*al4*de4*ga4);
 
                     newValue_y =
-                            ((1/q)*grayscale[(i+j)]*(lightY - lightX*de4) + newValue_z*lightZ*(lightX*de4 - lightY) + lm*(sumY - sumX*de4))
+                            ((1/q)*grayscale[(i+j)]*(lightY - lightX*de4) + newValue_z*lightZ*(lightX*de4 - lightY) + lm*(sumY - sumX*de4) + deltaE*(e[3*(i+j)+1] - e[3*(i+j)]*de4))
                             /
-                            (lightY*lightY + lm*neighbourSize - lightY*lightX*de4);
+                            (lightY*lightY + lm*neighbourSize + deltaE - lightY*lightX*de4);
 
                     newValue_x =
-                            ((1/q)*grayscale[(i+j)]*lightX - newValue_y*lightY*lightX - newValue_z*lightZ*lightX + lm*sumX)
+                            ((1/q)*grayscale[(i+j)]*lightX - newValue_y*lightY*lightX - newValue_z*lightZ*lightX + lm*sumX + deltaE*e[3*(i+j)])
                             /
-                            (lightX*lightX + lm*neighbourSize);
+                            (lightX*lightX + lm*neighbourSize + deltaE);
 
                     if(newValue_z < 0){
                         newValue_z = -newValue_z;
@@ -5035,6 +5043,50 @@ public class ShapeFromShading implements Algorithm {
 
     }
 
+    public static String getLightDirection(java.util.List<Marker> markers, int collumns, int rows){
+        double[][] valsA;
+        double[][] valsB;
+
+        valsA = new double[markers.size()][3];
+        valsB = new double[markers.size()][1];
+
+        Marker m;
+        for(int i = 0; i < 3; i++){
+            m = markers.get(i);
+            //System.out.println(m.getX()+" "+m.getY()+" "+m.getZ());
+            valsA[i] = new double[]{(m.getX()-127.5),(m.getY()-127.5),m.getZ()-127.5};
+            //valsB[i] = new double[]{(double)(grayscale[(int)((int)(rows*m.getPosY())*collumns+collumns*m.getPosX())-1])};
+            valsB[i] = new double[]{((int)(m.getPosX()*(collumns-1)) + (int)(m.getPosY()*((rows-1)))*(collumns))};
+        }
+
+        Matrix A = new Matrix(valsA);
+        Matrix b = new Matrix(valsB);
+        Matrix x = A.solve(b);
+
+        /*lightX = x.get(0,0)/q;
+        lightY = x.get(1,0)/q;
+        lightZ = x.get(2,0)/q;*/
+        DecimalFormat decimalFormat = new DecimalFormat("#0.0000");
+        double lightX = x.get(0,0);
+        double lightY = x.get(1,0);
+        double lightZ = x.get(2,0);
+
+        double size = Math.sqrt((lightX*lightX)+lightY*lightY+lightZ*lightZ);
+        lightX=-lightX/size;
+        lightY=lightY/size;
+        lightZ=lightZ/size;
+
+        /*lightX = 127.5*(lightX+1);
+        lightY = 127.5*(lightY+1);
+        lightZ = 127.5*(lightZ+1);*/
+        //System.out.println(lightX+" "+lightY+" "+lightZ);
+
+        return "Light vector = ("+decimalFormat.format(lightX)+" , "+decimalFormat.format(lightY)+" , "+decimalFormat.format(lightZ)+");";
+    }
+
+    public String getLightMessage(){
+        return getLightDirection(markers,collumns,rows);
+    }
 
     /**
      * VRACI V POLI JEDNA HODNOTA COLLUMNS x ROWS
@@ -5104,5 +5156,7 @@ public class ShapeFromShading implements Algorithm {
         this.lm = regularization;
     }
 
-
+    public void setDeltaE(double deltaE){
+        this.deltaE = deltaE;
+    }
 }
