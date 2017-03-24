@@ -1366,7 +1366,7 @@ public class MainScreen extends JFrame {
                         @Override
                         protected Void doInBackground() throws Exception {
                             //float tic = System.nanoTime();
-                            imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), 1.0 , ((double)(regularSlider.getValue()))/100.0, ((double)(deltaESlider.getValue()))/100.0);
+                            imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), 1.0 , ((double)(regularSlider.getValue()))/100.0, ((double)(deltaESlider.getValue()))/400.0);
                             statusLabel.setText(imageLoader.getLightVector());
                             updateHeight(image.getHeightMap());
                             if(doGong){

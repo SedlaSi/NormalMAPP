@@ -80,13 +80,13 @@ public class ShapeFromShading implements Algorithm {
         getLightSource(); // 3. step
 
 
-        for(int i = 0; i < markers.size(); i++){
+        /*for(int i = 0; i < markers.size(); i++){
             System.out.println(markers.get(i).getX() + ", " + markers.get(i).getY() + ", " + markers.get(i).getZ());
         }
         System.out.println();
         System.out.println("LightX = "+lightX);
         System.out.println("LightY = "+lightY);
-        System.out.println("LightZ = "+lightZ);
+        System.out.println("LightZ = "+lightZ);*/
 
         /*lightX = 0.8434105885819642;
         lightY = 0.3284961304866877;
@@ -95,7 +95,7 @@ public class ShapeFromShading implements Algorithm {
         //normalField = getHeightMap();
         //normalField = getDepthMap2();
         //normalField = getDepthMap3();
-        steps = steps*10;
+        //steps = steps*10;
         //steps = 5000;
         //lightX = - lightX;
         //normalField = getDepthMap4(); //
@@ -121,11 +121,11 @@ public class ShapeFromShading implements Algorithm {
 
 
         // VYPISOVANI PLOCHYCH NORMAL
-        for(int i = bodyStart; i < normalField.length+bodyStart ; i++){
+        /*for(int i = bodyStart; i < normalField.length+bodyStart ; i++){
             //fr[i] = (byte)((normalField[i-bodyStart]+1.0)*127.0);
             fr[i] = (byte)((normalField[i-bodyStart]/2+0.5)*255.0);
             //fr[i] = (byte)((normalField[i-bodyStart])*255.0);
-        }
+        }*/
 
         // VYPISOVANI VYSKOVE MAPY
         //finishDepths(relativeHeights());
@@ -133,8 +133,8 @@ public class ShapeFromShading implements Algorithm {
         // SKUTECNY KONEC
         //absoluteHeightsOld(relativeHeights());
         //absoluteHeights(relativeHeights());
-        steps = 5000;
-        //absoluteHeightsNEW(relativeHeights()); // opravuje extremy v okrajich --> 18.3.2017 VPORADKU !!!!
+        steps = steps*100;
+        absoluteHeightsNEW(relativeHeights()); // opravuje extremy v okrajich --> 18.3.2017 VPORADKU !!!!
         //absoluteHeightsSW(relativeHeights()); // opravuje extremy v okrajich
         //absoluteHeightsQUAD(relativeHeights()); // opravuje extremy v okrajich
         /*if(playGong){
@@ -269,7 +269,60 @@ public class ShapeFromShading implements Algorithm {
                 n[3*(int)(j*collumns+i)+2] = z;
             }
         }
-        return n;
+        double [] d = new double[3*size];
+        System.arraycopy(n,0,d,0,n.length);
+        int mask = 10;
+        double power = 1/((2*mask+1)*(2*mask+1));
+        double sumX,sumY,sumZ;
+        int beginR = 0;
+        int beginC = 0;
+        int endR = 0;
+        int endC = 0;
+        // gaussian blur
+        /*System.out.println("size "+size);
+        System.out.println("col "+collumns);
+        System.out.println("rows "+rows);*/
+        for(int blur = 0; blur < 10; blur++) {
+            for (int j = 0; j < size; j += collumns) {
+                for (int i = 0; i < collumns; i++) {
+                    sumX = 0.0;
+                    sumY = 0.0;
+                    sumZ = 0.0;
+                    //System.out.println(j + i);
+                    beginR = (j - mask * collumns + i);
+                    while(beginR < 0) beginR += collumns;
+                    endR = (j + mask * collumns + i);
+                    while(endR >= size) endR -= collumns;
+                    beginC = -mask;
+                    while((beginR + beginC) < 0) beginC++;
+                    while((i + beginC) < 0) beginC++;
+                    endC = mask;
+                    while((endR + endC) >= size) endC--;
+                    while((i + endC) >= collumns) endC--;
+                    // ted muzeme o mask doleva,doprava,nahoru aj dolu
+                    for (int w = beginR; w <= endR; w += collumns) { // jedu stredem masky dolu
+                        for (int q = beginC; q <= endC; q++) { // projizdim radky
+                            sumX += n[3 * (q + w)];
+                            sumY += n[3 * (q + w) + 1];
+                            sumZ += n[3 * (q + w) + 2];
+                        }
+                    }
+                    // mame naplnene sumy
+                    len = Math.sqrt(sumX * sumX + sumY * sumY + sumZ * sumZ);
+
+                    d[3 * (i + j)] = sumX / len;
+                    d[3 * (i + j) + 1] = sumY / len;
+                    d[3 * (i + j) + 2] = sumZ / len;
+                }
+            }
+
+            // musime prekopirovat pole!!!
+            for(int i = 0; i < d.length; i++){
+                n[i] = d[i];
+            }
+
+        }
+        return d;
     }
 
     // nepouziva se
@@ -4321,7 +4374,7 @@ public class ShapeFromShading implements Algorithm {
         ga2 = (lightX*lightZ)/(lightX*lightX + lm*2);
         //double [] s = new double[size];
 
-        for(int g = 0; g < steps; g++){ // hlavni loop = pocet kroku gauss-siedela
+        for(int g = 0; g < 25; g++){ // hlavni loop = pocet kroku gauss-siedela
             mod+=3;
             //horni radka
 
