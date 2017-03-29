@@ -21,81 +21,32 @@ import java.beans.PropertyChangeListener;
  */
 public class NormalMAPP {
 
-    public static void main(String [] args){
+    public static void main(String[] args) {
         new NormalMAPP();
-        //new NormalMAPP("load");
-        /*Session session = new Session();
-        ImageLoader imageLoader = new ImageLoader(session.getSessionFolder());
-        MainScreen mainScreen = new MainScreen(session,imageLoader);
-        mainScreen.createFrame();*/
     }
 
-    public NormalMAPP (){
+    public NormalMAPP() {
 
         EventQueue.invokeLater(() -> {
-            /*final GLProfile profile = GLProfile.get(GLProfile.GL2);
-            GLCapabilities capabilities = new GLCapabilities(profile);
-            GLCanvas glcanvas = new GLCanvas(capabilities);
-
-            Preview3D p = new Preview3D();
-            glcanvas.addGLEventListener(p);
-            glcanvas.setSize(400,400);
-
-            final FPSAnimator animator = new FPSAnimator(glcanvas,300,true);
-            final JPanel frame = new JPanel();
-            frame.add(glcanvas);
-
-            frame.setSize(frame.getPreferredSize());
-            GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-
-            GraphicsDevice [] devices = graphicsEnvironment.getScreenDevices();
-            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-
-            int windowX = Math.max(0,(screenSize.width - frame.getWidth())/2);
-            int windowY = Math.max(0,(screenSize.height - frame.getHeight())/2);
-
-            frame.setLocation(windowX,windowY);
-
-            frame.setVisible(true);
-
-            JPanel panel = new JPanel();
-            panel.setPreferredSize(new Dimension(0,0));
-            //frame.add(panel,BorderLayout.SOUTH);
-            animator.start();
-*/
-
-
-
             Session session = new Session();
             ImageLoader imageLoader = new ImageLoader(session.getSessionFolder());
-            MainScreen mainScreen = new MainScreen(session,imageLoader);
-
-            //mainScreen.setPreview(frame);
-
+            MainScreen mainScreen = new MainScreen(session, imageLoader);
             imageLoader.setMainFrameReference(mainScreen);
             mainScreen.createFrame();
         });
 
     }
 
-    public NormalMAPP(String s){
+    public NormalMAPP(String s) {
 
-            JButton showWaitBtn = new JButton(new ShowWaitAction("Show Wait Dialog"));
-            JPanel panel = new JPanel();
-            panel.add(showWaitBtn);
-            Session session = new Session();
-            ImageLoader imageLoader = new ImageLoader(session.getSessionFolder());
-            MainScreen mainScreen = new MainScreen(session,imageLoader);
-            imageLoader.setMainFrameReference(mainScreen);
-            mainScreen.createFrame();
-            /*JFrame frame = new JFrame("Frame");
-            frame.getContentPane().add(panel);
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.pack();
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);*/
-
-
+        JButton showWaitBtn = new JButton(new ShowWaitAction("Show Wait Dialog"));
+        JPanel panel = new JPanel();
+        panel.add(showWaitBtn);
+        Session session = new Session();
+        ImageLoader imageLoader = new ImageLoader(session.getSessionFolder());
+        MainScreen mainScreen = new MainScreen(session, imageLoader);
+        imageLoader.setMainFrameReference(mainScreen);
+        mainScreen.createFrame();
     }
 
     private class ShowWaitAction extends AbstractAction {
@@ -107,7 +58,7 @@ public class NormalMAPP {
 
         @Override
         public void actionPerformed(ActionEvent evt) {
-            SwingWorker<Void, Void> mySwingWorker = new SwingWorker<Void, Void>(){
+            SwingWorker<Void, Void> mySwingWorker = new SwingWorker<Void, Void>() {
                 @Override
                 protected Void doInBackground() throws Exception {
 
@@ -117,17 +68,13 @@ public class NormalMAPP {
                 }
             };
 
-            Window win = SwingUtilities.getWindowAncestor((AbstractButton)evt.getSource());
+            Window win = SwingUtilities.getWindowAncestor((AbstractButton) evt.getSource());
             final JDialog dialog = new JDialog(win, "Dialog", Dialog.ModalityType.APPLICATION_MODAL);
 
-            mySwingWorker.addPropertyChangeListener(new PropertyChangeListener() {
-
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    if (evt.getPropertyName().equals("state")) {
-                        if (evt.getNewValue() == SwingWorker.StateValue.DONE) {
-                            dialog.dispose();
-                        }
+            mySwingWorker.addPropertyChangeListener(evt1 -> {
+                if (evt1.getPropertyName().equals("state")) {
+                    if (evt1.getNewValue() == SwingWorker.StateValue.DONE) {
+                        dialog.dispose();
                     }
                 }
             });

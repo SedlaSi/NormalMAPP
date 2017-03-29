@@ -18,64 +18,61 @@ public class Tutorial {
 
     JPanel tutorialPanel;
     JDialog dialog;
-    java.util.List<JPanel> cards;
-    JPanel cardPanel,buttonPanel;
+    JPanel cardPanel, buttonPanel;
     CardLayout cardLayout;
-    JButton next,previous,end;
+    JButton next, previous, end;
     int pointer = 0;
     private final static int WIDTH = 600;
     private final static int HEIGHT = 300;
 
-    public static void main(String [] args){
+    public static void main(String[] args) {
         Tutorial tut = new Tutorial();
         tut.start(null);
     }
 
-    public void start(JFrame parent){
+    public void start(JFrame parent) {
         prepareTutorialPanel();
-        prepareDialog(parent,tutorialPanel);
+        prepareDialog(parent, tutorialPanel);
 
         dialog.setVisible(true);
 
-        cardLayout.show(cardPanel,"0");
+        cardLayout.show(cardPanel, "0");
         dialog.revalidate();
         dialog.repaint();
-        //dialog.setResizable(false);
         dialog.setLocationRelativeTo(null);
     }
 
-    private void prepareDialog(JFrame parent,JPanel panel) {
-        if(dialog == null){
+    private void prepareDialog(JFrame parent, JPanel panel) {
+        if (dialog == null) {
             dialog = new JDialog(parent);
-            dialog.setPreferredSize(new Dimension(WIDTH,HEIGHT));
+            dialog.setPreferredSize(new Dimension(WIDTH, HEIGHT));
             dialog.pack();
             dialog.setContentPane(panel);
         }
     }
 
-    private void prepareTutorialPanel(){
-        if(tutorialPanel == null){
+    private void prepareTutorialPanel() {
+        if (tutorialPanel == null) {
             tutorialPanel = new JPanel(new BorderLayout());
 
             cardLayout = new CardLayout();
             cardPanel = new JPanel(cardLayout);
             setCards(cardPanel);
-            tutorialPanel.add(cardPanel,BorderLayout.CENTER);
-            //cards = new ArrayList<>();
+            tutorialPanel.add(cardPanel, BorderLayout.CENTER);
 
             buttonPanel = new JPanel(new BorderLayout());
             next = new JButton("Next");
             next.addActionListener(actionEvent -> {
-                if(pointer < 10){
+                if (pointer < 10) {
                     pointer++;
                     cardLayout.show(cardPanel, pointer + "");
                 }
             });
             previous = new JButton("Previous");
             previous.addActionListener(actionEvent -> {
-                if(pointer > 0){
+                if (pointer > 0) {
                     pointer--;
-                    cardLayout.show(cardPanel,pointer+"");
+                    cardLayout.show(cardPanel, pointer + "");
                 }
             });
             end = new JButton("End");
@@ -84,38 +81,37 @@ public class Tutorial {
             // pridani buttonu do buttonPanelu
             JPanel e = new JPanel();
             e.add(end);
-            buttonPanel.add(e,BorderLayout.WEST);
+            buttonPanel.add(e, BorderLayout.WEST);
             JPanel b = new JPanel();
             b.add(next);
             b.add(previous);
-            //buttonPanel.add(next,BorderLayout.CENTER);
-            buttonPanel.add(b,BorderLayout.EAST);
+            buttonPanel.add(b, BorderLayout.EAST);
             //=============================
-            tutorialPanel.add(buttonPanel,BorderLayout.PAGE_END);
+            tutorialPanel.add(buttonPanel, BorderLayout.PAGE_END);
         }
     }
 
-    private void setCards(JPanel cardPanel){
-        cardPanel.add(getWelcome(),"0");
-        cardPanel.add(getOpenImage(),"1");
-        cardPanel.add(getAddMarker(),"2");
-        cardPanel.add(getSetUpMarker(),"3");
-        cardPanel.add(getEditRemoveMarker(),"4");
-        cardPanel.add(getAlbedo(),"5");
-        cardPanel.add(getSmoothness(),"6");
-        cardPanel.add(getCalculationSteps(),"7");
-        cardPanel.add(getHeightMap(),"8");
-        cardPanel.add(getNormalMap(),"9");
-        cardPanel.add(getSavingOutput(),"10");
+    private void setCards(JPanel cardPanel) {
+        cardPanel.add(getWelcome(), "0");
+        cardPanel.add(getOpenImage(), "1");
+        cardPanel.add(getAddMarker(), "2");
+        cardPanel.add(getSetUpMarker(), "3");
+        cardPanel.add(getEditRemoveMarker(), "4");
+        cardPanel.add(getAlbedo(), "5");
+        cardPanel.add(getSmoothness(), "6");
+        cardPanel.add(getCalculationSteps(), "7");
+        cardPanel.add(getHeightMap(), "8");
+        cardPanel.add(getNormalMap(), "9");
+        cardPanel.add(getSavingOutput(), "10");
 
     }
 
-    protected static class Cards{
+    protected static class Cards {
 
-        static JPanel getWelcome(){
+        static JPanel getWelcome() {
             JPanel panel = new JPanel();
             JEditorPane editorPane = new JEditorPane();
-            editorPane.setPreferredSize(new Dimension(WIDTH,HEIGHT));
+            editorPane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
             editorPane.setEditable(false);
             java.net.URL helpURL = Tutorial.class.getResource(
@@ -134,17 +130,17 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH - 20, HEIGHT - 72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH - 20, HEIGHT - 72));
 
             panel.add(editorScrollPane);
             return panel;
         }
 
-        static JPanel getOpenImage(){
+        static JPanel getOpenImage() {
             JPanel panel = new JPanel();
             JEditorPane editorPane = new JEditorPane();
-            editorPane.setPreferredSize(new Dimension(WIDTH,HEIGHT));
+            editorPane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
             editorPane.setEditable(false);
             java.net.URL helpURL = Tutorial.class.getResource(
@@ -163,17 +159,17 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH - 20, HEIGHT - 72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH - 20, HEIGHT - 72));
 
             panel.add(editorScrollPane);
             return panel;
         }
 
-        static JPanel getAddMarker(){
+        static JPanel getAddMarker() {
             JPanel panel = new JPanel();
             JEditorPane editorPane = new JEditorPane();
-            editorPane.setPreferredSize(new Dimension(WIDTH,HEIGHT));
+            editorPane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
             editorPane.setEditable(false);
             java.net.URL helpURL = Tutorial.class.getResource(
@@ -192,17 +188,17 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH - 20, HEIGHT - 72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH - 20, HEIGHT - 72));
 
             panel.add(editorScrollPane);
             return panel;
         }
 
-        static JPanel getSetUpMarker(){
+        static JPanel getSetUpMarker() {
             JPanel panel = new JPanel();
             JEditorPane editorPane = new JEditorPane();
-            editorPane.setPreferredSize(new Dimension(WIDTH,HEIGHT));
+            editorPane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
             editorPane.setEditable(false);
             java.net.URL helpURL = Tutorial.class.getResource(
@@ -221,17 +217,17 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH - 20, HEIGHT - 72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH - 20, HEIGHT - 72));
 
             panel.add(editorScrollPane);
             return panel;
         }
 
-        static JPanel getEditRemoveMarker(){
+        static JPanel getEditRemoveMarker() {
             JPanel panel = new JPanel();
             JEditorPane editorPane = new JEditorPane();
-            editorPane.setPreferredSize(new Dimension(WIDTH,HEIGHT));
+            editorPane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
             editorPane.setEditable(false);
             java.net.URL helpURL = Tutorial.class.getResource(
@@ -250,17 +246,17 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH - 20, HEIGHT - 72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH - 20, HEIGHT - 72));
 
             panel.add(editorScrollPane);
             return panel;
         }
 
-        static JPanel getAlbedo(){
+        static JPanel getAlbedo() {
             JPanel panel = new JPanel();
             JEditorPane editorPane = new JEditorPane();
-            editorPane.setPreferredSize(new Dimension(WIDTH,HEIGHT));
+            editorPane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
             editorPane.setEditable(false);
             java.net.URL helpURL = Tutorial.class.getResource(
@@ -279,17 +275,17 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH - 20, HEIGHT - 72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH - 20, HEIGHT - 72));
 
             panel.add(editorScrollPane);
             return panel;
         }
 
-        static JPanel getSmoothness(){
+        static JPanel getSmoothness() {
             JPanel panel = new JPanel();
             JEditorPane editorPane = new JEditorPane();
-            editorPane.setPreferredSize(new Dimension(WIDTH,HEIGHT));
+            editorPane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
             editorPane.setEditable(false);
             java.net.URL helpURL = Tutorial.class.getResource(
@@ -308,17 +304,17 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH - 20, HEIGHT - 72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH - 20, HEIGHT - 72));
 
             panel.add(editorScrollPane);
             return panel;
         }
 
-        static JPanel getCalculationSteps(){
+        static JPanel getCalculationSteps() {
             JPanel panel = new JPanel();
             JEditorPane editorPane = new JEditorPane();
-            editorPane.setPreferredSize(new Dimension(WIDTH,HEIGHT));
+            editorPane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
             editorPane.setEditable(false);
             java.net.URL helpURL = Tutorial.class.getResource(
@@ -337,17 +333,17 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH - 20, HEIGHT - 72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH - 20, HEIGHT - 72));
 
             panel.add(editorScrollPane);
             return panel;
         }
 
-        static JPanel getHeightMap(){
+        static JPanel getHeightMap() {
             JPanel panel = new JPanel();
             JEditorPane editorPane = new JEditorPane();
-            editorPane.setPreferredSize(new Dimension(WIDTH,HEIGHT));
+            editorPane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
             editorPane.setEditable(false);
             java.net.URL helpURL = Tutorial.class.getResource(
@@ -366,17 +362,17 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH - 20, HEIGHT - 72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH - 20, HEIGHT - 72));
 
             panel.add(editorScrollPane);
             return panel;
         }
 
-        static JPanel getNormalMap(){
+        static JPanel getNormalMap() {
             JPanel panel = new JPanel();
             JEditorPane editorPane = new JEditorPane();
-            editorPane.setPreferredSize(new Dimension(WIDTH,HEIGHT));
+            editorPane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
             editorPane.setEditable(false);
             java.net.URL helpURL = Tutorial.class.getResource(
@@ -395,17 +391,17 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH - 20, HEIGHT - 72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH - 20, HEIGHT - 72));
 
             panel.add(editorScrollPane);
             return panel;
         }
 
-        static JPanel getSavingOutput(){
+        static JPanel getSavingOutput() {
             JPanel panel = new JPanel();
             JEditorPane editorPane = new JEditorPane();
-            editorPane.setPreferredSize(new Dimension(WIDTH,HEIGHT));
+            editorPane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
             editorPane.setEditable(false);
             java.net.URL helpURL = Tutorial.class.getResource(
@@ -424,8 +420,8 @@ public class Tutorial {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            editorScrollPane.setPreferredSize(new Dimension(WIDTH-20, HEIGHT-72));
-            editorScrollPane.setMinimumSize(new Dimension(WIDTH-20, HEIGHT-72));
+            editorScrollPane.setPreferredSize(new Dimension(WIDTH - 20, HEIGHT - 72));
+            editorScrollPane.setMinimumSize(new Dimension(WIDTH - 20, HEIGHT - 72));
 
             panel.add(editorScrollPane);
             return panel;

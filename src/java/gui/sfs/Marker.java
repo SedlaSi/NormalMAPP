@@ -21,7 +21,7 @@ public class Marker {
 
     private String name;
 
-    public Marker(String name,int x, int y, int z, double posX, double posY){
+    public Marker(String name, int x, int y, int z, double posX, double posY) {
         this.name = name;
         this.x = x;
         this.y = y;
@@ -30,7 +30,7 @@ public class Marker {
         this.posY = posY;
     }
 
-    public Marker(String name){
+    public Marker(String name) {
         this.name = name;
     }
 
@@ -82,11 +82,11 @@ public class Marker {
         this.name = name;
     }
 
-    public Rectangle getSquare(){
+    public Rectangle getSquare() {
         return square;
     }
 
-    public void setSquare(Rectangle square){
+    public void setSquare(Rectangle square) {
         this.square = square;
     }
 
@@ -107,7 +107,7 @@ public class Marker {
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return name;
     }
 }

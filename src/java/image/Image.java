@@ -17,20 +17,20 @@ public class Image {
     private BufferedImage normalMap;
     private BufferedImage preview;
 
-    public Image(File sourceFile,BufferedImage originalMap){
+    public Image(File sourceFile, BufferedImage originalMap) {
         this.sourceFile = sourceFile;
         this.originalMap = originalMap;
     }
 
-    public void setHeightMap(BufferedImage heightMap){
+    public void setHeightMap(BufferedImage heightMap) {
         this.heightMap = heightMap;
     }
 
-    public void setNormalMap(BufferedImage normalMap){
+    public void setNormalMap(BufferedImage normalMap) {
         this.normalMap = normalMap;
     }
 
-    public void setPreview(BufferedImage preview){
+    public void setPreview(BufferedImage preview) {
         this.preview = preview;
     }
 
