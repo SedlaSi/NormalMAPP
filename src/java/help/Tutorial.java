@@ -40,7 +40,7 @@ public class Tutorial {
         cardLayout.show(cardPanel,"0");
         dialog.revalidate();
         dialog.repaint();
-        dialog.setResizable(false);
+        //dialog.setResizable(false);
         dialog.setLocationRelativeTo(null);
     }
 

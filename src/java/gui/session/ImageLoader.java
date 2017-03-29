@@ -17,6 +17,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.PriorityQueue;
 
 /**
@@ -276,6 +277,46 @@ public class ImageLoader extends JFrame{
 
     public String getLightVector(){
         return shapeFromShading.getLightMessage();
+    }
+
+    public void testCalculate(java.util.List<Marker> markerList, int steps, double q, double lm, double e){
+        String folder = "/home/sedlasi1/Desktop/test_folder/";
+        float tic,toc;
+        double time;
+        long size;
+        StringBuilder A = new StringBuilder();
+        StringBuilder b = new StringBuilder();
+        A.append("A = [");
+        b.append("b = [");
+        DecimalFormat f = new DecimalFormat("#0.0000000");
+        for(int i = 1; i < 14; i++){ // projizdime kazdy obrazek
+            System.out.println(i);
+            tic = System.nanoTime();
+            ShapeFromShading sfs = new ShapeFromShading();
+            sfs.setSteps(10);
+            sfs.setAlbedo(q);
+            sfs.setRegularization(lm);
+            sfs.setDeltaE(e);
+            sfs.setMarkers(markerList);
+            sfs.setImage(folder+i+".ppm");
+            sfs.shapeFromShading();
+            toc = System.nanoTime();
+            time = (double)(toc-tic)/1000000000.0; // jak dlouho trvalo 10 stepů
+            size = (long)(sfs.getCollumns() * sfs.getRows());
+            //A.append(size * size).append(" ").append(size).append(" 1;\n"); //quadratic
+            A.append(size).append(" ").append("1").append(";\n"); // linear
+            b.append(f.format(time / 10)).append(";\n");
+            System.out.println(i);
+            System.out.println();
+        }
+        System.out.println();
+        System.out.println();
+        A.append("];");
+        b.append("];");
+
+        System.out.println(A.toString());
+        System.out.println();
+        System.out.println(b.toString());
     }
 
     public void saveHeightMap(){

@@ -1,7 +1,8 @@
 package gui.session;
 
+import org.im4java.process.ProcessStarter;
+
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Created by root on 19.7.16.
@@ -17,6 +18,8 @@ public class Session {
         if(System.getProperty("os.name").contains("Windows")){
             ROOT_FOLDER = "C:\\Users\\" + System.getProperty("user.name") + "\\AppData\\Local\\Temp\\.NormalMAPP";
             SLASH = "\\";
+            String myPath = this.getClass().getResource("/GraphicsMagick").getPath();
+            ProcessStarter.setGlobalSearchPath(myPath);
         }
         sessionId = Long.toString(System.nanoTime()) + ((int)(Math.random()*100));
         sessionFolder = ROOT_FOLDER + SLASH + "session_" + sessionId;

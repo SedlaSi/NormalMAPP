@@ -157,10 +157,10 @@ public class NormalMap implements Algorithm {
 
                 valX = ((valX/length + 1.0) * (255.0/2.0));
                 valY = ((valY/length + 1.0) * (255.0/2.0));
-                out[off + (readen_lines*collumns*3)+i*3] = (byte)valX;
+                out[off + (readen_lines*collumns*3)+i*3] = (byte)(int)valX;
 
-                out[off + (readen_lines*collumns*3)+1+i*3] = (byte)valY;
-                out[off + (readen_lines*collumns*3)+2+i*3] = (byte)((valZ/length + 1.0) * (255.0/2.0));
+                out[off + (readen_lines*collumns*3)+1+i*3] = (byte)(int)valY;
+                out[off + (readen_lines*collumns*3)+2+i*3] = (byte)(int)((valZ/length + 1.0) * (255.0/2.0));
 
             }
             readen_lines++;

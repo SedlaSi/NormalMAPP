@@ -47,6 +47,8 @@ public class ShapeFromShading implements Algorithm {
     int bodyStart;
     private double [] normalField;
 
+    //private String testFile = "/home/sedlasi1/Desktop/Skola/Bakalarska_prace/Dokumentace/testovani/10/";
+
     public ShapeFromShading(){
     }
 
@@ -125,7 +127,8 @@ public class ShapeFromShading implements Algorithm {
             //fr[i] = (byte)((normalField[i-bodyStart]+1.0)*127.0);
             fr[i] = (byte)((normalField[i-bodyStart]/2+0.5)*255.0);
             //fr[i] = (byte)((normalField[i-bodyStart])*255.0);
-        }*/
+        }
+        write(fr,testFile+"e2.ppm");*/
 
         // VYPISOVANI VYSKOVE MAPY
         //finishDepths(relativeHeights());
@@ -135,6 +138,9 @@ public class ShapeFromShading implements Algorithm {
         //absoluteHeights(relativeHeights());
         steps = steps*100;
         absoluteHeightsNEW(relativeHeights()); // opravuje extremy v okrajich --> 18.3.2017 VPORADKU !!!!
+        /*write(fr,testFile+"height.ppm");
+        NormalMap normalMap = new NormalMap();
+        write(normalMap.normalMap(fr,180.0,0.05),testFile+"normal.ppm");*/
         //absoluteHeightsSW(relativeHeights()); // opravuje extremy v okrajich
         //absoluteHeightsQUAD(relativeHeights()); // opravuje extremy v okrajich
         /*if(playGong){
@@ -282,6 +288,7 @@ public class ShapeFromShading implements Algorithm {
         /*System.out.println("size "+size);
         System.out.println("col "+collumns);
         System.out.println("rows "+rows);*/
+        // 10
         for(int blur = 0; blur < 10; blur++) {
             for (int j = 0; j < size; j += collumns) {
                 for (int i = 0; i < collumns; i++) {
@@ -2570,10 +2577,10 @@ public class ShapeFromShading implements Algorithm {
     public static void main(String [] args){
         ShapeFromShading sfs=  new ShapeFromShading();
         //sfs.fr = sfs.read("/home/sedlasi1/Desktop/cl_koule.ppm");
-        sfs.fr = sfs.read("/home/sedlasi1/Desktop/GG.ppm");
+        //sfs.fr = sfs.read("/home/sedlasi1/Desktop/GG.ppm");
         //sfs.fr = sfs.read("/home/sedlasi1/Desktop/B_2.ppm");
-        //sfs.fr = sfs.read("/home/sedlasi1/Desktop/testovaci_obrazky/7364-normal.ppm");
-        //sfs.fr = sfs.read("/home/sedlasi1/Desktop/testovaci_obrazky/psfixnormal.ppm");
+        //sfs.fr = sfs.read("/home/sedlasi1/Desktop/testovaci_obrazky/e2.ppm");
+        sfs.fr = sfs.read("/home/sedlasi1/Desktop/testovaci_obrazky/psfixnormal.ppm");
         //sfs.fr = sfs.read("/home/sedlasi1/Desktop/KK.ppm");
         //sfs.fr = sfs.read("/home/sedlasi1/Desktop/testovaci_obrazky/center.ppm");
         //sfs.fr = sfs.read("/home/sedlasi1/Desktop/testovaci_obrazky/7259d9158be0b7e8c62c887fac57ed81.ppm");
@@ -2611,10 +2618,11 @@ public class ShapeFromShading implements Algorithm {
         sfs.normalField = sfs.getDepthMap();*/
         //sfs.normalField = sfs.getHeightMap();
         // VYPISOVANI PLOCHYCH NORMAL
-        /*for(int i = sfs.bodyStart; i < sfs.normalField.length+sfs.bodyStart ; i++){
+        for(int i = sfs.bodyStart; i < sfs.normalField.length+sfs.bodyStart ; i++){
             //fr[i] = (byte)((normalField[i]+1)*127.5);
             sfs.fr[i] = (byte)((sfs.normalField[i-sfs.bodyStart])*255.0);
-        }*/
+        }
+        //sfs.write(sfs.fr,sfs.testFile+"e2.ppm");
         double x,y,z;
         int start = sfs.bodyStart;
         byte [] fr = sfs.fr;
@@ -2629,13 +2637,13 @@ public class ShapeFromShading implements Algorithm {
         }
         /*double [] rel = sfs.relativeHeights();
         for(int i = 0; i < rel.length-1 ; i+=2){
-            fr[3*(i/2) + start] = (byte)(int)((rel[i])*127.5 + 127.5);
-            fr[3*(i/2) + start+1] = (byte)(int)((rel[i])*127.5 + 127.5);
-            fr[3*(i/2) + start+2] = (byte)(int)((rel[i])*127.5 + 127.5);
-        }
-        sfs.fr = fr;*/
+            fr[3*(i/2) + start] = (byte)(int)((rel[i+1])*127.5 + 127.5);
+            fr[3*(i/2) + start+1] = (byte)(int)((rel[i+1])*127.5 + 127.5);
+            fr[3*(i/2) + start+2] = (byte)(int)((rel[i+1])*127.5 + 127.5);
+        }*/
+        sfs.fr = fr;
         //sfs.absoluteHeights(sfs.relativeHeights());
-        sfs.steps = 10000;
+        sfs.steps = 5000;
         //sfs.absoluteHeightsQUAD(sfs.relativeHeights());
         sfs.absoluteHeightsNEW(sfs.relativeHeights());
         //sfs.absoluteHeightsSW(sfs.relativeHeights());
@@ -2667,7 +2675,7 @@ public class ShapeFromShading implements Algorithm {
         //sfs.absoluteHeightsSW(rel);
         //sfs.absoluteHeightsSW(sfs.relativeHeights());
         NormalMap normalMap = new NormalMap();
-        sfs.write(normalMap.normalMap(sfs.fr,180.0,0.1),"/home/sedlasi1/Desktop/testovaci_obrazky/F.ppm");
+        sfs.write(normalMap.normalMap(sfs.fr,180.0,0.05),"/home/sedlasi1/Desktop/testovaci_obrazky/F.ppm");
         sfs.write(sfs.fr,"/home/sedlasi1/Desktop/testovaci_obrazky/uu.ppm");
         //test();
     }
@@ -4195,6 +4203,14 @@ public class ShapeFromShading implements Algorithm {
         int size = collumns*rows;
         double [] n = new double[3*size];
         double [] e = interpolatedNormalEstimation();
+
+        //test write
+        /*for(int i = bodyStart; i < normalField.length+bodyStart ; i++){
+            fr[i] = (byte)((e[i-bodyStart])*255.0);
+        }
+        write(fr,testFile+"e.ppm");*/
+        //====================
+
         System.arraycopy(e,0,n,0,e.length);
         double x,y,z,l;
 
@@ -5211,5 +5227,14 @@ public class ShapeFromShading implements Algorithm {
 
     public void setDeltaE(double deltaE){
         this.deltaE = deltaE;
+    }
+
+
+    public int getCollumns(){
+        return collumns;
+    }
+
+    public int getRows(){
+        return rows;
     }
 }

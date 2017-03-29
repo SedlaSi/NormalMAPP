@@ -48,9 +48,7 @@ public class MainScreen extends JFrame {
     JPanel cardSettingsBoxPanel;
     CardLayout cardSettingsBoxLayout;
 
-    private static final float C = 705400.0f;
-    private static final float t = 0.14f;
-    private boolean doGong = false;
+
     JLabel timeText;
 
     OriginalMapSettingsBox originalMapSettingsBox;
@@ -1254,7 +1252,7 @@ public class MainScreen extends JFrame {
                 JPanel up = new JPanel(new BorderLayout());
                 JPanel upLeft = new JPanel(new BorderLayout());
                 //upLeft.add(new JLabel("            Albedo:"),BorderLayout.NORTH);
-                upLeft.add(new JLabel("    Marker direct surface hint:"),BorderLayout.NORTH);
+                upLeft.add(new JLabel("    Markers effect:"),BorderLayout.NORTH);
                 deltaESlider = new JSlider(JSlider.VERTICAL,0,100,0);
                 deltaESlider.setMajorTickSpacing(25);
                 deltaESlider.setMinorTickSpacing(10);
@@ -1289,7 +1287,7 @@ public class MainScreen extends JFrame {
                 stepsSlider.setPaintTicks(true);
                 stepsSlider.setPaintLabels(true);
                 stepsSlider.addChangeListener(changeEvent -> {
-                    int time = calculationTime();
+                    /*int time = calculationTime();
                     if(time > IMPATIENT_CUSTOMER_TIME-1){
                         timeText.setForeground(Color.RED);
                         doGong = true;
@@ -1297,13 +1295,21 @@ public class MainScreen extends JFrame {
                         doGong = false;
                         timeText.setForeground(Color.DARK_GRAY);
                     }
-                    timeText.setText(time+" seconds");
+                    timeText.setText(time+" seconds");*/
                 });
                 down.add(stepsSlider,BorderLayout.CENTER);
                 JPanel textPanel = new JPanel(new BorderLayout());
-                textPanel.add(new JLabel("  Estimated calculation time:   "),BorderLayout.WEST);
-                timeText = new JLabel(calculationTime()+"");
-                textPanel.add(timeText,BorderLayout.CENTER);
+                JCheckBox checkBox = new JCheckBox();
+                checkBox.addActionListener(actionEvent -> {
+                    if(checkBox.isSelected()){
+                        doGong = true;
+                    } else {
+                        doGong = false;
+                    }
+                });
+                textPanel.add(new JLabel("  Notice me with sound "),BorderLayout.WEST);
+                //timeText = new JLabel(calculationTime()+"");
+                textPanel.add(checkBox,BorderLayout.CENTER);
                 textPanel.setBorder(BorderFactory.createEmptyBorder(10,0,10,0));
                 //textPanel.add(new JLabel("seconds"),BorderLayout.EAST);
                 down.add(textPanel,BorderLayout.PAGE_END);
@@ -1325,9 +1331,27 @@ public class MainScreen extends JFrame {
             return settingBox;
         }
 
+        // quadratic
+        private static final double A = -0.000000000000006;
+        private static final double B = 0.000001507009748;
+        private static final double C = 0.022965441715616;
+        private boolean doGong = false;
+
+        // linear
+        private static final double D = -0.000001793984616;
+        private static final double E = 0.290214250769940;
+
         private int calculationTime(){
             if(image == null || image.getOriginalMap() == null) return 0;
-            int time = (int)(((float)(image.getOriginalMap().getWidth() * image.getOriginalMap().getHeight())/C)*t*(float)stepsSlider.getValue());
+            double size = (double)(image.getOriginalMap().getWidth() * image.getOriginalMap().getHeight());
+            double steps = (double)stepsSlider.getValue();
+            /*System.out.println(A);
+            System.out.println(size);
+            System.out.println(B);
+            System.out.println(steps);*/
+            //int time = (int)(((A*size)*size + B*size + C)*steps); // quadratic
+            int time = (int)((D*size + E)*steps); // linear
+            //System.out.println(time);
             if(time > IMPATIENT_CUSTOMER_TIME){
                 doGong = true;
             } else {
@@ -1366,7 +1390,12 @@ public class MainScreen extends JFrame {
                         @Override
                         protected Void doInBackground() throws Exception {
                             //float tic = System.nanoTime();
-                            imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), 1.0 , ((double)(regularSlider.getValue()))/100.0, ((double)(deltaESlider.getValue()))/400.0);
+                            imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), 1.0 , ((double)(regularSlider.getValue()))/100.0, ((double)(deltaESlider.getValue()))/200.0);
+
+
+                            /*imageLoader.testCalculate(markerList, stepsSlider.getValue(), 1.0 , ((double)(regularSlider.getValue()))/100.0, ((double)(deltaESlider.getValue()))/200.0);
+                            gong();*/
+
                             statusLabel.setText(imageLoader.getLightVector());
                             updateHeight(image.getHeightMap());
                             if(doGong){
@@ -1398,10 +1427,10 @@ public class MainScreen extends JFrame {
                     dialog.add(panel);
                     dialog.pack();
                     dialog.setLocationRelativeTo(win);
-                    if(doGong){
+                    /*if(doGong){
                         JOptionPane.showMessageDialog(dialog, "Our monkey will hit the gong when calculations are finished.");
 
-                    }
+                    }*/
 
                     dialog.setVisible(true);
 
