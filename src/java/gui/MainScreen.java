@@ -20,7 +20,9 @@ import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 /**
@@ -81,6 +83,10 @@ public class MainScreen extends JFrame {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         this.setPreferredSize(new Dimension(800, 600));
         this.pack();
+
+        ImageIcon icon = new ImageIcon((MainScreen.class.getResource("/logo.png")));
+
+        this.getFrame().setIconImage(icon.getImage());
         setLocationRelativeTo(null);
         setTitle("NormalMAPP");
 
@@ -180,7 +186,9 @@ public class MainScreen extends JFrame {
                     originalMapImagePanel.addSquare(mouseEvent.getX(), mouseEvent.getY());
                     originalMapSettingsBox.updateList();
                     if (markerList.size() == 3) { // pridali sme marker a jsou zrovna 3
-                        statusLabel.setText(ShapeFromShading.getLightDirection(markerList, image.getOriginalMap().getWidth(), image.getOriginalMap().getHeight()));
+                        if(image != null && image.getOriginalMap() != null ){
+                            statusLabel.setText(ShapeFromShading.getLightDirection(markerList, image.getOriginalMap().getWidth(), image.getOriginalMap().getHeight()));
+                        }
                     }
                     originalMapImagePanel.revalidate();
                     originalMapImagePanel.repaint();
@@ -538,7 +546,10 @@ public class MainScreen extends JFrame {
 
                 if (image != null) {
                     updateImagePanels();
-
+                    if (image.getHeightMap() != null) {
+                        tabbedPanel.setSelectedComponent(heightMapImagePanel);
+                        cardSettingsBoxLayout.show(cardSettingsBoxPanel, "hs");
+                    }
                 }
             }
         }
@@ -861,6 +872,9 @@ public class MainScreen extends JFrame {
             protected void paintComponent(Graphics g) {
 
                 Graphics2D g2d = (Graphics2D) g;
+                g2d.setColor(new Color(128, 127, 255));
+                g2d.fillRect(0,0,500,500);
+
                 g2d.translate(this.getWidth() / 2, this.getHeight() / 2);
                 g2d.rotate(Math.toRadians(lightAngle.getValue()));
                 g2d.translate(-getLightImage().getWidth(this) / 2, -getLightImage().getHeight(this) / 2);
@@ -945,6 +959,8 @@ public class MainScreen extends JFrame {
                     if (imageLoader != null && image != null && image.getHeightMap() != null) {
                         imageLoader.refreshNormalMap(angle, normalHeight = ((70.0 * (-99.0)) / 10000.0 + 1.0));
                         updateNormal(image.getNormalMap());
+                        cardSettingsBoxLayout.show(cardSettingsBoxPanel, "ns");
+                        tabbedPanel.setSelectedComponent(normalMapImagePanel);
                     }
                 }
             }
@@ -1081,7 +1097,7 @@ public class MainScreen extends JFrame {
                 upLeft.add(deltaESlider, BorderLayout.CENTER);
 
                 JPanel upRight = new JPanel(new BorderLayout());
-                upRight.add(new JLabel("    Smoothness:"), BorderLayout.NORTH);
+                upRight.add(new JLabel("   Smoothness:      "), BorderLayout.NORTH);
                 regularSlider = new JSlider(JSlider.VERTICAL, 0, 100, 50);
                 regularSlider.setMajorTickSpacing(25);
                 regularSlider.setMinorTickSpacing(10);
@@ -1104,6 +1120,7 @@ public class MainScreen extends JFrame {
                 stepsSlider.setMinorTickSpacing(10);
                 stepsSlider.setPaintTicks(true);
                 stepsSlider.setPaintLabels(true);
+
                 down.add(stepsSlider, BorderLayout.CENTER);
                 JPanel textPanel = new JPanel(new BorderLayout());
                 JCheckBox checkBox = new JCheckBox();
@@ -1159,9 +1176,11 @@ public class MainScreen extends JFrame {
                     SwingWorker<Void, Void> mySwingWorker = new SwingWorker<Void, Void>() {
                         @Override
                         protected Void doInBackground() throws Exception {
+
                             //float tic = System.nanoTime();
 
                             imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), 1.0, ((double) (regularSlider.getValue())) / 100.0, ((double) (deltaESlider.getValue())) / 200.0);
+                            //imageLoader.calculateHeightMap(markerList, stepsSlider.getValue(), ((double) (deltaESlider.getValue())) / 100.0, ((double) (regularSlider.getValue())) / 100.0, 0.25);
 
                             statusLabel.setText(imageLoader.getLightVector());
                             updateHeight(image.getHeightMap());
@@ -1183,7 +1202,7 @@ public class MainScreen extends JFrame {
 
                     Window win = SwingUtilities.getWindowAncestor((AbstractButton) evt.getSource());
                     final JDialog dialog = new JDialog(win, "Calculating Height Map", Dialog.ModalityType.APPLICATION_MODAL);
-
+                    dialog.setResizable(false);
                     mySwingWorker.addPropertyChangeListener(evt1 -> {
                         if (evt1.getPropertyName().equals("state")) {
                             if (evt1.getNewValue() == SwingWorker.StateValue.DONE) {
@@ -1218,7 +1237,7 @@ public class MainScreen extends JFrame {
             try {
                 Clip clip;
                 AudioInputStream inputStream = AudioSystem.getAudioInputStream(
-                        MainScreen.class.getResourceAsStream("/gong/gong.wav"));
+                        new BufferedInputStream(MainScreen.class.getResourceAsStream("/gong/gong.wav")));
                 DataLine.Info info = new DataLine.Info(Clip.class, inputStream.getFormat());
                 clip = (Clip) AudioSystem.getLine(info);
                 clip.open(inputStream);

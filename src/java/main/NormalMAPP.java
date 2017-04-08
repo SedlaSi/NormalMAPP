@@ -1,9 +1,5 @@
 package main;
 
-import com.jogamp.opengl.GLCapabilities;
-import com.jogamp.opengl.GLProfile;
-import com.jogamp.opengl.awt.GLCanvas;
-import com.jogamp.opengl.util.FPSAnimator;
 import gui.MainScreen;
 import gui.session.ImageLoader;
 import gui.session.Session;
@@ -11,10 +7,6 @@ import gui.session.Session;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 /**
  * Created by root on 14.7.16.

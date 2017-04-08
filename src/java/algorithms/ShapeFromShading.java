@@ -73,10 +73,19 @@ public class ShapeFromShading implements Algorithm {
 
         normalField = getDepthMapVEC(); // now
 
+        // VYPISOVANI PLOCHYCH NORMAL
+        /*for(int i = bodyStart; i < normalField.length+bodyStart ; i++){
+            //fr[i] = (byte)((normalField[i-bodyStart]+1.0)*127.0);
+            fr[i] = (byte)((normalField[i-bodyStart]/2+0.5)*255.0);
+            //fr[i] = (byte)((normalField[i-bodyStart])*255.0);
+        }*/
+
+        //this.write(fr,"/home/sedlasi1/Desktop/Skola/Bakalarska_prace/Dokumentace/latex/img/ch5/e2.ppm");
         grayscale = null;
 
 
         steps = steps * 100;
+        //steps = 1000;
         absoluteHeightsNEW(relativeHeights()); // opravuje extremy v okrajich --> 18.3.2017 VPORADKU !!!!
 
         return fr;
@@ -784,7 +793,7 @@ public class ShapeFromShading implements Algorithm {
         ga4 = (lightX * lightZ) / (lightX * lightX + lm * 4);
 
 
-        for (int g = 0; g < 25; g++) { // hlavni loop = pocet kroku gauss-siedela
+        for (int g = 0; g < 25; g++) { // hlavni loop = pocet kroku gauss-siedela 25
             mod += 3;
             //horni radka
 
@@ -1000,19 +1009,26 @@ public class ShapeFromShading implements Algorithm {
 
         Matrix A = new Matrix(valsA);
         Matrix b = new Matrix(valsB);
-        Matrix x = A.solve(b);
+        Matrix x;
+        try{
+            x = A.solve(b);
+            DecimalFormat decimalFormat = new DecimalFormat("#0.0000");
+            double lightX = x.get(0, 0);
+            double lightY = x.get(1, 0);
+            double lightZ = x.get(2, 0);
 
-        DecimalFormat decimalFormat = new DecimalFormat("#0.0000");
-        double lightX = x.get(0, 0);
-        double lightY = x.get(1, 0);
-        double lightZ = x.get(2, 0);
+            double size = Math.sqrt((lightX * lightX) + lightY * lightY + lightZ * lightZ);
+            lightX = -lightX / size;
+            lightY = lightY / size;
+            lightZ = lightZ / size;
 
-        double size = Math.sqrt((lightX * lightX) + lightY * lightY + lightZ * lightZ);
-        lightX = -lightX / size;
-        lightY = lightY / size;
-        lightZ = lightZ / size;
+            return "Light vector = (" + decimalFormat.format(lightX) + " , " + decimalFormat.format(lightY) + " , " + decimalFormat.format(lightZ) + ");";
+        } catch (Exception e){
+            return "Singular values. Rearrange your markers.";
+        }
 
-        return "Light vector = (" + decimalFormat.format(lightX) + " , " + decimalFormat.format(lightY) + " , " + decimalFormat.format(lightZ) + ");";
+
+
     }
 
     public String getLightMessage() {

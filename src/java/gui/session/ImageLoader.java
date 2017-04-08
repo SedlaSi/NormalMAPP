@@ -6,6 +6,7 @@ import gui.sfs.Marker;
 import image.Image;
 import org.im4java.core.ConvertCmd;
 import org.im4java.core.IMOperation;
+import org.im4java.process.ProcessStarter;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -53,7 +54,6 @@ public class ImageLoader extends JFrame {
         } else {
             return null;
         }
-
         SwingWorker<Void, Void> mySwingWorker = new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
@@ -66,6 +66,7 @@ public class ImageLoader extends JFrame {
                     op.addImage("ppm:" + newImagePath);
                     // CC command
                     ConvertCmd convert = new ConvertCmd(true);
+                    //convert.setSearchPath(Session.graphicsPath);
                     // Run
                     convert.run(op);
                 } catch (Exception e) {
@@ -73,6 +74,7 @@ public class ImageLoader extends JFrame {
                 }
                 image = null;
                 try {
+                    //System.out.println(newImagePath);
                     File imageFile = new File(newImagePath);
                     BufferedImage imData = ImageIO.read(imageFile);
                     image = new Image(imageFile, imData);

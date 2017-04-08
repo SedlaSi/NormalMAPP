@@ -232,6 +232,8 @@ public class EditMarkerScreen extends JDialog {
         @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2d = (Graphics2D) g;
+            g2d.setColor(new Color(238, 238, 238));
+            g2d.fillRect(0,0,500,500);
             g2d.drawImage(getBackgroundDirectionImage(), 8, 13, this);
             g2d.translate(this.getWidth() / 2, this.getHeight() / 2);
             g2d.rotate(-Math.toRadians(directionSlider.getValue()));
@@ -250,6 +252,9 @@ public class EditMarkerScreen extends JDialog {
         @Override
         protected void paintComponent(Graphics g2) {
             Graphics2D g = (Graphics2D) g2;
+            g.setColor(new Color(238, 238, 238));
+            g.fillRect(0,0,500,500);
+
             g.translate(8, 13);
             g.drawImage(getBackgroundAngleImage(), 0, 0, this);
             if (directionSlider.getValue() > 90 && directionSlider.getValue() <= 270) {
@@ -292,7 +297,7 @@ public class EditMarkerScreen extends JDialog {
 
             // vycisteni okraju
             g.translate(-8, -13);
-            g.setColor(Color.WHITE);
+            g.setColor(new Color(238, 238, 238));
             g.fillRect(0, 0, 8, 250);
             g.translate(8, 13 + 200);
             g.fillRect(0, 0, 250, 30);
