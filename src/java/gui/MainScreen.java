@@ -32,7 +32,7 @@ public class MainScreen extends JFrame {
 
     JMenuBar menuBar;
     JMenu file, help, save, load;
-    JMenuItem exit, openTexture, saveHeighMap, saveNormalMap, loadHeightMap, tutorial;
+    JMenuItem exit, openTexture, saveHeighMap, saveNormalMap, loadHeightMap, tutorial, about, updates;
     ImageLoader imageLoader;
     image.Image image;
     JPanel mainPanel, leftBoxPanel;
@@ -101,9 +101,27 @@ public class MainScreen extends JFrame {
         help = new JMenu("Help");
         tutorial = new JMenuItem("Tutorial");
         tutorialDialog = new Tutorial();
-        tutorial.addActionListener(actionEvent -> tutorialDialog.start(null));
+        tutorial.addActionListener(actionEvent -> tutorialDialog.start());
+        about = new JMenuItem("About");
+        JPanel aboutP = new JPanel(new GridLayout(4,1));
+        aboutP.add(new JLabel("NormalMAPP is free software for calculating"));
+        aboutP.add(new JLabel("height maps and normal maps from single image."));
+        aboutP.add(new JLabel("You can download NormalMAPP from following adress:"));
+        aboutP.add(new JTextArea("https://github.com/SedlaSi/NormalMAPP_repo/blob/master/build/NormalMAPP.zip"));
+        about.addActionListener(actionEvent -> JOptionPane.showMessageDialog(getMainReference(), aboutP));
+
+        updates = new JMenuItem("Updates");
+        JPanel updatesP = new JPanel(new GridLayout(2,1));
+        updatesP.add(new JLabel("Download newest version on our websites:"));
+        updatesP.add(new JTextArea("https://github.com/SedlaSi/NormalMAPP_repo/blob/master/build/NormalMAPP.zip"));
+        updates.addActionListener(actionEvent -> JOptionPane.showMessageDialog(getMainReference(), updatesP));
+
+        help.add(about);
+        help.add(updates);
         help.add(tutorial);
         menuBar.add(help);
+
+
 
         openTexture = new JMenuItem("Open Texture");
         openTexture.addActionListener(actionListener);

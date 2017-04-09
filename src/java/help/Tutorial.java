@@ -27,12 +27,12 @@ public class Tutorial {
 
     public static void main(String[] args) {
         Tutorial tut = new Tutorial();
-        tut.start(null);
+        tut.start();
     }
 
-    public void start(JFrame parent) {
+    public void start() {
         prepareTutorialPanel();
-        prepareDialog(parent, tutorialPanel);
+        prepareDialog(null, tutorialPanel);
 
         dialog.setVisible(true);
 
@@ -76,7 +76,7 @@ public class Tutorial {
                 }
             });
             end = new JButton("End");
-            end.addActionListener(actionEvent -> dialog.dispose());
+            end.addActionListener(actionEvent -> {dialog.dispose();});
 
             // pridani buttonu do buttonPanelu
             JPanel e = new JPanel();
