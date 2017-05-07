@@ -7,7 +7,16 @@ import java.io.IOException;
 import java.nio.BufferOverflowException;
 
 /**
- * Created by root on 14.7.16.
+ * Created by sedlasi1 on 14.7.16.
+ *
+ * Image class is data container for all main input / output files.
+ *
+ * Image class contains:
+ *      input image -> BufferedImage originalMap
+ *      height map image -> BufferedImage heightMap
+ *      normal map image -> BufferedImage normalMap
+ *      reference to the input file -> File sourceFile
+ *
  */
 public class Image {
 
@@ -15,7 +24,6 @@ public class Image {
     private BufferedImage originalMap;
     private BufferedImage heightMap;
     private BufferedImage normalMap;
-    private BufferedImage preview;
 
     public Image(File sourceFile, BufferedImage originalMap) {
         this.sourceFile = sourceFile;
@@ -30,10 +38,6 @@ public class Image {
         this.normalMap = normalMap;
     }
 
-    public void setPreview(BufferedImage preview) {
-        this.preview = preview;
-    }
-
     public BufferedImage getNormalMap() {
         return normalMap;
     }
@@ -44,10 +48,6 @@ public class Image {
 
     public BufferedImage getOriginalMap() {
         return originalMap;
-    }
-
-    public BufferedImage getPreview() {
-        return preview;
     }
 
 }

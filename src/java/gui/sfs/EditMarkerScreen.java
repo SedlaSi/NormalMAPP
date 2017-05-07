@@ -11,7 +11,12 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 /**
- * Created by root on 23.10.16.
+ * Created by sedlasi1 on 23.10.16.
+ *
+ * EditMarkerScreen class creates modal JDialog,
+ * which contains all gui tools for editing Marker
+ * information.
+ *
  */
 public class EditMarkerScreen extends JDialog {
 
@@ -30,6 +35,13 @@ public class EditMarkerScreen extends JDialog {
     BufferedImage directionImage, angleImage, backgroundDirectionImage, backgroundAngleImage;
     BufferedImage angleImageR, backgroundDirectionImageR;
 
+    /**
+     * Constructor for modal JDialog
+     *
+     * @param mainFrame
+     * @param name
+     * @param modalityType
+     */
     public EditMarkerScreen(JFrame mainFrame, String name, Dialog.ModalityType modalityType) {
         super(mainFrame, name, modalityType);
     }
@@ -38,6 +50,11 @@ public class EditMarkerScreen extends JDialog {
         super();
     }
 
+    /**
+     * @method main() for testing purposes
+     *
+     * @param args
+     */
     public static void main(String[] args) {
         double angle = Math.toRadians(0.0);
         double dir = Math.toRadians(250.0);
@@ -62,6 +79,10 @@ public class EditMarkerScreen extends JDialog {
         editMarkerScreen.startFrame();*/
     }
 
+    /**
+     * @method startFrame() creates dialog, fill it
+     * with all components and display it.
+     */
     public void startFrame() {
         this.setPreferredSize(new Dimension(450, 350));
         this.pack();
@@ -175,10 +196,17 @@ public class EditMarkerScreen extends JDialog {
         pack();
     }
 
+    /**
+     * @method disposeDialog() disposes current dialog
+     */
     private void disposeDialog() {
         this.dispose();
     }
 
+    /**
+     * @method getDirectionImage()
+     * @return Resources/review_marker_edit/direction_row.png
+     */
     private BufferedImage getDirectionImage() {
         if (directionImage == null) {
             try {
@@ -190,6 +218,10 @@ public class EditMarkerScreen extends JDialog {
         return directionImage;
     }
 
+    /**
+     * @method getBackgroundDirectionImage()
+     * @return Resources/review_marker_edit/direction_background.png
+     */
     private BufferedImage getBackgroundDirectionImage() {
         if (backgroundDirectionImage == null) {
             try {
@@ -201,6 +233,10 @@ public class EditMarkerScreen extends JDialog {
         return backgroundDirectionImage;
     }
 
+    /**
+     * @method getAngleImage()
+     * @return Resources/review_marker_edit/angle_row.png
+     */
     private BufferedImage getAngleImage() {
         if (angleImage == null) {
             try {
@@ -212,6 +248,10 @@ public class EditMarkerScreen extends JDialog {
         return angleImage;
     }
 
+    /**
+     * @method getBackgroundAngleImage()
+     * @return Resources/review_marker_edit/angle_background.png
+     */
     private BufferedImage getBackgroundAngleImage() {
         if (backgroundAngleImage == null) {
             try {
@@ -227,6 +267,10 @@ public class EditMarkerScreen extends JDialog {
         this.marker = marker;
     }
 
+    /**
+     * DirectionPanel class is JPanel which displays on
+     * the left of the EditMarker JDialog.
+     */
     private class DirectionPanel extends JPanel {
 
         @Override
@@ -247,6 +291,10 @@ public class EditMarkerScreen extends JDialog {
 
     }
 
+    /**
+     * AnglePanel class is JPanel which displays on
+     * the right of the EditMarker JDialog.
+     */
     private class AnglePanel extends JPanel {
 
         @Override
@@ -310,6 +358,12 @@ public class EditMarkerScreen extends JDialog {
         }
     }
 
+    /**
+     * @method idEdit() sets, if information from marker
+     * on the input will be set to the sliders.
+     *
+     * @param edit
+     */
     public void isEdit(boolean edit) {
         this.edit = edit;
     }

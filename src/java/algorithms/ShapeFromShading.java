@@ -21,9 +21,18 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Created by root on 5.11.16.
+ * Created by sedlasi1 on 5.11.16.
+ *
+ * ShapeFromShading class is used to calculate height map
+ * from input image and markers provided by user.
+ *
+ * Algorithm used in this class:
+ *      Interactive Normal Reconstruction from Single Image
+ *
+ * For further information about the algorithm, please visit:
+ *      https://pdfs.semanticscholar.org/0d10/f43243d6b269be4d633e2c5c14d7b26cef10.pdf
  */
-public class ShapeFromShading implements Algorithm {
+public class ShapeFromShading {
 
     private final static double ROUND_ANGLE = 2.0; //2.0
     private final static double FLAT_ANGLE = 5.0; // 5.0
@@ -44,6 +53,11 @@ public class ShapeFromShading implements Algorithm {
     int bodyStart;
     private double[] normalField;
 
+    /**
+     * @method setImage() used to read ppm input image
+     * from session folder.
+     * @param path path to the input image in session folder
+     */
     public void setImage(String path) {
 
         try {
@@ -54,14 +68,29 @@ public class ShapeFromShading implements Algorithm {
 
     }
 
+    /**
+     * @method setSteps() sets calculation steps.
+     * Used by Calculation steps slider in GUI.
+     * @param steps number of calculation steps
+     */
     public void setSteps(int steps) {
         this.steps = steps;
     }
 
+    /**
+     * @method setMarkers() set list of markers which will be used
+     * in the calculation.
+     * @param markers
+     */
     public void setMarkers(List<Marker> markers) {
         this.markers = markers;
     }
 
+    /**
+     * @method shapeFromShading() starts the main computation
+     * of the height map.
+     * @return byte array height map in ppm image format
+     */
     public byte[] shapeFromShading() {
         if (fr == null || markers == null) {
             System.out.println("NULL fr or markers");
@@ -91,6 +120,12 @@ public class ShapeFromShading implements Algorithm {
         return fr;
     }
 
+    /**
+     * @method interpolatedNormalEstimation() is used to calculate
+     * mask which is used as base for computation of height map.
+     * Not in original algorithm.
+     * @return field of double values representing normal vectors
+     */
     private double[] interpolatedNormalEstimation() {
         int size = collumns * rows;
         double[] n = new double[3 * size];
@@ -221,6 +256,11 @@ public class ShapeFromShading implements Algorithm {
         return d;
     }
 
+    /**
+     * @method absoluteHeightsNEW() calculates final height map
+     * from input relative height field.
+     * @param q field of relatives height between vectors
+     */
     private void absoluteHeightsNEW(double[] q) {
         int size = collumns * rows;
         double[] h = new double[size];
@@ -395,6 +435,11 @@ public class ShapeFromShading implements Algorithm {
 
     }
 
+    /**
+     * @method relativeHeights() calculates relative
+     * heights between vectors.
+     * @return double field of relatives height between vectors
+     */
     private double[] relativeHeights() {
         int size = collumns * rows;
         double[] relativeHeights = new double[2 * collumns * rows];
@@ -718,6 +763,12 @@ public class ShapeFromShading implements Algorithm {
         return relativeHeights;
     }
 
+    /**
+     * @method write() writes byte array of the picture
+     * to the file specificated in the path.
+     * @param picture input byte array
+     * @param path path to the file
+     */
     public void write(byte[] picture, String path) {
         FileOutputStream fos;
 
@@ -733,6 +784,12 @@ public class ShapeFromShading implements Algorithm {
 
     }
 
+    /**
+     * @method read() reads file to the byte array
+     * from input path.
+     * @param path input path of the file
+     * @return byte field of the file
+     */
     public byte[] read(String path) {
         try {
             return Files.readAllBytes(Paths.get(path));
@@ -742,7 +799,11 @@ public class ShapeFromShading implements Algorithm {
         }
     }
 
-    // 19.3.2017 METODA!!!!!! -- minimalizace po celych vektorech
+    /**
+     * @method getDepthMapVEC() calculates the initial normal vector
+     * estimation. Equation E2 in the algorithm thesis.
+     * @return field of normal vectors
+     */
     private double[] getDepthMapVEC() {
         // 4. step
         int size = collumns * rows;
@@ -963,6 +1024,9 @@ public class ShapeFromShading implements Algorithm {
         return n;
     }
 
+    /**
+     * @method getLightSource() calculates light vector. Equation E1 in the algorithm thesis.
+     */
     private void getLightSource() {
         double[][] valsA;
         double[][] valsB;
@@ -993,6 +1057,14 @@ public class ShapeFromShading implements Algorithm {
 
     }
 
+    /**
+     * @method getLightDirection() calculates light vector and creates message for GUI.
+     * Equation E1 in the algorithm thesis.
+     * @param markers list of input markers
+     * @param collumns width of input image
+     * @param rows height of input image
+     * @return message for GUI: Light vector ...
+     */
     public static String getLightDirection(java.util.List<Marker> markers, int collumns, int rows) {
         double[][] valsA;
         double[][] valsB;
@@ -1031,12 +1103,17 @@ public class ShapeFromShading implements Algorithm {
 
     }
 
+    /**
+     * @method getLightMessage() returns light vector message for GUI with proper object parameters
+     * @return message for GUI: Light vector ...
+     */
     public String getLightMessage() {
         return getLightDirection(markers, collumns, rows);
     }
 
     /**
-     * VRACI V POLI JEDNA HODNOTA COLLUMNS x ROWS
+     * @method getGrayscale() fill grayscale variable with gray scale values of the
+     * fr variable
      */
     private void getGrayscale() {
         int off; // offset in array
@@ -1085,33 +1162,35 @@ public class ShapeFromShading implements Algorithm {
 
     }
 
-
-    @Override
-    public int getSteps() {
-        return 0;
-    }
-
+    /**
+     *
+     * @param albedo is not currently used in GUY
+     */
     public void setAlbedo(double albedo) {
         this.q = albedo;
     }
 
+    /**
+     *
+     * @param regularization variable can be set from Smoothness slider in GUI
+     */
     public void setRegularization(double regularization) {
         this.lm = regularization;
     }
 
+    /**
+     *
+     * @param deltaE variable can be set from Markers Effect slider in GUI
+     */
     public void setDeltaE(double deltaE) {
         this.deltaE = deltaE;
     }
 
-
-    public int getCollumns() {
-        return collumns;
-    }
-
-    public int getRows() {
-        return rows;
-    }
-
+    /**
+     * @method invert() inverts color from input image and returns inverted image
+     * @param fr byte field image in ppm format
+     * @return byte field image in ppm format with inverted colors
+     */
     public byte[] invert(byte[] fr) {
         int off = 3; // offset in array
 

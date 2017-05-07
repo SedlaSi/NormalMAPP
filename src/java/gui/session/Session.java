@@ -7,25 +7,38 @@ import java.io.File;
 import java.io.FileReader;
 
 /**
- * Created by root on 19.7.16.
+ * Created by sedlasi1 on 19.7.16.
+ *
+ * Session class contains information about current session
+ * of NormalMAPP. It provides those information to gui.session.ImageLoader.
+ *
+ * Information:
+ *      path to temporary folder on current system -> ROOT_FOLDER
+ *      path separator on current system -> SLASH
+ *      name of the system -> SYSTEM
+ *      path to the Graphics Magic folder -> GRAPHICS_MAGIC_FOLDER
+ *      path to current session folder -> sessionFolder
  */
 public class Session {
 
     private static String GRAPHICS_MAGIC_FOLDER = ".\\lib\\GraphicsMagick"; // do not put slash at the end
-
     private static String ROOT_FOLDER = "/tmp/.NormalMAPP";
-    public static String SLASH = "/";
-    public static String SYSTEM = "UNIX";
+    static String SLASH = "/";
+    private static String SYSTEM = "UNIX";
     private String sessionFolder;
+
+    // random hash created for current session
     String sessionId;
 
+    /**
+     * Edit constructor for other systems compatibility
+     */
     public Session() {
         if (System.getProperty("os.name").contains("Windows")) {
             SYSTEM = "WINDOWS";
             ROOT_FOLDER = "C:\\Users\\" + System.getProperty("user.name") + "\\AppData\\Local\\Temp\\.NormalMAPP";
             SLASH = "\\";
             loadGraphicsMagick();
-            //ProcessStarter.setGlobalSearchPath(GRAPHICS_MAGIC_FOLDER);
         }
 
         sessionId = Long.toString(System.nanoTime()) + ((int) (Math.random() * 100));
@@ -33,6 +46,10 @@ public class Session {
         init();
     }
 
+    /**
+     * @method loadGraphicsMagick() reads path of Graphics Magick folder
+     * from conf.txt file. This method is used only on Microsoft Windows systems.
+     */
     private void loadGraphicsMagick(){
         try{
             String path = Session.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
@@ -67,7 +84,11 @@ public class Session {
         ProcessStarter.setGlobalSearchPath(GRAPHICS_MAGIC_FOLDER);
     }
 
-
+    /**
+     * @method init() creates root folder of NormalMAPP
+     * application in temporary folder (not created if exists).
+     * Then it creates session folder in root folder.
+     */
     private void init() {
 
         File rootFolder = new File(ROOT_FOLDER);
@@ -82,10 +103,13 @@ public class Session {
             System.out.println("Cannot create session folder for session " + sessionId + ".");
             System.exit(120);
         }
-
-
     }
 
+    /**
+     * @method endSession() starts when the application
+     * is about to end, it removes all files from session folder.
+     * If NormalMAPP root folder is empty, it will be removed as well.
+     */
     public void endSession() {
         File sessionFolderFile = new File(sessionFolder);
         File[] subFiles = sessionFolderFile.listFiles();

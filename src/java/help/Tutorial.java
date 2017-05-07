@@ -1,18 +1,19 @@
 package help;
 
-import sun.awt.im.CompositionArea;
-
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.ArrayList;
 
 import static help.Tutorial.Cards.*;
 
 /**
- * Created by root on 7.3.17.
+ * Created by sedlasi1 on 7.3.17.
+ *
+ * Tutorial class creates frame with tutorial available in GUI
+ * through Help -> Tutorial.
+ *
+ * Class uses resources from Resources/help/ folder
+ *
  */
 public class Tutorial {
 
@@ -30,6 +31,12 @@ public class Tutorial {
         tut.start();
     }
 
+    /**
+     * @method start() creates the tutorial frame
+     * and show the first page of the tutorial.
+     *
+     * @return void
+     */
     public void start() {
         prepareTutorialPanel();
         prepareDialog(null, tutorialPanel);
@@ -42,6 +49,14 @@ public class Tutorial {
         dialog.setLocationRelativeTo(null);
     }
 
+    /**
+     * @method prepareDialog() creates JDialog for
+     * tutorial, sets size and connect it with proper JPanel.
+     *
+     * @param parent use for modality, null in default
+     * @param panel is the main tutorial panel
+     * @return void
+     */
     private void prepareDialog(JFrame parent, JPanel panel) {
         if (dialog == null) {
             dialog = new JDialog(parent);
@@ -51,6 +66,12 @@ public class Tutorial {
         }
     }
 
+    /**
+     * @method prepareTutorialPanel() initialize tutorialPanel variable
+     * and fill it with all buttons and cardLayout
+     *
+     * @return void
+     */
     private void prepareTutorialPanel() {
         if (tutorialPanel == null) {
             tutorialPanel = new JPanel(new BorderLayout());
@@ -91,6 +112,11 @@ public class Tutorial {
         }
     }
 
+    /**
+     * @method setCards adds JPanels to the cardPanel variable
+     *
+     * @param cardPanel
+     */
     private void setCards(JPanel cardPanel) {
         cardPanel.add(getWelcome(), "0");
         cardPanel.add(getOpenImage(), "1");
@@ -106,6 +132,13 @@ public class Tutorial {
 
     }
 
+    /**
+     * Cards class contains static methods which returns JPanels with
+     * all tutorial pages, each page have her own JPanel with his own
+     * method in this class.
+     *
+     * Tutorial pages are loaded from Resources/help/ folder
+     */
     protected static class Cards {
 
         static JPanel getWelcome() {

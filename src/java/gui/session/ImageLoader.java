@@ -6,20 +6,20 @@ import gui.sfs.Marker;
 import image.Image;
 import org.im4java.core.ConvertCmd;
 import org.im4java.core.IMOperation;
-import org.im4java.process.ProcessStarter;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
-import java.text.DecimalFormat;
 
 /**
- * Created by root on 14.7.16.
+ * Created by sedlasi1 on 14.7.16.
+ *
+ * ImageLoader class is used for removing/loading images
+ * in/to the session folder. For further information
+ * about session folder visit gui.session.Session class.
  */
 public class ImageLoader extends JFrame {
 
@@ -41,10 +41,20 @@ public class ImageLoader extends JFrame {
         this.sessionFolder = sessionFolder;
     }
 
+    /**
+     * @method setMainFrameReference() set reference to the MainScreen object.
+     * @param mainFrameReference
+     */
     public void setMainFrameReference(JFrame mainFrameReference) {
         this.mainFrameReference = mainFrameReference;
     }
 
+    /**
+     * @method loadImage() is used to load
+     * input image to the application.
+     * JFileChooser is started inside.
+     * @return image.Image
+     */
     public Image loadImage() {
 
         int ret = fileChooser.showOpenDialog(ImageLoader.this);
@@ -112,39 +122,12 @@ public class ImageLoader extends JFrame {
         return image;
     }
 
-    public Image testloadImage() {
-
-        File file = new File("/home/sedlasi1/Desktop/cl_koule.png");
-
-        String newImagePath = sessionFolder + Session.SLASH + ORIGINAL_NAME;
-        try {
-            // Use IM
-            IMOperation op = new IMOperation();
-            // Pipe
-            op.addImage(file.getAbsolutePath());
-            op.addImage("ppm:" + newImagePath);
-            // CC command
-            ConvertCmd convert = new ConvertCmd(true);
-            // Run
-            convert.run(op);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        image = null;
-        try {
-            File imageFile = new File(newImagePath);
-            BufferedImage imData = ImageIO.read(imageFile);
-            image = new Image(imageFile, imData);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return image;
-    }
-
+    /**
+     * @method loadHeightMap() is used to load
+     * height map image to the application.
+     * JFileChooser is started inside.
+     * @return image.Image
+     */
     public Image loadHeightMap() {
 
         int ret = fileChooser.showOpenDialog(ImageLoader.this);
@@ -213,6 +196,13 @@ public class ImageLoader extends JFrame {
         return image;
     }
 
+    /**
+     * @method refreshNormalMap() recalculates normal map in session folder
+     * with input angle and height of the z value.
+     *
+     * @param angle
+     * @param height
+     */
     public void refreshNormalMap(double angle, double height) {
         if (image.getHeightMap() != null) {
             normalMap.write(normalMap.normalMap(normalMap.read(sessionFolder + Session.SLASH + HEIGHT_NAME), angle, height), sessionFolder + Session.SLASH + NORMAL_NAME);
@@ -225,6 +215,15 @@ public class ImageLoader extends JFrame {
         }
     }
 
+    /**
+     * @method calculateHeightMap() calculates height map and save it to the
+     * session folder.
+     * @param markerList user input markers
+     * @param steps number of calculation steps
+     * @param q albedo parameter, not currently in use
+     * @param lm lambda parameter -> set by Smoothness slider in GUI
+     * @param e e parameter -> set by Markers effect slider in GUI
+     */
     public void calculateHeightMap(java.util.List<Marker> markerList, int steps, double q, double lm, double e) {
         shapeFromShading.setSteps(steps);
         shapeFromShading.setAlbedo(q);
@@ -241,10 +240,17 @@ public class ImageLoader extends JFrame {
 
     }
 
+    /**
+     *
+     * @return message which is shown on the bottom of the screen: Light vector ...
+     */
     public String getLightVector() {
         return shapeFromShading.getLightMessage();
     }
 
+    /**
+     * @method saveHeightMap() saves height map file selected with JFileChooser
+     */
     public void saveHeightMap() {
         fileChooser.setSelectedFile(new File("heightmap.png"));
         int ret = fileChooser.showSaveDialog(ImageLoader.this);
@@ -270,6 +276,9 @@ public class ImageLoader extends JFrame {
         }
     }
 
+    /**
+     * @method saveNormalMap() saves height map file selected with JFileChooser
+     */
     public void saveNormalMap() {
         fileChooser.setSelectedFile(new File("normalmap.png"));
         int ret = fileChooser.showSaveDialog(ImageLoader.this);
@@ -294,11 +303,10 @@ public class ImageLoader extends JFrame {
         }
     }
 
-    public Image getImage() {
-        return image;
-    }
-
-
+    /**
+     * @method invertHeightMap() invert heights in current height map.
+     * It is called by clicking "Invert heights" button in height map settings box.
+     */
     public void invertHeightMap() {
         shapeFromShading.write(shapeFromShading.invert(shapeFromShading.read(sessionFolder + Session.SLASH + HEIGHT_NAME)), sessionFolder + Session.SLASH + HEIGHT_NAME);
         try {

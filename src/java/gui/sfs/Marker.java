@@ -3,7 +3,11 @@ package gui.sfs;
 import java.awt.*;
 
 /**
- * Created by root on 23.10.16.
+ * Created by sedlasi1 on 23.10.16.
+ *
+ * Marker class is data class containing data of
+ * normal vector which was set by user.
+ *
  */
 public class Marker {
 
@@ -17,6 +21,7 @@ public class Marker {
     private int direction;
     private int angle;
 
+    // not currently in use
     Rectangle square;
 
     private String name;
@@ -80,14 +85,6 @@ public class Marker {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public Rectangle getSquare() {
-        return square;
-    }
-
-    public void setSquare(Rectangle square) {
-        this.square = square;
     }
 
     public void setDirection(int direction) {

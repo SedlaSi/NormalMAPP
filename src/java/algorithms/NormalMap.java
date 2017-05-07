@@ -5,10 +5,21 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
-public class NormalMap implements Algorithm {
+/**
+ * Created by sedlasi1 on 14.7.16.
+ *
+ * NormalMap class is used for calculating normal maps from
+ * input height map. For normal map calculations Sobel-Feldman
+ * convolution is used.
+ */
+public class NormalMap {
 
-    private static final int STEPS = 5;
-
+    /**
+     * @method read() reads file to the byte array
+     * from input path.
+     * @param path input path of the file
+     * @return byte field of the file
+     */
     public byte[] read(String path) {
         try {
             return Files.readAllBytes(Paths.get(path));
@@ -18,6 +29,12 @@ public class NormalMap implements Algorithm {
         }
     }
 
+    /**
+     * @method write() writes byte array of the picture
+     * to the file specificated in the path.
+     * @param picture input byte array
+     * @param path path to the file
+     */
     public void write(byte[] picture, String path) {
         FileOutputStream fos;
         try {
@@ -32,6 +49,12 @@ public class NormalMap implements Algorithm {
 
     }
 
+    /**
+     * @method getGrayscale() calculates grayscale
+     * from ppm file and returns grayscale table
+     * @param fr input ppm file in byte array
+     * @return grayscale table in byte array
+     */
     private byte[] getGrayscale(byte[] fr) {
         int collumns;
         int rows;
@@ -78,6 +101,14 @@ public class NormalMap implements Algorithm {
         return out;
     }
 
+    /**
+     * @method normalMap() calculates normal map from input ppm image
+     * saved in byte field
+     * @param fr input ppm file
+     * @param angle angle of vectors
+     * @param height height of the z value of vectors
+     * @return
+     */
     public byte[] normalMap(byte[] fr, double angle, double height) {
         byte[] gray = getGrayscale(fr);
         byte[] out = Arrays.copyOf(fr, fr.length);
@@ -188,98 +219,6 @@ public class NormalMap implements Algorithm {
 
 
         return out;
-    }
-
-    public byte[] convolution(byte[] fr) {
-        int collumns;
-        int rows;
-        int off = 3; // offset in array
-        byte[] out = Arrays.copyOf(fr, fr.length);
-
-        int upper, middle, lower;
-
-
-        System.out.println("P = " + fr[0]);
-        System.out.println("6 = " + fr[1]);
-        System.out.println("/n = " + fr[2]);
-        while (fr[off] != 10) off++;
-        int i = 3;
-        StringBuilder stb = new StringBuilder();
-        while (true) {
-            if (fr[i] == '#') {
-                i++;
-                while (fr[i] != '\n') i++;
-            } else break;
-        }
-        i++;
-        off = i;
-        while (fr[off] != 10 && fr[off] != ' ') off++;
-        while (i < off) {
-            stb.append((char) fr[i]);
-            i++;
-        }
-        collumns = Integer.parseInt(stb.toString());
-
-        off++;
-        i = off;
-        while (fr[off] != 10 && fr[off] != ' ') off++;
-        stb = new StringBuilder();
-        while (i < off) {
-            stb.append((char) fr[i]);
-            i++;
-        }
-        rows = Integer.parseInt(stb.toString());
-        off += 5;
-        upper = off;
-        middle = off + 3 * collumns;
-        lower = off + 6 * collumns;
-        int readen_lines = 3;
-        int valR;
-        int valG;
-        int valB;
-
-        while (readen_lines <= rows) {
-            for (i = 3; i < collumns * 3 - 3; i += 3) {
-
-                valR = (5 * (fr[middle + i] & 0xFF) - (fr[middle + i - 3] & 0xFF) - (fr[middle + i + 3] & 0xFF) - (fr[upper + i] & 0xFF) - (fr[lower + i] & 0xFF)); // R
-
-                if (valR > 255) {
-                    valR = 255;
-                } else if (valR < 0) {
-                    valR = 0;
-                }
-
-                out[middle + i] = (byte) valR;
-
-                valG = (5 * (fr[middle + i + 1] & 0xFF) - (fr[middle + i - 2] & 0xFF) - (fr[middle + i + 4] & 0xFF) - (fr[upper + i + 1] & 0xFF) - (fr[lower + i + 1] & 0xFF)); // G
-                if (valG > 255) {
-                    valG = 255;
-                } else if (valG < 0) {
-                    valG = 0;
-                }
-                out[middle + i + 1] = (byte) valG;
-
-                valB = (5 * (fr[middle + i + 2] & 0xFF) - (fr[middle + i - 1] & 0xFF) - (fr[middle + i + 5] & 0xFF) - (fr[upper + i + 2] & 0xFF) - (fr[lower + i + 2] & 0xFF)); // B
-                if (valB > 255) {
-                    valB = 255;
-                } else if (valB < 0) {
-                    valB = 0;
-                }
-                out[middle + i + 2] = (byte) valB;
-            }
-
-            upper = middle;
-            middle = lower;
-            lower += 3 * collumns;
-            readen_lines++;
-        }
-
-        return out;
-    }
-
-    @Override
-    public int getSteps() {
-        return STEPS;
     }
 
 }

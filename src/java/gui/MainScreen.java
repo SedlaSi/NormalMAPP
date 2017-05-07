@@ -1,7 +1,6 @@
 package gui;
 
 import algorithms.ShapeFromShading;
-import gui.sfs.AlgorithmSettingsDialog;
 import gui.sfs.EditMarkerScreen;
 import gui.sfs.Marker;
 import gui.session.ImageLoader;
@@ -15,18 +14,20 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.DataLine;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 /**
- * Created by root on 14.7.16.
+ * Created by sedlasi1 on 14.7.16.
+ *
+ * MainScreen class contains all main variables of GUI for NormalMAPP.
+ * Class is initialized in main.NormalMAPP class.
+ *
  */
 public class MainScreen extends JFrame {
 
@@ -41,9 +42,10 @@ public class MainScreen extends JFrame {
     EditMarkerScreen editMarkerScreen;
     JLabel statusLabel;
 
+    // synchronize Original Image, Height Map and Normal Map position and zoom
     private final boolean updateAllImages = true;
 
-
+    private boolean mouseIsDragged = false ;
     JTabbedPane tabbedPanel;
     JPanel cardSettingsBoxPanel;
     CardLayout cardSettingsBoxLayout;
@@ -64,9 +66,11 @@ public class MainScreen extends JFrame {
     private double mouseStartX, mouseStartY;
 
     private double angle;
-    private boolean mouseIsDragged;
-    private double normalHeight = 0.1;
 
+    /**
+     * @method main for testing purposes
+     * @param args
+     */
     public static void main(String[] args) {
         MainScreen mainScreen = new MainScreen(null, null);
         mainScreen.createFrame();
@@ -77,6 +81,9 @@ public class MainScreen extends JFrame {
         this.session = session;
     }
 
+    /**
+     * @method createFrame() initialize the main JFrame and fill it with all the components.
+     */
     public void createFrame() {
         ThisMenuListener menuListener = new ThisMenuListener();
         actionListener = new ThisActionListener();
@@ -203,7 +210,7 @@ public class MainScreen extends JFrame {
                 if (originalMapSettingsBox.activeButton == originalMapSettingsBox.addMarkerButton) {
                     originalMapImagePanel.addSquare(mouseEvent.getX(), mouseEvent.getY());
                     originalMapSettingsBox.updateList();
-                    if (markerList.size() == 3) { // pridali sme marker a jsou zrovna 3
+                    if (markerList.size() == 3) { //we add a marker and there are just 3 of them -> recalculate light vector
                         if(image != null && image.getOriginalMap() != null ){
                             statusLabel.setText(ShapeFromShading.getLightDirection(markerList, image.getOriginalMap().getWidth(), image.getOriginalMap().getHeight()));
                         }
@@ -484,18 +491,30 @@ public class MainScreen extends JFrame {
         pack();
     }
 
+    /**
+     * @method updateOriginal() update input image and refreshes ImagePanel
+     * @param original
+     */
     private void updateOriginal(BufferedImage original) {
         originalMapImagePanel.setBufferedImage(original);
         revalidate();
         repaint();
     }
 
+    /**
+     * @method updateHeight() update height map image and refreshes ImagePanel
+     * @param height
+     */
     private void updateHeight(BufferedImage height) {
         heightMapImagePanel.setBufferedImage(height);
         revalidate();
         repaint();
     }
 
+    /**
+     * @method updateNormal() update normal map image and refreshes ImagePanel
+     * @param normal
+     */
     private void updateNormal(BufferedImage normal) {
         if (image.getHeightMap() != null) {
             normalMapImagePanel.setBufferedImage(normal);
@@ -504,6 +523,9 @@ public class MainScreen extends JFrame {
         }
     }
 
+    /**
+     * @method updateImagePanels() update all three images with methods above
+     */
     private void updateImagePanels() {
         if (image.getOriginalMap() != null) {
             updateOriginal(image.getOriginalMap());
@@ -520,6 +542,11 @@ public class MainScreen extends JFrame {
         return this;
     }
 
+
+    /**
+     * ThisMenuListener is MenuListener class connected to all
+     * menu buttons in the application GUI. Not currently in use.
+     */
     private class ThisMenuListener implements MenuListener {
 
         @Override
@@ -538,6 +565,16 @@ public class MainScreen extends JFrame {
         }
     }
 
+    /**
+     * ThisActionListener class is ActionListener class
+     * which receives Events from menu buttons:
+     *      Open Texture
+     *      Save Normal Map
+     *      Save Height Map
+     *      Load Height Map
+     *      Exit
+     *
+     */
     private class ThisActionListener implements ActionListener {
 
         @Override
@@ -550,9 +587,17 @@ public class MainScreen extends JFrame {
 
                 }
             } else if (e.getSource() == saveNormalMap) {
-                imageLoader.saveNormalMap();
+                if(image != null && image.getNormalMap() != null){
+                    imageLoader.saveNormalMap();
+                } else {
+                    JOptionPane.showMessageDialog(getFrame(), "No normal map to be saved.");
+                }
             } else if (e.getSource() == saveHeighMap) {
-                imageLoader.saveHeightMap();
+                if(image != null && image.getHeightMap() != null) {
+                    imageLoader.saveHeightMap();
+                } else {
+                    JOptionPane.showMessageDialog(getFrame(), "No height map to be saved.");
+                }
             } else if (e.getSource() == exit) {
                 if (session != null) {
                     session.endSession();
@@ -573,6 +618,11 @@ public class MainScreen extends JFrame {
         }
     }
 
+    /**
+     * OriginalMapImagePanel upgrade ImagePanel with ability of adding markers to the image.
+     * See addSquare() method for adding Marker. See ImagePanel class for further information.
+     *
+     */
     private class OriginalMapImagePanel extends ImagePanel {
 
         public OriginalMapImagePanel() {
@@ -581,6 +631,13 @@ public class MainScreen extends JFrame {
 
         private int markerNumber = 0;
 
+        /**
+         * @method addSquare() is used for creating Marker at the x, y position.
+         * X,Y values represents mouse position on the ImagePanel.
+         *
+         * @param x
+         * @param y
+         */
         public void addSquare(int x, int y) {
             if (image != null) {
 
@@ -620,10 +677,9 @@ public class MainScreen extends JFrame {
                 originalMapImagePanel.revalidate();
                 originalMapImagePanel.repaint();
                 editMarkerScreen = new EditMarkerScreen(getMainReference(), "", Dialog.ModalityType.DOCUMENT_MODAL);
-                /**
-                 * ZDE SE POTOM SPUSTI OBRAZOVKA NA UPRAVU UDAJU x, y A name
-                 */
                 editMarkerScreen.setMarker(marker);
+
+                // starts editMarkerScreen frame
                 editMarkerScreen.startFrame();
 
                 if (marker.getX() == -1 || marker.getY() == -1 || marker.getZ() == -1) { // Uzivatel dal "cancel"
@@ -634,6 +690,14 @@ public class MainScreen extends JFrame {
             }
         }
 
+        /**
+         * @method hightlightIfInterselectWithMouse() will mark Marker as highlighted.
+         * Highlighted marker will fill with green collor when ImagePanel will be repainted.
+         * X,Y values represents mouse position on the ImagePanel.
+         *
+         * @param x
+         * @param y
+         */
         public void hightlightIfInterselectWithMouse(int x, int y) {
             if (image != null) {
                 double xRel;
@@ -678,6 +742,13 @@ public class MainScreen extends JFrame {
             }
         }
 
+
+        /**
+         * @method hightlightIfListClicked() will mark Marker as highlighted.
+         * Highlighted marker will fill with green collor when ImagePanel will be repainted.
+         *
+         * @param item is index in list of markers
+         */
         public void hightlightIfListClicked(int item) {
             if (image != null) {
                 originalMapImagePanel.setHighlightedSquare(item);
@@ -686,6 +757,13 @@ public class MainScreen extends JFrame {
             }
         }
 
+        /**
+         * @method removeSquare() remove marker at position set in the input values.
+         * X,Y values represents mouse position on the ImagePanel.
+         *
+         * @param x
+         * @param y
+         */
         public void removeSquare(int x, int y) {
             if (image != null) {
                 double xRel;
@@ -729,6 +807,12 @@ public class MainScreen extends JFrame {
             }
         }
 
+        /**
+         * @method setSquareSize() change size of all markers,
+         * size of markers is applied when ImagePanel is repainted.
+         *
+         * @param size
+         */
         void setSquareSize(int size) {
             squareSize = size;
             square = new Rectangle(squareSize, squareSize);
@@ -736,10 +820,20 @@ public class MainScreen extends JFrame {
 
         private int eddited = 0;
 
+        /**
+         * @return index of square which was edited as the last one.
+         */
         int editedSquare() {
             return eddited;
         }
 
+        /**
+         * @method editSquare() starts editMarkerScreen frame with selected Marker
+         * X,Y values represents mouse position on the ImagePanel.
+         *
+         * @param x
+         * @param y
+         */
         void editSquare(int x, int y) {
             if (image != null) {
                 double xRel;
@@ -798,15 +892,27 @@ public class MainScreen extends JFrame {
     }
 
 
+    /**
+     * HeightMapImagePanel class used when Height Map tab is active.
+     * No further specialization so far.
+     */
     private class HeightMapImagePanel extends ImagePanel {
 
     }
 
+    /**
+     * NormalMapImagePanel class used when Normal Map tab is active.
+     * No further specialization so far.
+     */
     private class NormalMapImagePanel extends ImagePanel {
 
 
     }
 
+    /**
+     * SettingsBox abstract class is used as a provider
+     * for JPanel used in left side of the application -> toolbox.
+     */
     private abstract class SettingsBox {
         JPanel settingBox;
 
@@ -814,11 +920,19 @@ public class MainScreen extends JFrame {
             settingBox = new JPanel();
         }
 
+        /**
+         *
+         * @return JPanel of setting box.
+         */
         JPanel getPanel() {
             return settingBox;
         }
     }
 
+    /**
+     * NormalMapSettingsBox is used when Normal Map tab is active.
+     * Contains all GUI parts for editing normal maps.
+     */
     private class NormalMapSettingsBox extends SettingsBox {
         JPanel settingBox;
         JPanel lightPanel, heightPanel, recalculatePanel, lightToolPanel;
@@ -882,6 +996,9 @@ public class MainScreen extends JFrame {
             return settingBox;
         }
 
+        /**
+         * DirectionPanel class is JPanel containing rotating image of normal map of ball.
+         */
         private class DirectionPanel extends JPanel {
 
             private BufferedImage lightImage;
@@ -915,6 +1032,10 @@ public class MainScreen extends JFrame {
                 repaint();
             }
 
+            /**
+             *
+             * @return image of ball which rotates in settings box
+             */
             private BufferedImage getLightImage() {
                 if (lightImage == null) {
                     try {
@@ -934,7 +1055,7 @@ public class MainScreen extends JFrame {
                 if (e.getSource() == recalculateButton) {
                     if (imageLoader != null && image != null) {
 
-                        imageLoader.refreshNormalMap(lightAngle.getValue(), normalHeight = (((double) height.getValue() * (-99.0)) / 10000.0 + 1.0));
+                        imageLoader.refreshNormalMap(lightAngle.getValue(), (((double) height.getValue() * (-99.0)) / 10000.0 + 1.0));
                         updateNormal(image.getNormalMap());
                     }
                 }
@@ -942,6 +1063,10 @@ public class MainScreen extends JFrame {
         };
     }
 
+    /**
+     * HeightMapSettingsBox class contains all GUI parts for editing
+     * height maps. This class is active when Height Map tab is selected.
+     */
     private class HeightMapSettingsBox extends SettingsBox {
         JPanel settingBox;
         JPanel calculateNormalPanel;
@@ -975,7 +1100,7 @@ public class MainScreen extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 if (e.getSource() == calculateNormalButton) {
                     if (imageLoader != null && image != null && image.getHeightMap() != null) {
-                        imageLoader.refreshNormalMap(angle, normalHeight = ((70.0 * (-99.0)) / 10000.0 + 1.0));
+                        imageLoader.refreshNormalMap(angle, ((70.0 * (-99.0)) / 10000.0 + 1.0));
                         updateNormal(image.getNormalMap());
                         cardSettingsBoxLayout.show(cardSettingsBoxPanel, "ns");
                         tabbedPanel.setSelectedComponent(normalMapImagePanel);
@@ -1001,6 +1126,10 @@ public class MainScreen extends JFrame {
         return this;
     }
 
+    /**
+     * OriginalMapSettingsBox class is active when Original Image tab is selected.
+     * This class contains all GUI parts available on the left toolbox when Original Image is selected.
+     */
     private class OriginalMapSettingsBox extends SettingsBox {
         JPanel settingBox;
         JPanel recalculatePanel, editPanel, markerSizePanel, listPanel, settingsPanel;
@@ -1169,6 +1298,9 @@ public class MainScreen extends JFrame {
             return settingBox;
         }
 
+        /**
+         * updates list of markers
+         */
         void updateList() {
             displayMarkerList.setListData(markerList.toArray(new Marker[markerList.size()]));
             displayMarkerList.revalidate();
@@ -1179,6 +1311,10 @@ public class MainScreen extends JFrame {
             this.markerList = markerList;
         }
 
+        /**
+         * WaitAction class contains loading dialog. Loading dialog is shown
+         * when NormalMAPP is calculating height map.
+         */
         private class WaitAction extends AbstractAction {
 
             WaitAction(String name) {
@@ -1250,6 +1386,9 @@ public class MainScreen extends JFrame {
 
     }
 
+    /**
+     * Plays sound of gong from Resources/gong/gong.wav
+     */
     private static void gong() {
         new Thread(() -> {
             try {
